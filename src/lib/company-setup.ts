@@ -2,6 +2,7 @@ import type {
   CertificationId,
   CompanySetupProfile,
   CompanySetupStepId,
+  PastProject,
   SpecializationId,
 } from "@/types/company-setup"
 
@@ -109,6 +110,67 @@ export function createDefaultCompanySetupProfile(): CompanySetupProfile {
     techStack: ["OCR"],
     specializations: ["software-development"],
   }
+}
+
+/** Required fields that must be filled before the company profile is usable. */
+export function isCompanyProfileComplete(
+  profile: CompanySetupProfile | null | undefined
+): profile is CompanySetupProfile {
+  if (!profile) return false
+  if (!profile.companyNameThai.trim()) return false
+  if (!profile.companySize) return false
+  if (!profile.contactEmail.trim()) return false
+  if (!profile.registeredCapitalThb.trim()) return false
+  if (!profile.notBlacklisted) return false
+  if (profile.specializations.length === 0) return false
+
+  const incompleteCert = profile.certifications.find(
+    (item) =>
+      item.selected &&
+      (!item.certificateNumber.trim() || !item.expirationDate.trim())
+  )
+  if (incompleteCert) return false
+
+  return true
+}
+
+export function getCompanySizeLabel(value: CompanySetupProfile["companySize"]) {
+  return (
+    COMPANY_SIZE_OPTIONS.find((option) => option.value === value)?.label ??
+    value ??
+    "—"
+  )
+}
+
+export function getEgPStatusLabel(value: CompanySetupProfile["egpStatus"]) {
+  switch (value) {
+    case "registered":
+      return "Registered on e-GP"
+    case "in-progress":
+      return "Registration in progress"
+    case "not-registered":
+      return "Not registered"
+    default:
+      return "—"
+  }
+}
+
+export function getClientSectorLabel(value: PastProject["clientSector"]) {
+  return (
+    CLIENT_SECTOR_OPTIONS.find((option) => option.value === value)?.label ??
+    value ??
+    "—"
+  )
+}
+
+export function getSpecializationLabel(id: SpecializationId) {
+  return (
+    SPECIALIZATION_OPTIONS.find((option) => option.id === id)?.label ?? id
+  )
+}
+
+export function getCertificationLabel(id: CertificationId) {
+  return CERTIFICATION_OPTIONS.find((option) => option.id === id)?.label ?? id
 }
 
 export const STEP_DESCRIPTIONS: Record<CompanySetupStepId, string> = {

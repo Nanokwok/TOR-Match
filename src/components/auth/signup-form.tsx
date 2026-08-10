@@ -37,7 +37,7 @@ export function SignupForm() {
         setError(result.error)
         return
       }
-      router.push("/browse")
+      router.push("/company-setup")
     })
   }
 
@@ -49,7 +49,7 @@ export function SignupForm() {
         setError(result.error)
         return
       }
-      router.push("/browse")
+      router.push("/company-setup")
     })
   }
 

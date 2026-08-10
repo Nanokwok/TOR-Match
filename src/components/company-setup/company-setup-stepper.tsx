@@ -51,7 +51,7 @@ export function CompanySetupStepper({
                 aria-hidden
                 className={cn(
                   "absolute top-5 left-[calc(50%+24px)] h-px w-[calc(100%-48px)]",
-                  index < currentIndex ? "bg-[#0088C9]" : "bg-neutral-200"
+                  index < currentIndex ? "bg-primary" : "bg-border"
                 )}
               />
             ) : null}
@@ -60,10 +60,10 @@ export function CompanySetupStepper({
               className={cn(
                 "relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                 completed && "border-emerald-500 bg-emerald-500 text-white",
-                active && "border-[#0088C9] bg-[#0088C9] text-white",
+                active && "border-primary bg-primary text-primary-foreground",
                 !completed &&
                   !active &&
-                  "border-neutral-300 bg-white text-neutral-400"
+                  "border-border bg-card text-muted-foreground"
               )}
             >
               {completed ? (
@@ -77,7 +77,7 @@ export function CompanySetupStepper({
               <p
                 className={cn(
                   "text-[10px] font-medium tracking-[0.12em] uppercase",
-                  active ? "text-neutral-500" : "text-neutral-400"
+                  active ? "text-muted-foreground" : "text-muted-foreground/70"
                 )}
               >
                 STEP {index + 1}
@@ -85,9 +85,9 @@ export function CompanySetupStepper({
               <p
                 className={cn(
                   "text-xs leading-snug sm:text-[13px]",
-                  active && "font-semibold text-neutral-950",
-                  completed && "font-medium text-neutral-700",
-                  !active && !completed && "font-medium text-neutral-400"
+                  active && "font-semibold text-foreground",
+                  completed && "font-medium text-foreground/80",
+                  !active && !completed && "font-medium text-muted-foreground"
                 )}
               >
                 {step.label}

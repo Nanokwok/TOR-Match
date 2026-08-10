@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 
-import { moveWorkspaceCardAction } from "@/actions/workspace"
+import { moveWorkspaceCardAction, removeWorkspaceCardAction } from "@/actions/workspace"
 import { AddTorToColumnDialog } from "@/components/workspace/add-tor-to-column-dialog"
 import { WorkspaceCardDetailDialog } from "@/components/workspace/workspace-card-detail-dialog"
 import { WorkspaceKanbanBoard } from "@/components/workspace/workspace-kanban-board"
@@ -71,6 +71,12 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
     setAllCards(cards)
   }
 
+  function handleDeleteCard(torId: string) {
+    setAllCards((previous) => previous.filter((card) => card.torId !== torId))
+    setSelectedCardId((current) => (current === torId ? null : current))
+    void removeWorkspaceCardAction(torId)
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted">
       <WorkspaceFilterBar
@@ -88,6 +94,7 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
           onCardsChange={setAllCards}
           onMoveCard={handleMoveCard}
           onOpenCardDetails={setSelectedCardId}
+          onDeleteCard={handleDeleteCard}
           onRequestAddTor={setAddColumnId}
         />
       </div>

@@ -16,6 +16,7 @@ type KanbanColumnProps = {
   label: string
   cards: WorkspaceCard[]
   onOpenCardDetails?: (torId: string) => void
+  onDeleteCard?: (torId: string) => void
   onRequestAddTor?: (columnId: WorkspaceColumnId) => void
   disableDnd?: boolean
 }
@@ -25,6 +26,7 @@ export function KanbanColumn({
   label,
   cards,
   onOpenCardDetails,
+  onDeleteCard,
   onRequestAddTor,
   disableDnd = false,
 }: KanbanColumnProps) {
@@ -42,6 +44,7 @@ export function KanbanColumn({
               key={card.torId}
               card={card}
               onOpenDetails={onOpenCardDetails}
+              onDelete={onDeleteCard}
             />
           ))}
         </div>
@@ -55,6 +58,7 @@ export function KanbanColumn({
       label={label}
       cards={cards}
       onOpenCardDetails={onOpenCardDetails}
+      onDeleteCard={onDeleteCard}
       onRequestAddTor={onRequestAddTor}
     />
   )
@@ -65,6 +69,7 @@ function DroppableKanbanColumn({
   label,
   cards,
   onOpenCardDetails,
+  onDeleteCard,
   onRequestAddTor,
 }: Omit<KanbanColumnProps, "disableDnd">) {
   const { setNodeRef, isOver } = useDroppable({ id })
@@ -88,6 +93,7 @@ function DroppableKanbanColumn({
             key={card.torId}
             card={card}
             onOpenDetails={onOpenCardDetails}
+            onDelete={onDeleteCard}
           />
         ))}
       </div>
@@ -117,7 +123,7 @@ function KanbanColumnShell({
   }
 
   return (
-    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-secondary dark:!bg-black/20 p-3">
+    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl !bg-background dark:!bg-black/20 p-3">
       <div className="mb-3 flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-foreground">{label}</h2>

@@ -185,4 +185,22 @@ export async function addTorToWorkspace(
   return { ok: true, card, cards: nextCards }
 }
 
+export async function removeWorkspaceCard(
+  torId: string
+): Promise<
+  | { ok: true; cards: WorkspaceCard[] }
+  | { ok: false; error: string }
+> {
+  const cards = getMockWorkspaceCards()
+  const exists = cards.some((card) => card.torId === torId)
+
+  if (!exists) {
+    return { ok: false, error: "Card not found" }
+  }
+
+  const nextCards = cards.filter((card) => card.torId !== torId)
+  setMockWorkspaceCards(nextCards)
+  return { ok: true, cards: nextCards }
+}
+
 export { WORKSPACE_COLUMNS }

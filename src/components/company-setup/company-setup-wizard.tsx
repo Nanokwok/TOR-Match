@@ -46,12 +46,15 @@ import type {
 
 type CompanySetupWizardProps = {
   initialProfile?: CompanySetupProfile | null
+  mode?: "setup" | "edit"
 }
 
 export function CompanySetupWizard({
   initialProfile,
+  mode = "setup",
 }: CompanySetupWizardProps) {
   const router = useRouter()
+  const isEdit = mode === "edit"
   const [stepIndex, setStepIndex] = useState(0)
   const [profile, setProfile] = useState<CompanySetupProfile>(
     () => initialProfile ?? createDefaultCompanySetupProfile()
@@ -131,14 +134,18 @@ export function CompanySetupWizard({
     startSave(async () => {
       const result = await saveCompanySetupProfileAction(profile)
       if (result.ok) {
-        router.push("/browse")
+        router.push("/company-profile")
+        router.refresh()
       }
     })
   }
 
   function handleCancel() {
-    router.push("/browse")
+    router.push(isEdit ? "/company-profile" : "/browse")
   }
+
+  const nextLabel =
+    isLastStep && isEdit ? "Save Changes" : currentStep.nextLabel
 
   function addTechTag(raw: string) {
     const tag = raw.trim()
@@ -186,7 +193,7 @@ export function CompanySetupWizard({
 
       <section className="mx-auto w-full max-w-4xl">
         <div className="mb-8 space-y-2 text-center">
-          <h1 className="text-[28px] font-semibold tracking-tight text-neutral-950">
+          <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
             {currentStep.label === "Capabilities"
               ? "Capabilities & Tech Stack"
               : currentStep.label}
@@ -240,7 +247,7 @@ export function CompanySetupWizard({
             <Button
               type="button"
               variant="secondary"
-              className="h-10 min-w-[96px] bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
+              className="h-10 min-w-[96px] bg-muted text-foreground hover:bg-muted/80"
               onClick={handleCancel}
             >
               Cancel
@@ -249,7 +256,7 @@ export function CompanySetupWizard({
             <Button
               type="button"
               variant="secondary"
-              className="h-10 min-w-[96px] bg-neutral-100 text-neutral-800 hover:bg-neutral-200"
+              className="h-10 min-w-[96px] bg-muted text-foreground hover:bg-muted/80"
               onClick={handleBack}
             >
               Back
@@ -257,11 +264,11 @@ export function CompanySetupWizard({
           )}
           <Button
             type="button"
-            className="h-10 bg-[#0088C9] px-5 text-white hover:bg-[#007ab4]"
+            className="h-10 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
             disabled={isSaving}
             onClick={handleNext}
           >
-            {isSaving ? "Saving..." : currentStep.nextLabel}
+            {isSaving ? "Saving..." : nextLabel}
           </Button>
         </div>
       </section>
@@ -290,7 +297,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
             }))
           }
           placeholder="e.g. บริษัท เอ็กซ์เทค จำกัด"
-          className="h-11 rounded-md bg-white"
+          className="h-11 rounded-md bg-background"
         />
       </Field>
 
@@ -305,7 +312,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
             }))
           }
           placeholder="e.g. ExTech Co., Ltd."
-          className="h-11 rounded-md bg-white"
+          className="h-11 rounded-md bg-background"
         />
       </Field>
 
@@ -322,13 +329,13 @@ function GeneralStep({ profile, onChange }: StepProps) {
             }
             placeholder="0105565012345"
             inputMode="numeric"
-            className="h-11 rounded-md bg-white"
+            className="h-11 rounded-md bg-background"
           />
         </Field>
 
         <Field label="Company Size" required htmlFor="company-size">
           <Select
-            value={profile.companySize || undefined}
+            value={profile.companySize || null}
             onValueChange={(value) => {
               if (!value) return
               onChange((current) => ({
@@ -339,7 +346,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
           >
             <SelectTrigger
               id="company-size"
-              className="h-11 w-full rounded-md bg-white data-[size=default]:h-11"
+              className="h-11 w-full rounded-md bg-background data-[size=default]:h-11"
             >
               <SelectValue placeholder="Select Size" />
             </SelectTrigger>
@@ -367,7 +374,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
               }))
             }
             placeholder="bidding@company.com"
-            className="h-11 rounded-md bg-white"
+            className="h-11 rounded-md bg-background"
           />
         </Field>
 
@@ -382,7 +389,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
               }))
             }
             placeholder="02-123-4567"
-            className="h-11 rounded-md bg-white"
+            className="h-11 rounded-md bg-background"
           />
         </Field>
       </div>
@@ -431,7 +438,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
           ).map((option) => (
             <label
               key={option.value}
-              className="flex cursor-pointer items-center gap-2 text-sm text-neutral-800"
+              className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
             >
               <input
                 type="radio"
@@ -443,7 +450,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
                     egpStatus: option.value as EgPRegistrationStatus,
                   }))
                 }
-                className="size-4 accent-[#0088C9]"
+                className="size-4 accent-primary"
               />
               {option.label}
             </label>
@@ -451,7 +458,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-neutral-800">
+      <label className="flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-foreground">
         <Checkbox
           checked={profile.notBlacklisted}
           onCheckedChange={(checked) =>
@@ -487,7 +494,7 @@ function CertificationsStep({
             key={option.id}
             className="rounded-xl border border-border p-4"
           >
-            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-neutral-950">
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-foreground">
               <Checkbox
                 checked={entry.selected}
                 onCheckedChange={() => onToggle(option.id)}
@@ -563,7 +570,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
         <div key={project.id} className="space-y-4">
           {index > 0 ? (
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-neutral-950">
+              <p className="text-sm font-medium text-foreground">
                 Past Project {index + 1}
               </p>
               <Button
@@ -610,7 +617,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label="Client Sector" htmlFor={`sector-${project.id}`}>
               <Select
-                value={project.clientSector || undefined}
+                value={project.clientSector || null}
                 onValueChange={(value) => {
                   if (!value) return
                   onChange((current) => ({
@@ -666,7 +673,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
               htmlFor={`year-${project.id}`}
             >
               <Select
-                value={project.completionYear || undefined}
+                value={project.completionYear || null}
                 onValueChange={(value) => {
                   if (!value) return
                   onChange((current) => ({
@@ -701,7 +708,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
       <Button
         type="button"
         variant="ghost"
-        className="mx-auto flex w-full max-w-xs gap-1.5 text-[#0088C9] hover:text-[#007ab4]"
+        className="mx-auto flex w-full max-w-xs gap-1.5 text-primary hover:text-primary/90"
         onClick={() =>
           onChange((current) => ({
             ...current,
@@ -751,13 +758,13 @@ function CapabilitiesStep({
             {profile.techStack.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-full bg-[#EBF8FF] px-2.5 py-1 text-xs font-medium text-[#0088C9]"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
               >
                 {tag}
                 <button
                   type="button"
                   aria-label={`Remove ${tag}`}
-                  className="rounded-full p-0.5 hover:bg-[#0088C9]/10"
+                  className="rounded-full p-0.5 hover:bg-primary/10"
                   onClick={() => onRemoveTech(tag)}
                 >
                   <X className="size-3" />
@@ -778,14 +785,14 @@ function CapabilitiesStep({
                 key={option.id}
                 className={cn(
                   "flex cursor-pointer items-center gap-2.5 rounded-xl border border-border px-4 py-3 text-sm transition-colors",
-                  selected && "border-[#0088C9]/40 bg-[#EBF8FF]/50"
+                  selected && "border-primary/40 bg-primary/10"
                 )}
               >
                 <Checkbox
                   checked={selected}
                   onCheckedChange={() => onToggleSpecialization(option.id)}
                 />
-                <span className="font-medium text-neutral-950">
+                <span className="font-medium text-foreground">
                   {option.label}
                 </span>
               </label>
@@ -810,7 +817,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={htmlFor} className="text-sm font-semibold text-neutral-950">
+      <Label htmlFor={htmlFor} className="text-sm font-semibold text-foreground">
         {label}
         {required ? <span className="text-red-500"> *</span> : null}
       </Label>

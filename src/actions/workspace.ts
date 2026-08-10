@@ -5,6 +5,7 @@ import {
   getWorkspaceBoard,
   listWorkspaceAssignees,
   moveWorkspaceCard,
+  removeWorkspaceCard,
   searchTorsForWorkspace,
 } from "@/server/services/workspace.service";
 import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace";
@@ -34,4 +35,8 @@ export async function addTorToWorkspaceAction(
   column: WorkspaceColumnId,
 ) {
   return addTorToWorkspace(torId, column);
+}
+
+export async function removeWorkspaceCardAction(torId: string) {
+  return removeWorkspaceCard(torId);
 }

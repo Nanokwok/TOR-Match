@@ -77,7 +77,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
                   <Button
                     variant="link"
                     className="h-auto p-0 text-primary"
-                    onClick={() => router.push("/company-setup")}
+                    onClick={() => router.push("/company-profile")}
                   >
                     Company Setup →
                   </Button>

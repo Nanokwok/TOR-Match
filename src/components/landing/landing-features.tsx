@@ -48,7 +48,7 @@ const features = [
   {
     title: "Real-Time Deadline & Match Alerts",
     description:
-      "Receive instant notifications via Email, Push, or LINE the moment a new TOR matches your company profile.",
+      "Receive instant notifications via Email, or Push Notification the moment a new TOR matches your company profile.",
     icon: Bell,
   },
 ] as const;

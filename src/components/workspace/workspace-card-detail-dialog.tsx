@@ -214,18 +214,18 @@ function WorkspaceCardDetailBody({
         <Tabs defaultValue="details" className="mt-5 gap-0">
           <TabsList
             variant="line"
-            className="h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0"
+            className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0"
           >
             <TabsTrigger
               value="details"
-              className="h-10 rounded-none px-0 pb-3 after:bg-primary data-active:text-primary"
+              className="h-10 rounded-none px-0 after:bg-primary data-active:text-primary"
             >
               <FileText className="size-4" />
               Details
             </TabsTrigger>
             <TabsTrigger
               value="checklist"
-              className="h-10 rounded-none px-0 pb-3 after:bg-primary data-active:text-primary"
+              className="h-10 rounded-none px-0 after:bg-primary data-active:text-primary"
             >
               <ListChecks className="size-4" />
               Internal Task Checklist
