@@ -32,6 +32,7 @@ type HeaderProps = {
 
 const defaultNavItems: HeaderNavItem[] = [
   { label: "Browse TORs", href: "/browse" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Team Workspace", href: "/workspace" },
 ];
 
