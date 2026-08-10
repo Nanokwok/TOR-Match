@@ -1,9 +1,9 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Settings } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { browseActions } from "@/lib/browse-actions"
 import type { TorQualificationCheck } from "@/types/tor"
 
 type TorQualificationPanelProps = {
@@ -11,6 +11,8 @@ type TorQualificationPanelProps = {
 }
 
 export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
+  const router = useRouter()
+
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       <table className="w-full border-collapse text-left text-sm">
@@ -75,7 +77,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
                   <Button
                     variant="link"
                     className="h-auto p-0 text-[#0088C9]"
-                    onClick={() => browseActions.companySetup()}
+                    onClick={() => router.push("/company-setup")}
                   >
                     Company Setup →
                   </Button>

@@ -111,10 +111,14 @@ export function Header({
               align="end"
               className="min-w-44 bg-white text-neutral-950 shadow-lg ring-1 ring-black/10"
             >
-              <DropdownMenuItem onClick={() => browseActions.openCompanyProfile()}>
+              <DropdownMenuItem
+                onClick={() => router.push("/company-setup")}
+              >
                 Company Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => browseActions.openSettings()}>
+              <DropdownMenuItem
+                onClick={() => router.push("/settings/notifications")}
+              >
                 Setting
               </DropdownMenuItem>
               <DropdownMenuSeparator />
