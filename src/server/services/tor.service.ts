@@ -1,4 +1,5 @@
-import { getMockCompanyProfile, getMockTors } from "@/server/db/mock/tors";
+import { getMockCompanyProfile, getMockTors, listMockLocalOffices } from "@/server/db/mock/tors";
+import { matchesDetailFilters } from "@/lib/browse-filters";
 import { buildQualificationCheck } from "@/lib/qualification";
 import type {
   Tor,
@@ -21,6 +22,7 @@ function matchesKeyword(tor: Tor, keyword?: string) {
   return (
     tor.title.toLowerCase().includes(q) ||
     tor.department.toLowerCase().includes(q) ||
+    tor.localOffice.toLowerCase().includes(q) ||
     tor.announcementNo.toLowerCase().includes(q) ||
     tor.techTags.some((tag) => tag.toLowerCase().includes(q)) ||
     tor.summary.toLowerCase().includes(q)
@@ -57,6 +59,7 @@ export async function listTors(
     }
     if (!matchesBudget(tor, query.budgetRange)) return false;
     if (!matchesKeyword(tor, query.keyword)) return false;
+    if (!matchesDetailFilters(tor, query.detail)) return false;
     return true;
   });
 
@@ -71,6 +74,10 @@ export async function getTorById(id: string): Promise<Tor | null> {
 export async function listTorDepartments(): Promise<string[]> {
   const departments = new Set(getMockTors().map((tor) => tor.department));
   return [...departments].sort();
+}
+
+export async function listTorLocalOffices(): Promise<string[]> {
+  return listMockLocalOffices();
 }
 
 export async function getTorFinancials(

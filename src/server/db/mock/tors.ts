@@ -74,8 +74,58 @@ function defaultQualifications(
  * Mock TOR dataset. Swap this function's body (or replace callers)
  * when wiring a real database / API.
  */
+const LOCAL_OFFICES = [
+  "Phra Nakhon District",
+  "Chatuchak District",
+  "Traffic & Transportation Dept",
+  "Bang Kapi District",
+  "Pathum Wan District",
+  "Huai Khwang District",
+  "Lat Phrao District",
+  "Din Daeng District",
+  "Ratchathewi District",
+  "Khlong Toei District",
+  "Sathon District",
+  "Bang Rak District",
+  "Watthana District",
+  "Bang Sue District",
+  "Public Works District Office",
+] as const
+
+type TorSeed = Omit<Tor, "localOffice" | "announcementDate">
+
+function withBrowseMeta(tors: TorSeed[]): Tor[] {
+  return tors.map((tor, index) => {
+    const deadline = new Date(tor.deadline)
+    const announced = new Date(deadline)
+    announced.setDate(announced.getDate() - (21 + (index % 40)))
+    const method =
+      tor.method === "e-market" ? ("price-agreement" as const) : tor.method
+
+    return {
+      ...tor,
+      localOffice: LOCAL_OFFICES[index % LOCAL_OFFICES.length],
+      announcementDate: announced.toISOString(),
+      projectScale:
+        tor.budgetBaht >= 50_000_000 ? ("ENTERPRISE" as const) : tor.projectScale,
+      method,
+      financials: {
+        ...tor.financials,
+        method:
+          tor.financials.method === "e-market"
+            ? ("price-agreement" as const)
+            : tor.financials.method,
+      },
+    }
+  })
+}
+
+export function listMockLocalOffices() {
+  return [...LOCAL_OFFICES]
+}
+
 export function getMockTors(): Tor[] {
-  return [
+  return withBrowseMeta([
     {
       id: "tor-001",
       announcementNo: "BMA-SED-69-08-0142",
@@ -576,7 +626,7 @@ export function getMockTors(): Tor[] {
       },
       qualificationRequirements: defaultQualifications(2_000_000, 1_500_000),
     },
-  ];
+  ])
 }
 
 /**

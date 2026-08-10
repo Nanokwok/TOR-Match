@@ -1,16 +1,17 @@
-"use client";
+"use client"
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react"
 
-import { searchTorsAction } from "@/actions/tor";
+import { searchTorsAction } from "@/actions/tor"
 import {
   filtersToQuery,
   TorFilterBar,
   type BrowseFiltersState,
-} from "@/components/browse/tor-filter-bar";
-import { TorDetail } from "@/components/browse/tor-detail";
-import { TorList } from "@/components/browse/tor-list";
-import type { Tor } from "@/types/tor";
+} from "@/components/browse/tor-filter-bar"
+import { TorDetail } from "@/components/browse/tor-detail"
+import { TorList } from "@/components/browse/tor-list"
+import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
+import type { Tor } from "@/types/tor"
 
 const initialFilters: BrowseFiltersState = {
   keyword: "",
@@ -18,37 +19,56 @@ const initialFilters: BrowseFiltersState = {
   budgetRange: "all",
   status: "all",
   department: "all",
-};
+  detail: { ...EMPTY_DETAIL_FILTERS },
+}
 
 type BrowseViewProps = {
-  initialItems: Tor[];
-  departments: string[];
-};
+  initialItems: Tor[]
+  departments: string[]
+  localOffices: string[]
+}
 
-export function BrowseView({ initialItems, departments }: BrowseViewProps) {
-  const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters);
-  const [items, setItems] = useState(initialItems);
+export function BrowseView({
+  initialItems,
+  departments,
+  localOffices,
+}: BrowseViewProps) {
+  const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
+  const [items, setItems] = useState(initialItems)
   const [selectedId, setSelectedId] = useState<string | null>(
-    initialItems[0]?.id ?? null,
-  );
-  const [isPending, startTransition] = useTransition();
+    initialItems[0]?.id ?? null
+  )
+  const [isPending, startTransition] = useTransition()
 
   const selectedTor = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
-    [items, selectedId],
-  );
+    [items, selectedId]
+  )
 
-  function handleSearch() {
+  function runSearch(nextFilters: BrowseFiltersState) {
     startTransition(async () => {
-      const result = await searchTorsAction(filtersToQuery(filters));
-      setItems(result.items);
+      const result = await searchTorsAction(filtersToQuery(nextFilters))
+      setItems(result.items)
       setSelectedId((current) => {
         if (current && result.items.some((item) => item.id === current)) {
-          return current;
+          return current
         }
-        return result.items[0]?.id ?? null;
-      });
-    });
+        return result.items[0]?.id ?? null
+      })
+    })
+  }
+
+  function handleSearch() {
+    runSearch(filters)
+  }
+
+  function handleFiltersChange(next: BrowseFiltersState) {
+    const detailChanged =
+      JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
+    setFilters(next)
+    if (detailChanged) {
+      runSearch(next)
+    }
   }
 
   return (
@@ -56,7 +76,8 @@ export function BrowseView({ initialItems, departments }: BrowseViewProps) {
       <TorFilterBar
         filters={filters}
         departments={departments}
-        onChange={setFilters}
+        localOffices={localOffices}
+        onChange={handleFiltersChange}
         onSearch={handleSearch}
       />
 
@@ -78,5 +99,5 @@ export function BrowseView({ initialItems, departments }: BrowseViewProps) {
         </section>
       </div>
     </div>
-  );
+  )
 }

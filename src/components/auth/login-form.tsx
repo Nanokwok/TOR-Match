@@ -81,7 +81,7 @@ export function LoginForm() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@company.com"
-                className="h-11"
+                className="h-11 border-neutral-300 bg-white"
               />
             </div>
 
@@ -95,11 +95,11 @@ export function LoginForm() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
-                className="h-11"
+                className="h-11 border-neutral-300 bg-white"
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-neutral-700">
+            <label className="flex items-center gap-2 text-sm text-foreground">
               <Checkbox
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked === true)}
@@ -114,7 +114,7 @@ export function LoginForm() {
             <Button
               type="submit"
               disabled={isPending}
-              className="h-11 w-full bg-[#0088C9] text-white hover:bg-[#007ab4]"
+              className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isPending ? "Signing in..." : "Log In"}
             </Button>

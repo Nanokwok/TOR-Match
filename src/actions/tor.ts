@@ -3,6 +3,7 @@
 import {
   getTorById,
   listTorDepartments,
+  listTorLocalOffices,
   listTors,
 } from "@/server/services/tor.service";
 import type { TorListQuery } from "@/types/tor";
@@ -17,4 +18,8 @@ export async function getTorAction(id: string) {
 
 export async function getTorDepartmentsAction() {
   return listTorDepartments();
+}
+
+export async function getTorLocalOfficesAction() {
+  return listTorLocalOffices();
 }

@@ -88,7 +88,7 @@ export function SignupForm() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@company.com"
-                className="h-11"
+                className="h-11 border-neutral-300 bg-white"
               />
             </div>
 
@@ -104,7 +104,7 @@ export function SignupForm() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="••••••••"
-                  className="h-11"
+                  className="h-11 border-neutral-300 bg-white"
                 />
               </div>
               <div className="space-y-1.5">
@@ -118,7 +118,7 @@ export function SignupForm() {
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   placeholder="••••••••"
-                  className="h-11"
+                  className="h-11 border-neutral-300 bg-white"
                 />
               </div>
             </div>
@@ -130,7 +130,7 @@ export function SignupForm() {
             <Button
               type="submit"
               disabled={isPending}
-              className="h-11 w-full bg-[#0088C9] text-white hover:bg-[#007ab4]"
+              className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isPending ? "Creating account..." : "Register"}
             </Button>

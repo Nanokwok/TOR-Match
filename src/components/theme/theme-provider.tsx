@@ -11,6 +11,7 @@ import {
 
 import {
   applyThemeClass,
+  isForceLightMode,
   isThemePreference,
   resolveTheme,
   THEME_STORAGE_KEY,
@@ -22,6 +23,7 @@ type ThemeContextValue = {
   theme: ThemePreference
   resolvedTheme: ResolvedTheme
   setTheme: (theme: ThemePreference) => void
+  resyncTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
@@ -46,14 +48,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     useState<ResolvedTheme>("light")
   const [ready, setReady] = useState(false)
 
-  const setTheme = useCallback((next: ThemePreference) => {
-    setThemeState(next)
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next)
-    } catch {
-      // Ignore storage write errors
+  const applyResolved = useCallback((preference: ThemePreference) => {
+    if (isForceLightMode()) {
+      applyThemeClass("light")
+      setResolvedTheme("light")
+      return "light" as const
     }
+
+    const resolved = resolveTheme(
+      preference,
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    )
+    applyThemeClass(resolved)
+    setResolvedTheme(resolved)
+    return resolved
   }, [])
+
+  const setTheme = useCallback(
+    (next: ThemePreference) => {
+      setThemeState(next)
+      try {
+        window.localStorage.setItem(THEME_STORAGE_KEY, next)
+      } catch {
+        // Ignore storage write errors
+      }
+    },
+    []
+  )
+
+  const resyncTheme = useCallback(() => {
+    applyResolved(theme)
+  }, [applyResolved, theme])
 
   useEffect(() => {
     setThemeState(readStoredTheme())
@@ -67,18 +92,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const media = window.matchMedia("(prefers-color-scheme: dark)")
 
     function sync() {
-      const resolved = resolveTheme(theme, media.matches)
-      applyThemeClass(resolved)
-      setResolvedTheme(resolved)
+      applyResolved(theme)
     }
 
     sync()
     media.addEventListener("change", sync)
     return () => media.removeEventListener("change", sync)
-  }, [theme, ready])
+  }, [theme, ready, applyResolved])
 
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, resolvedTheme, setTheme, resyncTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   )

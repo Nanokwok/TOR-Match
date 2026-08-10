@@ -42,7 +42,7 @@ export function GoogleAuthButton({
       type="button"
       variant="outline"
       className={cn(
-        "h-11 w-full gap-2.5 border-border bg-white text-sm font-medium text-neutral-800 hover:bg-slate-50",
+        "h-11 w-full gap-2.5 border-neutral-300 bg-white text-sm font-medium text-neutral-800 hover:bg-neutral-50",
         className
       )}
       onClick={onClick}
