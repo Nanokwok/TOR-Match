@@ -20,15 +20,15 @@ const CATEGORY_STYLES: Record<
 > = {
   match: {
     icon: Sparkles,
-    className: "bg-emerald-100 text-emerald-600",
+    className: "text-emerald-600",
   },
   deadline: {
     icon: AlertTriangle,
-    className: "bg-amber-100 text-amber-600",
+    className: "text-amber-600",
   },
   system: {
     icon: Bell,
-    className: "bg-slate-100 text-slate-600",
+    className: "text-slate-600",
   },
 };
 
@@ -70,7 +70,7 @@ export function NotificationCard({
 
       <span
         className={cn(
-          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm",
+          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm border border-border",
           category.className,
         )}
       >
