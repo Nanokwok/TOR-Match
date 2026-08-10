@@ -72,7 +72,7 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#F7F7F8]">
+    <div className="flex min-h-0 flex-1 flex-col bg-muted">
       <WorkspaceFilterBar
         filters={filters}
         members={initialBoard.members}

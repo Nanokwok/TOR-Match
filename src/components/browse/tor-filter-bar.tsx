@@ -42,7 +42,7 @@ export function TorFilterBar({
   onSearch,
 }: TorFilterBarProps) {
   return (
-    <div className="border-b border-border bg-white px-4 py-3 md:px-6">
+    <div className="border-b border-border bg-card px-4 py-3 md:px-6">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -66,7 +66,7 @@ export function TorFilterBar({
               onCheckedChange={(checked) =>
                 onChange({ ...filters, eligibleOnly: checked })
               }
-              className="data-checked:bg-[#0088C9]"
+              className="data-checked:bg-primary"
             />
             <span className="whitespace-nowrap text-foreground">
               Eligible Only
@@ -131,7 +131,7 @@ export function TorFilterBar({
           </Button>
 
           <Button
-            className="h-9 bg-[#0088C9] px-5 text-white hover:bg-[#007ab4]"
+            className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
             onClick={onSearch}
           >
             Search

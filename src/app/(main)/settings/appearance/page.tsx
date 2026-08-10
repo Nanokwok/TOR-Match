@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AppearanceSettingsPage() {
   return (
-    <div className="min-h-0 flex-1 bg-white">
+    <div className="min-h-0 flex-1 bg-background">
       <AppearanceSettingsView />
     </div>
   )

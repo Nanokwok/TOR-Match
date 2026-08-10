@@ -17,7 +17,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
     <div className="overflow-hidden rounded-lg border border-border">
       <table className="w-full border-collapse text-left text-sm">
         <thead>
-          <tr className="bg-[#0088C9] text-white">
+          <tr className="bg-primary text-primary-foreground">
             <th className="px-4 py-3 font-medium">Qualification Requirement</th>
             <th className="px-4 py-3 font-medium">TOR Minimum Criteria</th>
             <th className="px-4 py-3 font-medium">Your Company Profile</th>
@@ -28,9 +28,9 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
             check.rows.map((row) => (
               <tr
                 key={row.requirement}
-                className="border-t border-border bg-white"
+                className="border-t border-border bg-card"
               >
-                <td className="px-4 py-3 font-medium text-neutral-950">
+                <td className="px-4 py-3 font-medium text-foreground">
                   {row.requirement}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
@@ -51,7 +51,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
             ))
           ) : (
             <tr>
-              <td className="border-t border-border px-4 py-3 align-top font-medium text-neutral-950">
+              <td className="border-t border-border px-4 py-3 align-top font-medium text-foreground">
                 <div className="space-y-6 py-1">
                   {check.rows.map((row) => (
                     <div key={row.requirement}>{row.requirement}</div>
@@ -76,7 +76,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
                   </p>
                   <Button
                     variant="link"
-                    className="h-auto p-0 text-[#0088C9]"
+                    className="h-auto p-0 text-primary"
                     onClick={() => router.push("/company-setup")}
                   >
                     Company Setup →

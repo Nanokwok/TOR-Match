@@ -33,13 +33,13 @@ export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
       </div>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-neutral-950">
+        <h3 className="text-sm font-semibold text-foreground">
           Payment Milestones
         </h3>
         <div className="overflow-hidden rounded-lg border border-border">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="bg-[#0088C9] text-white">
+              <tr className="bg-primary text-primary-foreground">
                 <th className="px-4 py-3 font-medium">Day</th>
                 <th className="px-4 py-3 font-medium">Milestone</th>
                 <th className="px-4 py-3 font-medium">Deliverable</th>
@@ -49,12 +49,12 @@ export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
               {financials.milestones.map((milestone) => (
                 <tr
                   key={`${milestone.milestoneNumber}-${milestone.day}`}
-                  className="border-t border-border bg-white"
+                  className="border-t border-border bg-card"
                 >
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-950">
+                  <td className="px-4 py-3 whitespace-nowrap text-foreground">
                     {milestone.day} Days
                   </td>
-                  <td className="px-4 py-3 text-neutral-950">
+                  <td className="px-4 py-3 text-foreground">
                     {formatMilestoneLabel(
                       milestone.milestoneNumber,
                       milestone.percent,
@@ -85,12 +85,12 @@ function Metric({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-[#EBF8FF]">
-        <Icon className="size-4 text-[#0088C9]" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+        <Icon className="size-4 text-primary" />
       </div>
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-neutral-950">{value}</p>
+        <p className="text-sm font-semibold text-foreground">{value}</p>
       </div>
     </div>
   )

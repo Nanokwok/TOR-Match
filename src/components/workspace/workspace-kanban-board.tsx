@@ -248,7 +248,7 @@ export function WorkspaceKanbanBoard({
         {activeCard ? (
           <WorkspaceTorCard
             card={activeCard}
-            className="cursor-grabbing shadow-lg ring-2 ring-[#0088C9]/20"
+            className="cursor-grabbing shadow-lg ring-2 ring-primary/20"
           />
         ) : null}
       </DragOverlay>

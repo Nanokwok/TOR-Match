@@ -112,7 +112,7 @@ export function ShareTorDialog({
       label: "Email",
       href: `mailto:?subject=${encodeURIComponent(`TOR: ${tor.title}`)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
       icon: Mail,
-      className: "bg-slate-100 text-neutral-800 hover:bg-slate-200",
+      className: "bg-muted text-foreground hover:bg-muted/80",
     },
   ] as const
 
@@ -146,7 +146,7 @@ export function ShareTorDialog({
                   href={item.href}
                   target={item.id === "email" ? undefined : "_blank"}
                   rel={item.id === "email" ? undefined : "noopener noreferrer"}
-                  className="flex flex-col items-center gap-2 rounded-lg p-2 text-center transition-colors hover:bg-slate-50"
+                  className="flex flex-col items-center gap-2 rounded-lg p-2 text-center transition-colors hover:bg-muted"
                 >
                   <span
                     className={cn(
@@ -172,7 +172,7 @@ export function ShareTorDialog({
               <Input
                 readOnly
                 value={shareUrl}
-                className="h-10 bg-slate-50 text-xs"
+                className="h-10 bg-muted text-xs"
                 onFocus={(event) => event.currentTarget.select()}
               />
               <Button

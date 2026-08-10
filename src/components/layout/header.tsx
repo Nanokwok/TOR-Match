@@ -6,6 +6,8 @@ import { ChevronDown, Languages } from "lucide-react";
 
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { useTheme } from "@/components/theme/theme-provider";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,6 +46,7 @@ export function Header({
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <header
@@ -81,6 +84,14 @@ export function Header({
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
           <NotificationCenter />
 
+          <AnimatedThemeToggler
+            theme={resolvedTheme}
+            onThemeChange={setTheme}
+            variant="circle"
+            duration={450}
+            className="inline-flex size-8 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 [&_svg]:size-4"
+          />
+
           <Button
             variant="ghost"
             size="icon-sm"
@@ -98,10 +109,10 @@ export function Header({
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-md bg-white px-3 text-sm font-medium text-neutral-950",
-                "outline-none transition-colors hover:bg-neutral-100",
+                "inline-flex h-8 items-center gap-1.5 rounded-md bg-card/10 dark:bg-secondary px-3 text-sm font-medium text-background dark:text-foreground",
+                "outline-none transition-colors hover:bg-muted",
                 "focus-visible:ring-2 focus-visible:ring-white/40",
-                "data-popup-open:bg-neutral-100"
+                "data-popup-open:bg-muted"
               )}
             >
               Company Profile
@@ -109,7 +120,7 @@ export function Header({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="min-w-44 bg-white text-neutral-950 shadow-lg ring-1 ring-black/10"
+              className="min-w-44 bg-popover text-popover-foreground shadow-lg ring-1 ring-foreground/10"
             >
               <DropdownMenuItem
                 onClick={() => router.push("/company-setup")}

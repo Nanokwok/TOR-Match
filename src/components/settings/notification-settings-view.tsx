@@ -100,14 +100,14 @@ export function NotificationSettingsView({
       <div className="space-y-4">
         <Link
           href="/settings"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-neutral-950"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
           Back to Settings
         </Link>
 
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold text-neutral-950">
+          <h1 className="text-2xl font-semibold text-foreground">
             Notification Settings
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -134,9 +134,9 @@ export function NotificationSettingsView({
         />
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-border bg-white">
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="text-base font-semibold text-neutral-950">
+          <h2 className="text-base font-semibold text-foreground">
             Notification Event Matrix
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export function NotificationSettingsView({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
-              <tr className="border-b border-border bg-slate-50/80 text-left text-xs tracking-wide text-muted-foreground uppercase">
+              <tr className="border-b border-border bg-muted/80 text-left text-xs tracking-wide text-muted-foreground uppercase">
                 <th className="px-5 py-3 font-medium">Event Category</th>
                 <th className="w-24 px-3 py-3 text-center font-medium">In-App</th>
                 <th className="w-24 px-3 py-3 text-center font-medium">Email</th>
@@ -162,7 +162,7 @@ export function NotificationSettingsView({
                     className="border-b border-border last:border-b-0"
                   >
                     <td className="px-5 py-3.5">
-                      <div className="font-medium text-neutral-950">
+                      <div className="font-medium text-foreground">
                         {event.label}
                       </div>
                       {event.description ? (
@@ -205,7 +205,7 @@ export function NotificationSettingsView({
 
       <section className="space-y-3">
         <div>
-          <h2 className="text-base font-semibold text-neutral-950">
+          <h2 className="text-base font-semibold text-foreground">
             Email Delivery Frequency & Digests
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ export function NotificationSettingsView({
         </div>
       </section>
 
-      <footer className="sticky bottom-0 -mx-6 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[#F7F7F8]/95 px-6 py-4 backdrop-blur">
+      <footer className="sticky bottom-0 -mx-6 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
         <p className="text-sm text-muted-foreground">
           {statusMessage ??
             (isDirty ? "You have unsaved changes." : "All changes saved.")}
@@ -372,7 +372,7 @@ export function NotificationSettingsView({
           </Button>
           <Button
             type="button"
-            className="bg-[#0088C9] text-white hover:bg-[#007ab4]"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
@@ -398,20 +398,20 @@ function MasterSwitchCard({
   onCheckedChange: (checked: boolean) => void
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-white p-4">
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-card p-4">
       <div className="min-w-0 space-y-1">
         <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-md bg-[#EBF8FF] text-[#0088C9]">
+          <span className="flex size-7 items-center justify-center rounded-md bg-primary/10 text-primary">
             {icon}
           </span>
-          <h2 className="text-sm font-semibold text-neutral-950">{title}</h2>
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         </div>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <Switch
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="data-checked:bg-[#0088C9]"
+        className="data-checked:bg-primary"
         aria-label={title}
       />
     </div>
@@ -436,20 +436,20 @@ function DigestCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-white p-4",
+        "rounded-xl border border-border bg-card p-4",
         disabled && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 space-y-1">
-          <h3 className="text-sm font-semibold text-neutral-950">{title}</h3>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         <Switch
           checked={enabled}
           disabled={disabled}
           onCheckedChange={onEnabledChange}
-          className="data-checked:bg-[#0088C9]"
+          className="data-checked:bg-primary"
           aria-label={title}
         />
       </div>

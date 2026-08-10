@@ -60,18 +60,18 @@ export function LandingFeatures() {
         {features.map((feature) => (
           <Card
             key={feature.title}
-            className="border-border/80 bg-white/90 shadow-none ring-1 ring-black/5 backdrop-blur-sm"
+            className="border-border/80 bg-card/90 shadow-none ring-1 ring-foreground/5 backdrop-blur-sm"
           >
             <CardHeader className="flex flex-row items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-[4px] bg-[#EBF8FF]">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[4px] bg-primary/10">
                 <feature.icon
-                  className="size-5 text-[#0088C9]"
+                  className="size-5 text-primary"
                   strokeWidth={1.75}
                   aria-hidden
                 />
               </div>
               <div className="min-w-0 flex-1 space-y-1.5">
-                <CardTitle className="text-base font-semibold text-neutral-950">
+                <CardTitle className="text-base font-semibold text-foreground">
                   {feature.title}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed text-muted-foreground">

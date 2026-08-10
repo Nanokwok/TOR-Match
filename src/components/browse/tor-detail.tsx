@@ -35,7 +35,7 @@ type TorDetailProps = {
 export function TorDetail({ tor }: TorDetailProps) {
   if (!tor) {
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-white p-8 text-sm text-muted-foreground">
+      <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">
         Select a TOR to view details.
       </div>
     );
@@ -54,13 +54,13 @@ function TorDetailContent({ tor }: { tor: Tor }) {
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-white">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="space-y-5 border-b border-border p-5 md:p-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {tor.eligible ? (
-                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-950">
                   Eligible
                 </Badge>
               ) : (
@@ -72,7 +72,7 @@ function TorDetailContent({ tor }: { tor: Tor }) {
             </div>
             <AnnouncementNoCopy announcementNo={tor.announcementNo} />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-neutral-950 md:text-2xl">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             {tor.title}
           </h2>
         </div>
@@ -109,7 +109,7 @@ function TorDetailContent({ tor }: { tor: Tor }) {
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
-            className="h-10 flex-1 bg-[#0088C9] text-white hover:bg-[#007ab4]"
+            className="h-10 flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() =>
               browseActions.viewOriginalSource(tor.id, tor.sourceUrl)
             }
@@ -147,21 +147,21 @@ function TorDetailContent({ tor }: { tor: Tor }) {
           >
             <TabsTrigger
               value="summary"
-              className="rounded-none px-0 py-3 data-active:text-[#0088C9] group-data-[variant=line]/tabs-list:data-active:after:bg-[#0088C9]"
+              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <ListChecks data-icon="inline-start" />
               Summary & Key Deliverables
             </TabsTrigger>
             <TabsTrigger
               value="qualification"
-              className="rounded-none px-0 py-3 data-active:text-[#0088C9] group-data-[variant=line]/tabs-list:data-active:after:bg-[#0088C9]"
+              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <FileCheck2 data-icon="inline-start" />
               Qualification Check
             </TabsTrigger>
             <TabsTrigger
               value="financials"
-              className="rounded-none px-0 py-3 data-active:text-[#0088C9] group-data-[variant=line]/tabs-list:data-active:after:bg-[#0088C9]"
+              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <CircleDollarSign data-icon="inline-start" />
               Financials
@@ -172,7 +172,7 @@ function TorDetailContent({ tor }: { tor: Tor }) {
         <div className="min-h-0 flex-1 overflow-y-auto p-5 md:p-6">
           <TabsContent value="summary" className="mt-0 space-y-6">
             <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-neutral-950">
+              <h3 className="text-sm font-semibold text-foreground">
                 Summary
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -181,7 +181,7 @@ function TorDetailContent({ tor }: { tor: Tor }) {
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold text-neutral-950">
+              <h3 className="text-sm font-semibold text-foreground">
                 Key Deliverables
               </h3>
               <ol className="space-y-2">
@@ -190,7 +190,7 @@ function TorDetailContent({ tor }: { tor: Tor }) {
                     key={item}
                     className="flex gap-3 text-sm text-muted-foreground"
                   >
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#EBF8FF] text-xs font-medium text-[#0088C9]">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                       {index + 1}
                     </span>
                     <span>{item}</span>
@@ -252,7 +252,7 @@ function AnnouncementNoCopy({ announcementNo }: { announcementNo: string }) {
       type="button"
       onClick={handleCopy}
       title="Click to copy announcement number"
-      className="group inline-flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-neutral-950"
+      className="group inline-flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
     >
       <span>No: {announcementNo}</span>
       <Copy className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
@@ -277,7 +277,7 @@ function MetaItem({
       </div>
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-neutral-950">{value}</p>
+        <p className="text-sm font-medium text-foreground">{value}</p>
       </div>
     </div>
   );

@@ -107,7 +107,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[min(420px,calc(100vw-1.5rem))] gap-0 overflow-hidden p-0 text-neutral-950"
+        className="w-[min(420px,calc(100vw-1.5rem))] gap-0 overflow-hidden p-0 text-foreground"
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -160,7 +160,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="h-10 flex-none rounded-none px-3 text-xs after:bg-[#0088C9] data-active:text-[#0088C9]"
+                  className="h-10 flex-none rounded-none px-3 text-xs after:bg-primary data-active:text-primary"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -184,10 +184,10 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               </div>
             ) : (
               <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-2 px-6 text-center">
-                <span className="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <Inbox className="size-5" />
                 </span>
-                <p className="text-sm font-medium text-neutral-950">
+                <p className="text-sm font-medium text-foreground">
                   No notifications found
                 </p>
                 <p className="text-xs text-muted-foreground">

@@ -28,7 +28,7 @@ const CATEGORY_STYLES: Record<
   },
   system: {
     icon: Bell,
-    className: "text-slate-600",
+    className: "text-muted-foreground",
   },
 };
 
@@ -58,7 +58,7 @@ export function NotificationCard({
       type="button"
       onClick={handleActivate}
       className={cn(
-        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-100/60",
+        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60",
         !notification.isRead && "bg-primary/5",
       )}
     >
@@ -79,7 +79,7 @@ export function NotificationCard({
 
       <span className="min-w-0 flex-1 space-y-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-neutral-950">
+          <span className="text-sm font-semibold text-foreground">
             {notification.title}
           </span>
           {notification.matchScore != null ? (
@@ -96,7 +96,7 @@ export function NotificationCard({
         <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{formatRelativeTime(notification.createdAt)}</span>
           {notification.link ? (
-            <span className="font-medium text-[#0088C9]">{actionLabel}</span>
+            <span className="font-medium text-primary">{actionLabel}</span>
           ) : null}
         </span>
       </span>

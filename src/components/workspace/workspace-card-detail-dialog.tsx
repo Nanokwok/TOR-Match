@@ -163,12 +163,12 @@ function WorkspaceCardDetailBody({
   return (
     <DialogContent
       showCloseButton={false}
-      className="max-h-[90vh] w-[calc(100%-2rem)] max-w-4xl overflow-hidden rounded-2xl border border-border bg-white p-0 sm:max-w-4xl"
+      className="max-h-[90vh] w-[calc(100%-2rem)] max-w-4xl overflow-hidden rounded-2xl border border-border bg-card p-0 sm:max-w-4xl"
     >
       <div className="border-b border-border px-6 pb-0 pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-2 pr-2">
-            <DialogTitle className="text-lg font-semibold leading-snug text-neutral-950">
+            <DialogTitle className="text-lg font-semibold leading-snug text-foreground">
               {draft.title}
             </DialogTitle>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -180,11 +180,11 @@ function WorkspaceCardDetailBody({
           <div className="flex shrink-0 items-start gap-4">
             <div className="hidden space-y-1 text-right text-xs text-muted-foreground sm:block">
               <p className="flex items-center justify-end gap-1.5">
-                <Banknote className="size-3.5 text-[#0088C9]" />
+                <Banknote className="size-3.5 text-primary" />
                 {formatThb(draft.budgetBaht)}
               </p>
               <p className="flex items-center justify-end gap-1.5">
-                <Clock3 className="size-3.5 text-[#0088C9]" />
+                <Clock3 className="size-3.5 text-primary" />
                 {formatDaysLeft(draft.deadline)}
               </p>
             </div>
@@ -202,11 +202,11 @@ function WorkspaceCardDetailBody({
 
         <div className="mt-4 space-y-1 text-xs text-muted-foreground sm:hidden">
           <p className="flex items-center gap-1.5">
-            <Banknote className="size-3.5 text-[#0088C9]" />
+            <Banknote className="size-3.5 text-primary" />
             {formatThb(draft.budgetBaht)}
           </p>
           <p className="flex items-center gap-1.5">
-            <Clock3 className="size-3.5 text-[#0088C9]" />
+            <Clock3 className="size-3.5 text-primary" />
             {formatDaysLeft(draft.deadline)}
           </p>
         </div>
@@ -218,14 +218,14 @@ function WorkspaceCardDetailBody({
           >
             <TabsTrigger
               value="details"
-              className="h-10 rounded-none px-0 pb-3 after:bg-[#0088C9] data-active:text-[#0088C9]"
+              className="h-10 rounded-none px-0 pb-3 after:bg-primary data-active:text-primary"
             >
               <FileText className="size-4" />
               Details
             </TabsTrigger>
             <TabsTrigger
               value="checklist"
-              className="h-10 rounded-none px-0 pb-3 after:bg-[#0088C9] data-active:text-[#0088C9]"
+              className="h-10 rounded-none px-0 pb-3 after:bg-primary data-active:text-primary"
             >
               <ListChecks className="size-4" />
               Internal Task Checklist
@@ -292,12 +292,12 @@ function WorkspaceCardDetailBody({
                   <Badge
                     key={member.id}
                     variant="secondary"
-                    className="h-8 gap-1 rounded-lg bg-[#F3F4F6] px-2.5 text-sm font-normal text-neutral-800 hover:bg-[#F3F4F6]"
+                    className="h-8 gap-1 rounded-lg bg-muted px-2.5 text-sm font-normal text-foreground hover:bg-muted"
                   >
                     {member.name}
                     <button
                       type="button"
-                      className="rounded-sm p-0.5 text-muted-foreground hover:text-neutral-950"
+                      className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
                       onClick={() => removeAssignee(member.id)}
                       aria-label={`Remove ${member.name}`}
                     >
@@ -318,7 +318,7 @@ function WorkspaceCardDetailBody({
                 </Button>
 
                 {assigneeMenuOpen ? (
-                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-border bg-white p-3 shadow-lg">
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-border bg-card p-3 shadow-lg">
                     <div className="relative">
                       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -340,7 +340,7 @@ function WorkspaceCardDetailBody({
                             type="button"
                             className={cn(
                               "flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm hover:bg-muted",
-                              selected && "text-[#0088C9]",
+                              selected && "text-primary",
                             )}
                             onClick={() => toggleAssignee(member.id)}
                           >
@@ -406,7 +406,7 @@ function WorkspaceCardDetailBody({
               {checklist.map((item) => (
                 <label
                   key={item.id}
-                  className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-neutral-800"
+                  className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-foreground"
                 >
                   <Checkbox
                     checked={item.completed}
@@ -428,7 +428,7 @@ function WorkspaceCardDetailBody({
 
             <div className="mt-5 flex justify-end border-t border-border pt-4">
               <Button
-                className="bg-[#0088C9] hover:bg-[#0088C9]/90"
+                className="bg-primary hover:bg-primary/90"
                 onClick={() => workspaceActions.seeFullTor(draft.torId)}
               >
                 See full TOR →

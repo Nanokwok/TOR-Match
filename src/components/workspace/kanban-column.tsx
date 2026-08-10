@@ -80,7 +80,7 @@ function DroppableKanbanColumn({
         ref={setNodeRef}
         className={cn(
           "flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2 transition-colors",
-          isOver && "bg-[#E4E4E8]"
+          isOver && "bg-accent"
         )}
       >
         {cards.map((card) => (
@@ -117,18 +117,18 @@ function KanbanColumnShell({
   }
 
   return (
-    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-[#ECECEF] p-3">
+    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-secondary dark:!bg-black/20 p-3">
       <div className="mb-3 flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-neutral-950">{label}</h2>
-          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <h2 className="text-sm font-semibold text-foreground">{label}</h2>
+          <span className="rounded-full bg-card px-2 py-0.5 text-xs font-medium text-muted-foreground">
             {count}
           </span>
         </div>
         <Button
           variant="ghost"
           size="icon-sm"
-          className="size-7 text-muted-foreground hover:text-neutral-950"
+          className="size-7 text-muted-foreground hover:text-foreground"
           aria-label={`Add TOR to ${label}`}
           onClick={handleAdd}
         >
@@ -140,7 +140,7 @@ function KanbanColumnShell({
 
       <Button
         variant="ghost"
-        className="mt-2 w-full justify-start gap-1.5 text-muted-foreground hover:text-neutral-950"
+        className="mt-2 w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground"
         onClick={handleAdd}
       >
         <Plus className="size-4" />

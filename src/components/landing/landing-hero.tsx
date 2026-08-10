@@ -31,17 +31,17 @@ export function LandingHero() {
       />
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
-        <h1 className="max-w-3xl text-4xl leading-[1.2] font-medium tracking-tight text-neutral-950 sm:text-5xl md:text-[3.25rem]">
+        <h1 className="max-w-3xl text-4xl leading-[1.2] font-medium tracking-tight text-foreground sm:text-5xl md:text-[3.25rem]">
           Built for tech agencies to
           <br />
-          <Highlighter action="underline" color="#0A0A0A">
-            <span className="font-script text-5xl text-[#0088C9] sm:text-6xl md:text-7xl">
+          <Highlighter action="underline" color="#0088C9">
+            <span className="font-script text-5xl text-primary sm:text-6xl md:text-7xl">
               Find
             </span>
           </Highlighter>{" "}
           and{" "}
-          <Highlighter action="highlight" color="#87CEFA">
-            <span className="font-script text-5xl text-black sm:text-6xl md:text-7xl">
+          <Highlighter action="highlight" color="rgba(135, 206, 250, 0.5)">
+            <span className="font-script text-5xl text-foreground sm:text-6xl md:text-7xl">
               Match
             </span>
           </Highlighter>
@@ -56,7 +56,7 @@ export function LandingHero() {
 
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
           <PulsatingButton
-            className="h-11 min-w-[220px] bg-[#0088C9] px-6 text-sm font-medium text-white hover:bg-[#007ab4]"
+            className="h-11 min-w-[220px] bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             pulseColor="rgba(0, 136, 201, 0.5)"
             duration="2s"
             distance="4px"
@@ -69,7 +69,7 @@ export function LandingHero() {
             size="lg"
             nativeButton={false}
             render={<Link href="/eligibility" />}
-            className="h-11 min-w-[220px] border-border bg-white text-sm font-medium text-neutral-950 hover:bg-neutral-50"
+            className="h-11 min-w-[220px] border-border bg-card text-sm font-medium text-foreground hover:bg-muted"
           >
             Check Company Eligibility
           </Button>

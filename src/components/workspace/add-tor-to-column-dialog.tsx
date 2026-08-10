@@ -153,11 +153,11 @@ function AddTorToColumnDialogBody({
                       disabled={isAdding}
                       onClick={() => handleAdd(tor)}
                       className={cn(
-                        "flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-slate-50",
-                        alreadyAdded && "bg-slate-50/80"
+                        "flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-muted",
+                        alreadyAdded && "bg-muted/80"
                       )}
                     >
-                      <span className="line-clamp-1 text-sm font-medium text-neutral-950">
+                      <span className="line-clamp-1 text-sm font-medium text-foreground">
                         {tor.title}
                       </span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

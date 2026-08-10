@@ -52,7 +52,7 @@ export function BrowseView({ initialItems, departments }: BrowseViewProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#F7F7F8]">
+    <div className="flex min-h-0 flex-1 flex-col bg-muted">
       <TorFilterBar
         filters={filters}
         departments={departments}
@@ -65,7 +65,7 @@ export function BrowseView({ initialItems, departments }: BrowseViewProps) {
           isPending ? "opacity-70" : ""
         }`}
       >
-        <aside className="min-h-[320px] overflow-y-auto rounded-xl border border-border bg-[#FBFBFC] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
+        <aside className="min-h-[320px] overflow-y-auto rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)]">
           <TorList
             items={items}
             selectedId={selectedId}

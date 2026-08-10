@@ -40,15 +40,15 @@ export function TorList({ items, selectedId, onSelect }: TorListProps) {
               }
             }}
             className={cn(
-              "w-full cursor-pointer rounded-lg border bg-white p-3 text-left transition-colors",
+              "w-full cursor-pointer rounded-lg border bg-card p-3 text-left transition-colors",
               selected
-                ? "border-[#0088C9] bg-[#EBF8FF] ring-1 ring-[#0088C9]/30"
+                ? "border-primary bg-primary/10 ring-1 ring-primary/30"
                 : "border-border hover:bg-muted/40",
             )}
           >
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <h3 className="line-clamp-2 text-sm font-semibold text-neutral-950">
+                <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
                   {tor.title}
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -68,7 +68,7 @@ export function TorList({ items, selectedId, onSelect }: TorListProps) {
                   className={cn(
                     "size-4",
                     tor.bookmarked
-                      ? "fill-[#0088C9] text-[#0088C9]"
+                      ? "fill-primary text-primary"
                       : "text-muted-foreground",
                   )}
                 />
@@ -86,7 +86,7 @@ export function TorList({ items, selectedId, onSelect }: TorListProps) {
                   </span>
                 ))}
               </div>
-              <span className="shrink-0 text-xs font-medium text-neutral-950">
+              <span className="shrink-0 text-xs font-medium text-foreground">
                 {formatBaht(tor.budgetBaht)}
               </span>
             </div>
