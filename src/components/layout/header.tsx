@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Languages } from "lucide-react";
 
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
@@ -43,6 +43,7 @@ export function Header({
   navItems = defaultNavItems,
 }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <header
@@ -117,7 +118,12 @@ export function Header({
                 Setting
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => browseActions.logout()}>
+              <DropdownMenuItem
+                onClick={() => {
+                  browseActions.logout();
+                  router.push("/login");
+                }}
+              >
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

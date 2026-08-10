@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Covered_By_Your_Grace, Geist_Mono, Google_Sans } from "next/font/google";
 
-import { Footer } from "@/components/layout/footer";
-import { Header } from "@/components/layout/header";
-
 import "./globals.css";
 
 const googleSans = Google_Sans({
@@ -34,11 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${googleSans.variable} ${coveredByYourGrace.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
-        <Header />
-        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-        <Footer />
-      </body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

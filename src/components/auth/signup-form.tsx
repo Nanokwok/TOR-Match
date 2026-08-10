@@ -1,0 +1,152 @@
+"use client"
+
+import { useState, useTransition, type FormEvent } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+
+import { AuthShell } from "@/components/auth/auth-shell"
+import { GoogleAuthButton } from "@/components/auth/google-auth-button"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  registerWithEmailAction,
+  registerWithGoogleAction,
+} from "@/actions/auth"
+
+export function SignupForm() {
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    startTransition(async () => {
+      const result = await registerWithEmailAction({ email, password })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.push("/browse")
+    })
+  }
+
+  function handleGoogleRegister() {
+    setError(null)
+    startTransition(async () => {
+      const result = await registerWithGoogleAction()
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      router.push("/browse")
+    })
+  }
+
+  return (
+    <AuthShell>
+      <div className="space-y-8">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight text-[#0088C9]">
+            Sign Up
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Welcome. Let&apos;s make your own account!
+          </p>
+        </div>
+
+        <div className="space-y-5">
+          <GoogleAuthButton
+            label="Register with Google"
+            onClick={handleGoogleRegister}
+          />
+
+          <div className="relative flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-email">Email</Label>
+              <Input
+                id="signup-email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@company.com"
+                className="h-11"
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••"
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                <Input
+                  id="signup-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="••••••••"
+                  className="h-11"
+                />
+              </div>
+            </div>
+
+            {error ? (
+              <p className="text-sm text-destructive">{error}</p>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="h-11 w-full bg-[#0088C9] text-white hover:bg-[#007ab4]"
+            >
+              {isPending ? "Creating account..." : "Register"}
+            </Button>
+          </form>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-[#0088C9] underline-offset-4 hover:underline"
+          >
+            Log in now
+          </Link>
+        </p>
+      </div>
+    </AuthShell>
+  )
+}
