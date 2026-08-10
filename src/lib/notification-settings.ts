@@ -30,14 +30,6 @@ export const NOTIFICATION_EVENTS: NotificationEventDefinition[] = [
     label: "24-Hour Final Call",
   },
   {
-    id: "team-assignment",
-    label: "Team Card Assignment",
-  },
-  {
-    id: "team-comments",
-    label: "Team Comments & Mentions",
-  },
-  {
     id: "system-profile",
     label: "System & Profile Verification",
   },

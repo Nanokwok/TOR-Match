@@ -117,7 +117,7 @@ export function Header({
                 Company Profile
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => router.push("/settings/notifications")}
+                onClick={() => router.push("/settings")}
               >
                 Setting
               </DropdownMenuItem>

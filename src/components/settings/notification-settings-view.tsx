@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useTransition, type ReactNode } from "react"
-import { Bell, Mail } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, Bell, Mail } from "lucide-react"
 
 import { saveNotificationSettingsAction } from "@/actions/notification-settings"
 import { Button } from "@/components/ui/button"
@@ -96,15 +97,25 @@ export function NotificationSettingsView({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold text-neutral-950">
-          Notification Settings
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Control how and when you receive alerts via In-App notifications and
-          Email.
-        </p>
-      </header>
+      <div className="space-y-4">
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-neutral-950"
+        >
+          <ArrowLeft className="size-4" />
+          Back to Settings
+        </Link>
+
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold text-neutral-950">
+            Notification Settings
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Control how and when you receive alerts via In-App notifications and
+            Email.
+          </p>
+        </header>
+      </div>
 
       <section className="grid gap-3 sm:grid-cols-2">
         <MasterSwitchCard
