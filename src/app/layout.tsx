@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Google_Sans } from "next/font/google";
+import { Covered_By_Your_Grace, Geist_Mono, Google_Sans } from "next/font/google";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
@@ -11,6 +11,12 @@ const googleSans = Google_Sans({
   subsets: ["latin", "thai"],
 });
 
+const coveredByYourGrace = Covered_By_Your_Grace({
+  variable: "--font-covered-by-your-grace",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -18,14 +24,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "TOR Match",
-  description: "TOR Match platform",
+  description:
+    "Extract key TOR criteria and automate eligibility matching for BMA government projects.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${googleSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${googleSans.variable} ${coveredByYourGrace.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <Header />
