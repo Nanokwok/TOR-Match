@@ -57,6 +57,9 @@ export function LandingHero() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
           <PulsatingButton
             className="h-11 min-w-[220px] bg-[#0088C9] px-6 text-sm font-medium text-white hover:bg-[#007ab4]"
+            pulseColor="rgba(0, 136, 201, 0.5)"
+            duration="2s"
+            distance="4px"
             onClick={() => router.push("/browse")}
           >
             Start Searching for Free

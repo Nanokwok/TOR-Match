@@ -1,9 +1,11 @@
 "use server";
 
 import {
+  addTorToWorkspace,
   getWorkspaceBoard,
   listWorkspaceAssignees,
   moveWorkspaceCard,
+  searchTorsForWorkspace,
 } from "@/server/services/workspace.service";
 import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace";
 
@@ -21,4 +23,15 @@ export async function moveWorkspaceCardAction(
   toIndex: number,
 ) {
   return moveWorkspaceCard(torId, toColumn, toIndex);
+}
+
+export async function searchTorsForWorkspaceAction(keyword = "") {
+  return searchTorsForWorkspace(keyword);
+}
+
+export async function addTorToWorkspaceAction(
+  torId: string,
+  column: WorkspaceColumnId,
+) {
+  return addTorToWorkspace(torId, column);
 }

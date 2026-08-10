@@ -16,6 +16,7 @@ type KanbanColumnProps = {
   label: string
   cards: WorkspaceCard[]
   onOpenCardDetails?: (torId: string) => void
+  onRequestAddTor?: (columnId: WorkspaceColumnId) => void
   disableDnd?: boolean
 }
 
@@ -24,11 +25,17 @@ export function KanbanColumn({
   label,
   cards,
   onOpenCardDetails,
+  onRequestAddTor,
   disableDnd = false,
 }: KanbanColumnProps) {
   if (disableDnd) {
     return (
-      <KanbanColumnShell id={id} label={label} count={cards.length}>
+      <KanbanColumnShell
+        id={id}
+        label={label}
+        count={cards.length}
+        onRequestAddTor={onRequestAddTor}
+      >
         <div className="flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2">
           {cards.map((card) => (
             <WorkspaceTorCard
@@ -48,6 +55,7 @@ export function KanbanColumn({
       label={label}
       cards={cards}
       onOpenCardDetails={onOpenCardDetails}
+      onRequestAddTor={onRequestAddTor}
     />
   )
 }
@@ -57,11 +65,17 @@ function DroppableKanbanColumn({
   label,
   cards,
   onOpenCardDetails,
+  onRequestAddTor,
 }: Omit<KanbanColumnProps, "disableDnd">) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
-    <KanbanColumnShell id={id} label={label} count={cards.length}>
+    <KanbanColumnShell
+      id={id}
+      label={label}
+      count={cards.length}
+      onRequestAddTor={onRequestAddTor}
+    >
       <div
         ref={setNodeRef}
         className={cn(
@@ -86,12 +100,22 @@ function KanbanColumnShell({
   label,
   count,
   children,
+  onRequestAddTor,
 }: {
   id: WorkspaceColumnId
   label: string
   count: number
   children: ReactNode
+  onRequestAddTor?: (columnId: WorkspaceColumnId) => void
 }) {
+  function handleAdd() {
+    if (onRequestAddTor) {
+      onRequestAddTor(id)
+      return
+    }
+    workspaceActions.addCardToColumn(id)
+  }
+
   return (
     <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-[#ECECEF] p-3">
       <div className="mb-3 flex items-center justify-between gap-2 px-1">
@@ -105,8 +129,8 @@ function KanbanColumnShell({
           variant="ghost"
           size="icon-sm"
           className="size-7 text-muted-foreground hover:text-neutral-950"
-          aria-label={`Add to ${label}`}
-          onClick={() => workspaceActions.addToColumnHeader(id)}
+          aria-label={`Add TOR to ${label}`}
+          onClick={handleAdd}
         >
           <Plus className="size-4" />
         </Button>
@@ -117,7 +141,7 @@ function KanbanColumnShell({
       <Button
         variant="ghost"
         className="mt-2 w-full justify-start gap-1.5 text-muted-foreground hover:text-neutral-950"
-        onClick={() => workspaceActions.addCardToColumn(id)}
+        onClick={handleAdd}
       >
         <Plus className="size-4" />
         New

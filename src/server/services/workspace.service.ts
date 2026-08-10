@@ -3,18 +3,38 @@ import {
   getMockWorkspaceCards,
   setMockWorkspaceCards,
 } from "@/server/db/mock/workspace"
+import { getMockTors } from "@/server/db/mock/tors"
 import {
   cardsToColumnItems,
   cardsToLookup,
   columnItemsToCards,
   moveCardInColumnItems,
 } from "@/lib/workspace-board"
+import type { Tor } from "@/types/tor"
 import type {
   WorkspaceBoardResult,
+  WorkspaceCard,
   WorkspaceColumnId,
   WorkspaceQuery,
 } from "@/types/workspace"
 import { WORKSPACE_COLUMNS } from "@/types/workspace"
+
+function torToWorkspaceCard(
+  tor: Tor,
+  column: WorkspaceColumnId
+): WorkspaceCard {
+  return {
+    torId: tor.id,
+    announcementNo: tor.announcementNo,
+    title: tor.title,
+    department: tor.department,
+    budgetBaht: tor.budgetBaht,
+    deadline: tor.deadline,
+    priority: "MEDIUM",
+    column,
+    assigneeIds: [],
+  }
+}
 
 function matchesWorkspaceQuery(
   card: ReturnType<typeof getMockWorkspaceCards>[number],
@@ -102,6 +122,67 @@ export async function moveWorkspaceCard(
   const nextCards = columnItemsToCards(items, lookup)
   setMockWorkspaceCards(nextCards)
   return nextCards
+}
+
+export async function searchTorsForWorkspace(keyword = "") {
+  const q = keyword.trim().toLowerCase()
+  const tors = getMockTors()
+
+  if (!q) return tors.slice(0, 12)
+
+  return tors
+    .filter((tor) => {
+      return (
+        tor.id.toLowerCase().includes(q) ||
+        tor.announcementNo.toLowerCase().includes(q) ||
+        tor.title.toLowerCase().includes(q)
+      )
+    })
+    .slice(0, 20)
+}
+
+export async function addTorToWorkspace(
+  torId: string,
+  column: WorkspaceColumnId
+): Promise<
+  | { ok: true; card: WorkspaceCard; cards: WorkspaceCard[] }
+  | { ok: false; error: string }
+> {
+  const tor = getMockTors().find(
+    (item) =>
+      item.id === torId ||
+      item.announcementNo.toLowerCase() === torId.trim().toLowerCase()
+  )
+
+  if (!tor) {
+    return { ok: false, error: "TOR not found" }
+  }
+
+  const cards = getMockWorkspaceCards()
+  const existing = cards.find((card) => card.torId === tor.id)
+
+  if (existing) {
+    if (existing.column === column) {
+      return { ok: false, error: "This TOR is already in this column" }
+    }
+
+    const lookup = cardsToLookup(cards)
+    const items = moveCardInColumnItems(
+      cardsToColumnItems(cards),
+      existing.torId,
+      column,
+      0
+    )
+    const nextCards = columnItemsToCards(items, lookup)
+    setMockWorkspaceCards(nextCards)
+    const moved = nextCards.find((card) => card.torId === tor.id)!
+    return { ok: true, card: moved, cards: nextCards }
+  }
+
+  const card = torToWorkspaceCard(tor, column)
+  const nextCards = [card, ...cards]
+  setMockWorkspaceCards(nextCards)
+  return { ok: true, card, cards: nextCards }
 }
 
 export { WORKSPACE_COLUMNS }

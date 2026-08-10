@@ -81,6 +81,7 @@ type WorkspaceKanbanBoardProps = {
     toIndex: number
   ) => void
   onOpenCardDetails?: (torId: string) => void
+  onRequestAddTor?: (columnId: WorkspaceColumnId) => void
 }
 
 export function WorkspaceKanbanBoard({
@@ -89,6 +90,7 @@ export function WorkspaceKanbanBoard({
   onCardsChange,
   onMoveCard,
   onOpenCardDetails,
+  onRequestAddTor,
 }: WorkspaceKanbanBoardProps) {
   const cardsById = useMemo(() => cardsToLookup(cards), [cards])
   const derivedColumnItems = useMemo(() => cardsToColumnItems(cards), [cards])
@@ -200,6 +202,7 @@ export function WorkspaceKanbanBoard({
               label={column.label}
               cards={columnCards}
               onOpenCardDetails={onOpenCardDetails}
+              onRequestAddTor={onRequestAddTor}
               disableDnd
             />
           )
@@ -217,6 +220,7 @@ export function WorkspaceKanbanBoard({
               label={column.label}
               cards={columnCards}
               onOpenCardDetails={onOpenCardDetails}
+              onRequestAddTor={onRequestAddTor}
             />
           </SortableContext>
         )

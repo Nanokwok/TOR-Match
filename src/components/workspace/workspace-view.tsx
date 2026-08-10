@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 
 import { moveWorkspaceCardAction } from "@/actions/workspace"
+import { AddTorToColumnDialog } from "@/components/workspace/add-tor-to-column-dialog"
 import { WorkspaceCardDetailDialog } from "@/components/workspace/workspace-card-detail-dialog"
 import { WorkspaceKanbanBoard } from "@/components/workspace/workspace-kanban-board"
 import {
@@ -10,7 +11,11 @@ import {
   type WorkspaceFiltersState,
 } from "@/components/workspace/workspace-filter-bar"
 import { filterWorkspaceCards, flattenBoardColumns } from "@/lib/workspace-board"
-import type { WorkspaceBoardResult, WorkspaceColumnId } from "@/types/workspace"
+import type {
+  WorkspaceBoardResult,
+  WorkspaceCard,
+  WorkspaceColumnId,
+} from "@/types/workspace"
 
 const initialFilters: WorkspaceFiltersState = {
   keyword: "",
@@ -29,6 +34,9 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
     flattenBoardColumns(initialBoard.columns)
   )
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [addColumnId, setAddColumnId] = useState<WorkspaceColumnId | null>(
+    null
+  )
 
   const filteredCards = useMemo(
     () =>
@@ -53,10 +61,14 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
     void moveWorkspaceCardAction(torId, toColumn, toIndex)
   }
 
-  function handleUpdateCard(updated: (typeof allCards)[number]) {
+  function handleUpdateCard(updated: WorkspaceCard) {
     setAllCards((previous) =>
       previous.map((card) => (card.torId === updated.torId ? updated : card))
     )
+  }
+
+  function handleTorAdded(_card: WorkspaceCard, cards: WorkspaceCard[]) {
+    setAllCards(cards)
   }
 
   return (
@@ -76,6 +88,7 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
           onCardsChange={setAllCards}
           onMoveCard={handleMoveCard}
           onOpenCardDetails={setSelectedCardId}
+          onRequestAddTor={setAddColumnId}
         />
       </div>
 
@@ -87,6 +100,16 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
         card={selectedCard}
         members={initialBoard.members}
         onUpdateCard={handleUpdateCard}
+      />
+
+      <AddTorToColumnDialog
+        open={addColumnId !== null}
+        columnId={addColumnId}
+        existingTorIds={allCards.map((card) => card.torId)}
+        onOpenChange={(open) => {
+          if (!open) setAddColumnId(null)
+        }}
+        onAdded={handleTorAdded}
       />
     </div>
   )
