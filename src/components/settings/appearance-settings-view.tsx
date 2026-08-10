@@ -5,7 +5,6 @@ import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 
 import { useTheme } from "@/components/theme/theme-provider"
-import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -18,7 +17,7 @@ import { Switch } from "@/components/ui/switch"
 import type { ThemePreference } from "@/lib/theme"
 
 export function AppearanceSettingsView() {
-  const { theme, resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [showDeadlines, setShowDeadlines] = useState(true)
 
   return (
