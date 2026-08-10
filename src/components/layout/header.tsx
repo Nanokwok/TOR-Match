@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { browseActions } from "@/lib/browse-actions";
 import { cn } from "@/lib/utils";
 
 export type HeaderNavItem = {
@@ -83,6 +84,7 @@ export function Header({
             size="icon-sm"
             className="relative text-white hover:bg-white/10 hover:text-white"
             aria-label="Notifications"
+            onClick={() => browseActions.openNotifications()}
           >
             <Bell className="size-4" />
             {hasNotifications ? (
@@ -95,6 +97,7 @@ export function Header({
             size="icon-sm"
             className="text-white hover:bg-white/10 hover:text-white"
             aria-label="Change language"
+            onClick={() => browseActions.changeLanguage()}
           >
             <Languages className="size-4" />
           </Button>
@@ -119,10 +122,16 @@ export function Header({
               align="end"
               className="min-w-44 bg-white text-neutral-950 shadow-lg ring-1 ring-black/10"
             >
-              <DropdownMenuItem>Company Profile</DropdownMenuItem>
-              <DropdownMenuItem>Setting</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => browseActions.openCompanyProfile()}>
+                Company Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => browseActions.openSettings()}>
+                Setting
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => browseActions.logout()}>
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
