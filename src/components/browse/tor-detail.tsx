@@ -16,6 +16,7 @@ import {
   Share2,
 } from "lucide-react";
 
+import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
 import { TorFinancialsPanel } from "@/components/browse/tor-financials-panel";
 import { TorQualificationPanel } from "@/components/browse/tor-qualification-panel";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,12 @@ export function TorDetail({ tor }: TorDetailProps) {
       </div>
     );
   }
+
+  return <TorDetailContent tor={tor} />;
+}
+
+function TorDetailContent({ tor }: { tor: Tor }) {
+  const [shareOpen, setShareOpen] = useState(false);
 
   // TODO: replace getMockCompanyProfile() with a real company-profile fetch
   const qualificationCheck = buildQualificationCheck(
@@ -121,7 +128,7 @@ export function TorDetail({ tor }: TorDetailProps) {
           <Button
             variant="outline"
             className="h-10 sm:min-w-28"
-            onClick={() => browseActions.shareTor(tor.id)}
+            onClick={() => setShareOpen(true)}
           >
             <Share2 data-icon="inline-start" />
             Share
@@ -213,6 +220,12 @@ export function TorDetail({ tor }: TorDetailProps) {
           </TabsContent>
         </div>
       </Tabs>
+
+      <ShareTorDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        tor={tor}
+      />
     </div>
   );
 }
