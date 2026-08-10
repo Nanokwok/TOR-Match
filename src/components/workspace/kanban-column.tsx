@@ -1,9 +1,11 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { Plus } from "lucide-react"
 
 import { SortableWorkspaceTorCard } from "@/components/workspace/sortable-workspace-tor-card"
+import { WorkspaceTorCard } from "@/components/workspace/workspace-tor-card"
 import { Button } from "@/components/ui/button"
 import { workspaceActions } from "@/lib/workspace-actions"
 import { cn } from "@/lib/utils"
@@ -14,6 +16,7 @@ type KanbanColumnProps = {
   label: string
   cards: WorkspaceCard[]
   onOpenCardDetails?: (torId: string) => void
+  disableDnd?: boolean
 }
 
 export function KanbanColumn({
@@ -21,29 +24,44 @@ export function KanbanColumn({
   label,
   cards,
   onOpenCardDetails,
+  disableDnd = false,
 }: KanbanColumnProps) {
+  if (disableDnd) {
+    return (
+      <KanbanColumnShell id={id} label={label} count={cards.length}>
+        <div className="flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2">
+          {cards.map((card) => (
+            <WorkspaceTorCard
+              key={card.torId}
+              card={card}
+              onOpenDetails={onOpenCardDetails}
+            />
+          ))}
+        </div>
+      </KanbanColumnShell>
+    )
+  }
+
+  return (
+    <DroppableKanbanColumn
+      id={id}
+      label={label}
+      cards={cards}
+      onOpenCardDetails={onOpenCardDetails}
+    />
+  )
+}
+
+function DroppableKanbanColumn({
+  id,
+  label,
+  cards,
+  onOpenCardDetails,
+}: Omit<KanbanColumnProps, "disableDnd">) {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
-    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-[#ECECEF] p-3">
-      <div className="mb-3 flex items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-neutral-950">{label}</h2>
-          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {cards.length}
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="size-7 text-muted-foreground hover:text-neutral-950"
-          aria-label={`Add to ${label}`}
-          onClick={() => workspaceActions.addToColumnHeader(id)}
-        >
-          <Plus className="size-4" />
-        </Button>
-      </div>
-
+    <KanbanColumnShell id={id} label={label} count={cards.length}>
       <div
         ref={setNodeRef}
         className={cn(
@@ -59,6 +77,42 @@ export function KanbanColumn({
           />
         ))}
       </div>
+    </KanbanColumnShell>
+  )
+}
+
+function KanbanColumnShell({
+  id,
+  label,
+  count,
+  children,
+}: {
+  id: WorkspaceColumnId
+  label: string
+  count: number
+  children: ReactNode
+}) {
+  return (
+    <section className="flex min-h-[520px] w-[24.25%] shrink-0 flex-col rounded-xl bg-[#ECECEF] p-3">
+      <div className="mb-3 flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-neutral-950">{label}</h2>
+          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {count}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="size-7 text-muted-foreground hover:text-neutral-950"
+          aria-label={`Add to ${label}`}
+          onClick={() => workspaceActions.addToColumnHeader(id)}
+        >
+          <Plus className="size-4" />
+        </Button>
+      </div>
+
+      {children}
 
       <Button
         variant="ghost"

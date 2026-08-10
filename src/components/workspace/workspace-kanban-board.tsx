@@ -18,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useSyncExternalStore } from "react"
 
 import { KanbanColumn } from "@/components/workspace/kanban-column"
 import { WorkspaceTorCard } from "@/components/workspace/workspace-tor-card"
@@ -32,6 +32,18 @@ import {
 } from "@/lib/workspace-board"
 import { WORKSPACE_COLUMNS } from "@/types/workspace"
 import type { WorkspaceCard, WorkspaceColumnId } from "@/types/workspace"
+
+function subscribe() {
+  return () => undefined
+}
+
+function getClientSnapshot() {
+  return true
+}
+
+function getServerSnapshot() {
+  return false
+}
 
 function computeDragEndItems(
   currentItems: ColumnItems,
@@ -84,6 +96,11 @@ export function WorkspaceKanbanBoard({
     null
   )
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const dndReady = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot
+  )
   const columnItems = dragColumnItems ?? derivedColumnItems
 
   const sensors = useSensors(
@@ -167,8 +184,53 @@ export function WorkspaceKanbanBoard({
     setDragColumnItems(null)
   }
 
+  const board = (
+    <div className="flex w-full gap-3">
+      {WORKSPACE_COLUMNS.map((column) => {
+        const cardIds = columnItems[column.id]
+        const columnCards = cardIds
+          .map((torId) => cardsById[torId])
+          .filter(Boolean)
+
+        if (!dndReady) {
+          return (
+            <KanbanColumn
+              key={column.id}
+              id={column.id}
+              label={column.label}
+              cards={columnCards}
+              onOpenCardDetails={onOpenCardDetails}
+              disableDnd
+            />
+          )
+        }
+
+        return (
+          <SortableContext
+            key={column.id}
+            id={column.id}
+            items={cardIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <KanbanColumn
+              id={column.id}
+              label={column.label}
+              cards={columnCards}
+              onOpenCardDetails={onOpenCardDetails}
+            />
+          </SortableContext>
+        )
+      })}
+    </div>
+  )
+
+  if (!dndReady) {
+    return board
+  }
+
   return (
     <DndContext
+      id="workspace-kanban"
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
@@ -176,30 +238,7 @@ export function WorkspaceKanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex w-full gap-3">
-        {WORKSPACE_COLUMNS.map((column) => {
-          const cardIds = columnItems[column.id]
-          const columnCards = cardIds
-            .map((torId) => cardsById[torId])
-            .filter(Boolean)
-
-          return (
-            <SortableContext
-              key={column.id}
-              id={column.id}
-              items={cardIds}
-              strategy={verticalListSortingStrategy}
-            >
-              <KanbanColumn
-                id={column.id}
-                label={column.label}
-                cards={columnCards}
-                onOpenCardDetails={onOpenCardDetails}
-              />
-            </SortableContext>
-          )
-        })}
-      </div>
+      {board}
 
       <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
         {activeCard ? (

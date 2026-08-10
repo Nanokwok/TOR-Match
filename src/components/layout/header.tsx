@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, Languages } from "lucide-react";
+import { ChevronDown, Languages } from "lucide-react";
 
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +26,6 @@ type HeaderProps = {
   className?: string;
   companyName?: string;
   navItems?: HeaderNavItem[];
-  hasNotifications?: boolean;
 };
 
 const defaultNavItems: HeaderNavItem[] = [
@@ -41,7 +41,6 @@ export function Header({
   className,
   companyName = "Company Name",
   navItems = defaultNavItems,
-  hasNotifications = true,
 }: HeaderProps) {
   const pathname = usePathname();
 
@@ -79,18 +78,7 @@ export function Header({
         </nav>
 
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="relative text-white hover:bg-white/10 hover:text-white"
-            aria-label="Notifications"
-            onClick={() => browseActions.openNotifications()}
-          >
-            <Bell className="size-4" />
-            {hasNotifications ? (
-              <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-white" />
-            ) : null}
-          </Button>
+          <NotificationCenter />
 
           <Button
             variant="ghost"
