@@ -32,3 +32,29 @@ export function formatTorDeadline(isoDate: string) {
 
   return `${datePart} — ${timePart} PM`
 }
+
+export function getDaysUntilDeadline(deadline: string) {
+  const now = new Date()
+  const end = new Date(deadline)
+  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+export function formatShortDate(isoDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  }).format(new Date(isoDate))
+}
+
+export function formatDaysLeft(deadline: string) {
+  const days = getDaysUntilDeadline(deadline)
+  const label =
+    days <= 0
+      ? "Due today"
+      : days === 1
+        ? "1 Day Left"
+        : `${days} Days Left`
+  return `${label} (${formatShortDate(deadline)})`
+}

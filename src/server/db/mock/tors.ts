@@ -1,4 +1,4 @@
-import type { CompanyProfile, Tor } from "@/types/tor"
+import type { CompanyProfile, Tor } from "@/types/tor";
 
 function milestonesForBudget(totalBudgetBaht: number) {
   const schedule = [
@@ -34,17 +34,17 @@ function milestonesForBudget(totalBudgetBaht: number) {
       percent: 10,
       deliverable: "Project Handover and Documentation Completion",
     },
-  ] as const
+  ] as const;
 
   return schedule.map((item) => ({
     ...item,
     amountBaht: Math.round((totalBudgetBaht * item.percent) / 100),
-  }))
+  }));
 }
 
 function defaultQualifications(
   minCapital: number,
-  pastContractMin: number
+  pastContractMin: number,
 ): Tor["qualificationRequirements"] {
   return [
     {
@@ -67,7 +67,7 @@ function defaultQualifications(
       requirement: "Deal-Breaker Clauses",
       torCriteria: "Must be registered e-GP Vendor",
     },
-  ]
+  ];
 }
 
 /**
@@ -279,7 +279,7 @@ export function getMockTors(): Tor[] {
       },
       qualificationRequirements: defaultQualifications(2_500_000, 2_000_000),
     },
-  ]
+  ];
 }
 
 /**
@@ -312,5 +312,5 @@ export function getMockCompanyProfile(): CompanyProfile | null {
         passed: true,
       },
     ],
-  }
+  };
 }

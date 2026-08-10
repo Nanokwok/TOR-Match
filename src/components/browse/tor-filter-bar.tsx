@@ -1,34 +1,29 @@
-"use client"
+"use client";
 
-import { Filter, Search } from "lucide-react"
+import { Filter, Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { browseActions } from "@/lib/browse-actions"
-import type { TorListQuery, TorProcurementStatus } from "@/types/tor"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LabeledFilterSelect } from "@/components/ui/labeled-filter-select";
+import { SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { browseActions } from "@/lib/browse-actions";
+import type { TorListQuery, TorProcurementStatus } from "@/types/tor";
 
 export type BrowseFiltersState = {
-  keyword: string
-  eligibleOnly: boolean
-  budgetRange: string
-  status: TorProcurementStatus | "all"
-  department: string
-}
+  keyword: string;
+  eligibleOnly: boolean;
+  budgetRange: string;
+  status: TorProcurementStatus | "all";
+  department: string;
+};
 
 type TorFilterBarProps = {
-  filters: BrowseFiltersState
-  departments: string[]
-  onChange: (next: BrowseFiltersState) => void
-  onSearch: () => void
-}
+  filters: BrowseFiltersState;
+  departments: string[];
+  onChange: (next: BrowseFiltersState) => void;
+  onSearch: () => void;
+};
 
 export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
   return {
@@ -37,7 +32,7 @@ export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
     budgetRange: filters.budgetRange,
     status: filters.status,
     department: filters.department,
-  }
+  };
 }
 
 export function TorFilterBar({
@@ -57,7 +52,7 @@ export function TorFilterBar({
               onChange({ ...filters, keyword: event.target.value })
             }
             onKeyDown={(event) => {
-              if (event.key === "Enter") onSearch()
+              if (event.key === "Enter") onSearch();
             }}
             placeholder="Search your keyword..."
             className="h-9 bg-background pl-9"
@@ -65,7 +60,7 @@ export function TorFilterBar({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+          <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
             <Switch
               checked={filters.eligibleOnly}
               onCheckedChange={(checked) =>
@@ -78,65 +73,52 @@ export function TorFilterBar({
             </span>
           </label>
 
-          <Select
+          <LabeledFilterSelect
+            label="Budget Range"
             value={filters.budgetRange}
-            onValueChange={(value) => {
-              if (value != null) onChange({ ...filters, budgetRange: value })
-            }}
+            onValueChange={(value) =>
+              onChange({ ...filters, budgetRange: value })
+            }
           >
-            <SelectTrigger className="h-9 min-w-[140px] bg-background">
-              <SelectValue placeholder="Budget Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Budget Range</SelectItem>
-              <SelectItem value="under-3m">Under 3M</SelectItem>
-              <SelectItem value="3m-6m">3M – 6M</SelectItem>
-              <SelectItem value="6m-10m">6M – 10M</SelectItem>
-              <SelectItem value="over-10m">Over 10M</SelectItem>
-            </SelectContent>
-          </Select>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="under-3m">Under 3M</SelectItem>
+            <SelectItem value="3m-6m">3M – 6M</SelectItem>
+            <SelectItem value="6m-10m">6M – 10M</SelectItem>
+            <SelectItem value="over-10m">Over 10M</SelectItem>
+          </LabeledFilterSelect>
 
-          <Select
+          <LabeledFilterSelect
+            label="Procurement Status"
             value={filters.status}
-            onValueChange={(value) => {
-              if (value != null) {
-                onChange({
-                  ...filters,
-                  status: value as BrowseFiltersState["status"],
-                })
-              }
-            }}
+            onValueChange={(value) =>
+              onChange({
+                ...filters,
+                status: value as BrowseFiltersState["status"],
+              })
+            }
           >
-            <SelectTrigger className="h-9 min-w-[160px] bg-background">
-              <SelectValue placeholder="Procurement Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Procurement Status</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="closing-soon">Closing Soon</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-              <SelectItem value="awarded">Awarded</SelectItem>
-            </SelectContent>
-          </Select>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="closing-soon">Closing Soon</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="awarded">Awarded</SelectItem>
+          </LabeledFilterSelect>
 
-          <Select
+          <LabeledFilterSelect
+            label="Department"
             value={filters.department}
-            onValueChange={(value) => {
-              if (value != null) onChange({ ...filters, department: value })
-            }}
+            onValueChange={(value) =>
+              onChange({ ...filters, department: value })
+            }
+            triggerClassName="min-w-[7rem]"
           >
-            <SelectTrigger className="h-9 min-w-[150px] bg-background">
-              <SelectValue placeholder="Department" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Department</SelectItem>
-              {departments.map((department) => (
-                <SelectItem key={department} value={department}>
-                  {department}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <SelectItem value="all">All</SelectItem>
+            {departments.map((department) => (
+              <SelectItem key={department} value={department}>
+                {department}
+              </SelectItem>
+            ))}
+          </LabeledFilterSelect>
 
           <Button
             variant="outline"
@@ -157,5 +139,5 @@ export function TorFilterBar({
         </div>
       </div>
     </div>
-  )
+  );
 }
