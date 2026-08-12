@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  useCallback,
   useState,
   useTransition,
   type KeyboardEvent,
@@ -10,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { Plus, X } from "lucide-react"
 
 import { saveCompanySetupProfileAction } from "@/actions/company-setup"
+import { useCompanySetupDemoFill } from "@/components/company-setup/company-setup-demo-fill"
 import { CompanySetupStepper } from "@/components/company-setup/company-setup-stepper"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -62,6 +64,15 @@ export function CompanySetupWizard({
   const [techInput, setTechInput] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isSaving, startSave] = useTransition()
+
+  // DEMO ONLY — remove with `company-setup-demo-fill.ts`
+  useCompanySetupDemoFill(
+    useCallback((nextProfile) => {
+      setProfile(nextProfile)
+      setTechInput("")
+      setError(null)
+    }, [])
+  )
 
   const currentStep = COMPANY_SETUP_STEPS[stepIndex]
   const isLastStep = stepIndex === COMPANY_SETUP_STEPS.length - 1

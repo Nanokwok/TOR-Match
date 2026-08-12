@@ -25,14 +25,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { browseActions } from "@/lib/browse-actions";
 import { formatTorDeadline } from "@/lib/format";
 import { buildQualificationCheck } from "@/lib/qualification";
+import { cn } from "@/lib/utils";
 import { getMockCompanyProfile } from "@/server/db/mock/tors";
 import type { Tor } from "@/types/tor";
 
 type TorDetailProps = {
   tor: Tor | null;
+  onToggleBookmark: (torId: string) => void;
 };
 
-export function TorDetail({ tor }: TorDetailProps) {
+export function TorDetail({ tor, onToggleBookmark }: TorDetailProps) {
   if (!tor) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">
@@ -41,10 +43,18 @@ export function TorDetail({ tor }: TorDetailProps) {
     );
   }
 
-  return <TorDetailContent tor={tor} />;
+  return (
+    <TorDetailContent tor={tor} onToggleBookmark={onToggleBookmark} />
+  );
 }
 
-function TorDetailContent({ tor }: { tor: Tor }) {
+function TorDetailContent({
+  tor,
+  onToggleBookmark,
+}: {
+  tor: Tor;
+  onToggleBookmark: (torId: string) => void;
+}) {
   const [shareOpen, setShareOpen] = useState(false);
 
   // TODO: replace getMockCompanyProfile() with a real company-profile fetch
@@ -119,11 +129,19 @@ function TorDetailContent({ tor }: { tor: Tor }) {
           </Button>
           <Button
             variant="outline"
-            className="h-10 sm:min-w-28"
-            onClick={() => browseActions.bookmarkTor(tor.id)}
+            className={cn(
+              "h-10 sm:min-w-28",
+              tor.bookmarked &&
+                "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+            )}
+            aria-pressed={tor.bookmarked}
+            onClick={() => onToggleBookmark(tor.id)}
           >
-            <Bookmark data-icon="inline-start" />
-            Bookmark
+            <Bookmark
+              data-icon="inline-start"
+              className={cn(tor.bookmarked && "fill-current")}
+            />
+            {tor.bookmarked ? "Bookmarked" : "Bookmark"}
           </Button>
           <Button
             variant="outline"

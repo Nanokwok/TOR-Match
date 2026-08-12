@@ -3,7 +3,6 @@
 import { Bookmark } from "lucide-react";
 
 import { formatBaht } from "@/lib/format";
-import { browseActions } from "@/lib/browse-actions";
 import { cn } from "@/lib/utils";
 import type { Tor } from "@/types/tor";
 
@@ -11,9 +10,15 @@ type TorListProps = {
   items: Tor[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onToggleBookmark: (torId: string) => void;
 };
 
-export function TorList({ items, selectedId, onSelect }: TorListProps) {
+export function TorList({
+  items,
+  selectedId,
+  onSelect,
+  onToggleBookmark,
+}: TorListProps) {
   if (items.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
@@ -58,10 +63,13 @@ export function TorList({ items, selectedId, onSelect }: TorListProps) {
               <button
                 type="button"
                 className="mt-0.5 shrink-0 rounded-sm p-0.5 hover:bg-black/5"
-                aria-label="Bookmark TOR"
+                aria-label={
+                  tor.bookmarked ? "Remove bookmark" : "Bookmark TOR"
+                }
+                aria-pressed={tor.bookmarked}
                 onClick={(event) => {
                   event.stopPropagation();
-                  browseActions.bookmarkTor(tor.id);
+                  onToggleBookmark(tor.id);
                 }}
               >
                 <Bookmark

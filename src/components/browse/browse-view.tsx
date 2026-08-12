@@ -10,6 +10,7 @@ import {
 } from "@/components/browse/tor-filter-bar"
 import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
+import { browseActions } from "@/lib/browse-actions"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
 import type { Tor } from "@/types/tor"
 
@@ -71,6 +72,16 @@ export function BrowseView({
     }
   }
 
+  function handleToggleBookmark(torId: string) {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === torId ? { ...item, bookmarked: !item.bookmarked } : item
+      )
+    )
+    // Persist later via server action; UI updates immediately for UX.
+    browseActions.bookmarkTor(torId)
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted">
       <TorFilterBar
@@ -91,11 +102,15 @@ export function BrowseView({
             items={items}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onToggleBookmark={handleToggleBookmark}
           />
         </aside>
 
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
-          <TorDetail tor={selectedTor} />
+          <TorDetail
+            tor={selectedTor}
+            onToggleBookmark={handleToggleBookmark}
+          />
         </section>
       </div>
     </div>

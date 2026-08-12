@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const themeInitScript = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var path=location.pathname;var auth=path==="/login"||path==="/signup"||path.indexOf("/login/")===0||path.indexOf("/signup/")===0;var r=document.documentElement;if(auth){r.setAttribute("data-force-light","true");r.classList.remove("dark");r.style.colorScheme="light";return;}var t=localStorage.getItem(k)||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";}catch(e){}})();`;
+const themeInitScript = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var path=location.pathname;var auth=path==="/login"||path==="/signup"||path.indexOf("/login/")===0||path.indexOf("/signup/")===0;var admin=path==="/admin"||path.indexOf("/admin/")===0;var r=document.documentElement;if(auth||admin){r.setAttribute("data-force-light","true");r.classList.remove("dark");r.style.colorScheme="light";return;}var t=localStorage.getItem(k)||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: "TOR Match",

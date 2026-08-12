@@ -42,7 +42,7 @@ export function LoginForm() {
         setError(result.error)
         return
       }
-      router.push("/browse")
+      router.push("/")
     })
   }
 
