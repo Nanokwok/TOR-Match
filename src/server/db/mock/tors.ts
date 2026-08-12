@@ -51,23 +51,46 @@ function defaultQualifications(
       id: "registered-capital",
       requirement: "Registered Capital",
       torCriteria: `≥ ${minCapital.toLocaleString("en-US")} THB`,
+      autoCheckable: true,
     },
     {
       id: "past-performance",
       requirement: "Past Performance",
       torCriteria: `Web App Contract ≥ ${pastContractMin.toLocaleString("en-US")} THB`,
+      autoCheckable: true,
     },
     {
       id: "certifications",
       requirement: "Certifications",
       torCriteria: "ISO/IEC 29110 or CMMI Level 2+",
+      autoCheckable: true,
     },
     {
       id: "deal-breaker",
       requirement: "Deal-Breaker Clauses",
       torCriteria: "Must be registered e-GP Vendor",
+      autoCheckable: true,
     },
-  ];
+  ]
+}
+
+function manualQualifications(): Tor["qualificationRequirements"] {
+  return [
+    {
+      id: "manual-experience",
+      requirement: "Government System Experience",
+      torCriteria:
+        "Must have prior experience delivering procurement or budget systems for government agencies",
+      autoCheckable: false,
+    },
+    {
+      id: "manual-team",
+      requirement: "Dedicated Project Team",
+      torCriteria:
+        "Must assign a full-time project manager and at least 2 senior developers for the contract duration",
+      autoCheckable: false,
+    },
+  ]
 }
 
 /**
@@ -159,7 +182,10 @@ export function getMockTors(): Tor[] {
         method: "e-bidding",
         milestones: milestonesForBudget(4_500_000),
       },
-      qualificationRequirements: defaultQualifications(2_000_000, 1_500_000),
+      qualificationRequirements: [
+        ...defaultQualifications(2_000_000, 1_500_000),
+        ...manualQualifications(),
+      ],
     },
     {
       id: "tor-002",

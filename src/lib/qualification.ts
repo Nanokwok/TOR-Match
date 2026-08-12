@@ -21,7 +21,8 @@ export function buildQualificationCheck(
         requirement: requirement.requirement,
         torCriteria: requirement.torCriteria,
         companyValue: match?.displayValue ?? null,
-        passed: match?.passed ?? null,
+        passed: requirement.autoCheckable ? (match?.passed ?? null) : null,
+        autoCheckable: requirement.autoCheckable,
       }
     }),
   }

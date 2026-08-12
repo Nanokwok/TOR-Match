@@ -42,6 +42,8 @@ export type TorQualificationRequirement = {
   id: string
   requirement: string
   torCriteria: string
+  /** When true, eligibility can be checked against the company profile. */
+  autoCheckable: boolean
 }
 
 export type Tor = {
@@ -88,6 +90,7 @@ export type TorQualificationCheck = {
     torCriteria: string
     companyValue: string | null
     passed: boolean | null
+    autoCheckable: boolean
   }[]
 }
 
