@@ -6,7 +6,7 @@ import type {
 export const NOTIFICATION_EVENTS: NotificationEventDefinition[] = [
   {
     id: "new-high-match",
-    label: "New High Match TOR (≥ 80%)",
+    label: "New TOR matching automatically verified qualifications",
   },
   {
     id: "high-budget",

@@ -82,9 +82,9 @@ export function NotificationCard({
           <span className="text-sm font-semibold text-foreground">
             {notification.title}
           </span>
-          {notification.matchScore != null ? (
+          {notification.autoVerifiedMatch ? (
             <Badge className="h-5 rounded-md border-transparent bg-emerald-100 px-1.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
-              {notification.matchScore}% Match
+              Auto-verified match
             </Badge>
           ) : null}
         </span>

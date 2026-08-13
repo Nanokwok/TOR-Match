@@ -12,7 +12,8 @@ export type AppNotification = {
   description: string
   createdAt: string
   isRead: boolean
-  matchScore?: number
+  /** True when the TOR matches automatically verified qualification criteria. */
+  autoVerifiedMatch?: boolean
   link?: string
   actionLabel?: NotificationActionLabel
 }
