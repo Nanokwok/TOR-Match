@@ -17,6 +17,7 @@ type LabeledFilterSelectProps = {
   children: ReactNode
   className?: string
   triggerClassName?: string
+  formatValue?: (value: string) => string
 }
 
 export function LabeledFilterSelect({
@@ -26,6 +27,7 @@ export function LabeledFilterSelect({
   children,
   className,
   triggerClassName,
+  formatValue,
 }: LabeledFilterSelectProps) {
   return (
     <div
@@ -49,7 +51,9 @@ export function LabeledFilterSelect({
             triggerClassName
           )}
         >
-          <SelectValue />
+          <SelectValue>
+            {formatValue ? formatValue(value) : undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent align="start">{children}</SelectContent>
       </Select>

@@ -22,6 +22,7 @@ import { useMemo, useState, useSyncExternalStore } from "react"
 
 import { KanbanColumn } from "@/components/workspace/kanban-column"
 import { WorkspaceTorCard } from "@/components/workspace/workspace-tor-card"
+import { useLocale } from "@/components/i18n/locale-provider"
 import {
   cardsToColumnItems,
   cardsToLookup,
@@ -32,6 +33,13 @@ import {
 } from "@/lib/workspace-board"
 import { WORKSPACE_COLUMNS } from "@/types/workspace"
 import type { WorkspaceCard, WorkspaceColumnId } from "@/types/workspace"
+
+const WORKSPACE_COLUMN_KEYS: Record<WorkspaceColumnId, string> = {
+  bookmark: "workspace.columnBookmark",
+  todo: "workspace.columnTodo",
+  "in-progress": "workspace.columnInProgress",
+  done: "workspace.columnDone",
+}
 
 function subscribe() {
   return () => undefined
@@ -94,6 +102,7 @@ export function WorkspaceKanbanBoard({
   onDeleteCard,
   onRequestAddTor,
 }: WorkspaceKanbanBoardProps) {
+  const { t } = useLocale()
   const cardsById = useMemo(() => cardsToLookup(cards), [cards])
   const derivedColumnItems = useMemo(() => cardsToColumnItems(cards), [cards])
   const [dragColumnItems, setDragColumnItems] = useState<ColumnItems | null>(
@@ -195,13 +204,14 @@ export function WorkspaceKanbanBoard({
         const columnCards = cardIds
           .map((torId) => cardsById[torId])
           .filter(Boolean)
+        const label = t(WORKSPACE_COLUMN_KEYS[column.id])
 
         if (!dndReady) {
           return (
             <KanbanColumn
               key={column.id}
               id={column.id}
-              label={column.label}
+              label={label}
               cards={columnCards}
               onOpenCardDetails={onOpenCardDetails}
               onDeleteCard={onDeleteCard}
@@ -220,7 +230,7 @@ export function WorkspaceKanbanBoard({
           >
             <KanbanColumn
               id={column.id}
-              label={column.label}
+              label={label}
               cards={columnCards}
               onOpenCardDetails={onOpenCardDetails}
               onDeleteCard={onDeleteCard}

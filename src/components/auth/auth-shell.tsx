@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { cn } from "@/lib/utils";
 
 type AuthShellProps = {
@@ -15,10 +16,13 @@ export function AuthShell({ children, className }: AuthShellProps) {
     <div className="grid min-h-full flex-1 lg:grid-cols-2">
       <div
         className={cn(
-          "flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-16 xl:px-24",
+          "relative flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-16 xl:px-24",
           className,
         )}
       >
+        <div className="absolute top-6 right-6">
+          <LanguageSwitcher variant="light" />
+        </div>
         <div className="mx-auto w-full max-w-[420px]">{children}</div>
       </div>
 

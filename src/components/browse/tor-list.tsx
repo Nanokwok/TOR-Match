@@ -2,7 +2,10 @@
 
 import { Bookmark } from "lucide-react";
 
+import { useLocale } from "@/components/i18n/locale-provider";
 import { formatBaht } from "@/lib/format";
+import { listTagLabel } from "@/lib/browse-labels";
+import { pickLocalized } from "@/lib/localized-content";
 import { cn } from "@/lib/utils";
 import type { Tor } from "@/types/tor";
 
@@ -19,10 +22,12 @@ export function TorList({
   onSelect,
   onToggleBookmark,
 }: TorListProps) {
+  const { locale, t } = useLocale();
+
   if (items.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
-        No TORs match your filters.
+        {t("browse.noMatch")}
       </div>
     );
   }
@@ -31,6 +36,12 @@ export function TorList({
     <div className="flex flex-col gap-2 p-3">
       {items.map((tor) => {
         const selected = tor.id === selectedId;
+        const title = pickLocalized(tor.title, tor.titleTh, locale);
+        const department = pickLocalized(
+          tor.department,
+          tor.departmentTh,
+          locale
+        );
 
         return (
           <div
@@ -54,17 +65,19 @@ export function TorList({
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
-                  {tor.title}
+                  {title}
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {tor.department}
+                  {department}
                 </p>
               </div>
               <button
                 type="button"
                 className="mt-0.5 shrink-0 rounded-sm p-0.5 hover:bg-black/5"
                 aria-label={
-                  tor.bookmarked ? "Remove bookmark" : "Bookmark TOR"
+                  tor.bookmarked
+                    ? t("browse.removeBookmark")
+                    : t("browse.bookmarkTor")
                 }
                 aria-pressed={tor.bookmarked}
                 onClick={(event) => {
@@ -90,12 +103,12 @@ export function TorList({
                     key={tag}
                     className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
                   >
-                    {tag}
+                    {listTagLabel(tag, t)}
                   </span>
                 ))}
               </div>
               <span className="shrink-0 text-xs font-medium text-foreground">
-                {formatBaht(tor.budgetBaht)}
+                {formatBaht(tor.budgetBaht, locale)}
               </span>
             </div>
           </div>

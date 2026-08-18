@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Bell, Inbox, Settings } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { NotificationCard } from "@/components/notifications/notification-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,17 +15,17 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MOCK_NOTIFICATIONS } from "@/server/db/mock/notifications"
+import { localizeNotification, MOCK_NOTIFICATIONS } from "@/server/db/mock/notifications"
 import { cn } from "@/lib/utils"
 import type { AppNotification } from "@/types/notification"
 
 type NotificationTab = "all" | "unread" | "matches" | "deadlines"
 
-const TABS: { value: NotificationTab; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "unread", label: "Unread" },
-  { value: "matches", label: "Matches" },
-  { value: "deadlines", label: "Deadlines" },
+const TAB_KEYS: { value: NotificationTab; labelKey: string }[] = [
+  { value: "all", labelKey: "notifications.tabAll" },
+  { value: "unread", labelKey: "notifications.tabUnread" },
+  { value: "matches", labelKey: "notifications.tabMatches" },
+  { value: "deadlines", labelKey: "notifications.tabDeadlines" },
 ]
 
 function filterNotifications(
@@ -48,10 +49,16 @@ type NotificationCenterProps = {
 }
 
 export function NotificationCenter({ className }: NotificationCenterProps) {
+  const { locale, t } = useLocale()
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<NotificationTab>("all")
   const [notifications, setNotifications] =
     useState<AppNotification[]>(MOCK_NOTIFICATIONS)
+
+  const localizedNotifications = useMemo(
+    () => notifications.map((item) => localizeNotification(item, locale)),
+    [notifications, locale]
+  )
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
@@ -59,8 +66,8 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   )
 
   const visibleNotifications = useMemo(
-    () => filterNotifications(notifications, activeTab),
-    [activeTab, notifications]
+    () => filterNotifications(localizedNotifications, activeTab),
+    [activeTab, localizedNotifications]
   )
 
   function markAsRead(id: string) {
@@ -77,6 +84,9 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     )
   }
 
+  const activeTabLabel =
+    TAB_KEYS.find((tab) => tab.value === activeTab)?.labelKey ?? ""
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
@@ -90,8 +100,8 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
             )}
             aria-label={
               unreadCount > 0
-                ? `Notifications, ${unreadCount} unread`
-                : "Notifications"
+                ? t("header.notificationsUnread", { count: unreadCount })
+                : t("header.notifications")
             }
           />
         }
@@ -111,10 +121,10 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
       >
         <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <h2 className="text-base font-semibold">Notifications</h2>
+            <h2 className="text-base font-semibold">{t("notifications.title")}</h2>
             {unreadCount > 0 ? (
               <Badge className="h-5 rounded-md bg-primary/10 px-1.5 text-[11px] font-medium text-primary hover:bg-primary/10">
-                {unreadCount} New
+                {t("notifications.newCount", { count: unreadCount })}
               </Badge>
             ) : null}
           </div>
@@ -128,7 +138,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               onClick={markAllAsRead}
               disabled={unreadCount === 0}
             >
-              Mark all as read
+              {t("notifications.markAllRead")}
             </Button>
             <Button
               variant="ghost"
@@ -136,7 +146,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               className="size-7 text-muted-foreground hover:text-foreground"
               nativeButton={false}
               render={<Link href="/settings/notifications" />}
-              aria-label="Notification settings"
+              aria-label={t("notifications.settings")}
               onClick={() => setOpen(false)}
             >
               <Settings className="size-4" />
@@ -156,13 +166,13 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               variant="line"
               className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
             >
-              {TABS.map((tab) => (
+              {TAB_KEYS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
                   className="h-10 flex-none rounded-none px-3 text-xs after:bg-primary data-active:text-primary"
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -188,12 +198,14 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                   <Inbox className="size-5" />
                 </span>
                 <p className="text-sm font-medium text-foreground">
-                  No notifications found
+                  {t("notifications.emptyTitle")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {activeTab === "all"
-                    ? "You’re all caught up for now."
-                    : `Nothing in ${TABS.find((tab) => tab.value === activeTab)?.label ?? "this"} yet.`}
+                    ? t("notifications.emptyAll")
+                    : t("notifications.emptyTab", {
+                        tab: t(activeTabLabel),
+                      })}
                 </p>
               </div>
             )}

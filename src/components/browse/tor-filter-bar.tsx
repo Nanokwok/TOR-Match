@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Filter, Search, X } from "lucide-react"
 
 import { BrowseMoreFiltersDialog } from "@/components/browse/browse-more-filters-dialog"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,10 @@ import {
   EMPTY_DETAIL_FILTERS,
   getActiveDetailFilterChips,
 } from "@/lib/browse-filters"
+import {
+  budgetRangeLabel,
+  procurementStatusLabel,
+} from "@/lib/browse-labels"
 import type {
   TorDetailFilters,
   TorListQuery,
@@ -56,9 +61,13 @@ export function TorFilterBar({
   onChange,
   onSearch,
 }: TorFilterBarProps) {
+  const { t } = useLocale()
   const [moreOpen, setMoreOpen] = useState(false)
   const activeDetailCount = countActiveDetailFilters(filters.detail)
-  const chips = getActiveDetailFilterChips(filters.detail)
+  const chips = useMemo(
+    () => getActiveDetailFilterChips(filters.detail, t),
+    [filters.detail, t]
+  )
 
   const baseQuery = useMemo(
     () => ({
@@ -124,7 +133,7 @@ export function TorFilterBar({
               onKeyDown={(event) => {
                 if (event.key === "Enter") onSearch()
               }}
-              placeholder="Search your keyword..."
+              placeholder={t("browse.searchPlaceholder")}
               className="h-9 bg-background pl-9"
             />
           </div>
@@ -139,27 +148,29 @@ export function TorFilterBar({
                 className="data-checked:bg-primary"
               />
               <span className="whitespace-nowrap text-foreground">
-                Eligible Only
+                {t("browse.eligibleOnly")}
               </span>
             </label>
 
             <LabeledFilterSelect
-              label="Budget Range"
+              label={t("browse.budgetRange")}
               value={filters.budgetRange}
+              formatValue={(value) => budgetRangeLabel(value, t)}
               onValueChange={(value) =>
                 onChange({ ...filters, budgetRange: value })
               }
             >
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="under-3m">Under 3M</SelectItem>
-              <SelectItem value="3m-6m">3M – 6M</SelectItem>
-              <SelectItem value="6m-10m">6M – 10M</SelectItem>
-              <SelectItem value="over-10m">Over 10M</SelectItem>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="under-3m">{t("browse.budgetUnder3m")}</SelectItem>
+              <SelectItem value="3m-6m">{t("browse.budget3m6m")}</SelectItem>
+              <SelectItem value="6m-10m">{t("browse.budget6m10m")}</SelectItem>
+              <SelectItem value="over-10m">{t("browse.budgetOver10m")}</SelectItem>
             </LabeledFilterSelect>
 
             <LabeledFilterSelect
-              label="Procurement Status"
+              label={t("browse.procurementStatus")}
               value={filters.status}
+              formatValue={(value) => procurementStatusLabel(value, t)}
               onValueChange={(value) =>
                 onChange({
                   ...filters,
@@ -167,22 +178,25 @@ export function TorFilterBar({
                 })
               }
             >
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="closing-soon">Closing Soon</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-              <SelectItem value="awarded">Awarded</SelectItem>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="open">{t("browse.statusOpen")}</SelectItem>
+              <SelectItem value="closing-soon">{t("browse.statusClosingSoon")}</SelectItem>
+              <SelectItem value="closed">{t("browse.statusClosed")}</SelectItem>
+              <SelectItem value="awarded">{t("browse.statusAwarded")}</SelectItem>
             </LabeledFilterSelect>
 
             <LabeledFilterSelect
-              label="Department"
+              label={t("browse.department")}
               value={filters.department}
+              formatValue={(value) =>
+                value === "all" ? t("common.all") : value
+              }
               onValueChange={(value) =>
                 onChange({ ...filters, department: value })
               }
               triggerClassName="min-w-[7rem]"
             >
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
               {departments.map((department) => (
                 <SelectItem key={department} value={department}>
                   {department}
@@ -193,11 +207,11 @@ export function TorFilterBar({
             <Button
               variant="outline"
               className="relative h-9 gap-2 px-3"
-              aria-label="More filters"
+              aria-label={t("browse.moreFilters")}
               onClick={() => setMoreOpen(true)}
             >
               <Filter className="size-4" />
-              <span className="hidden sm:inline">Filters</span>
+              <span className="hidden sm:inline">{t("common.filters")}</span>
               {activeDetailCount > 0 ? (
                 <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary">
                   {activeDetailCount}
@@ -209,7 +223,7 @@ export function TorFilterBar({
               className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
               onClick={onSearch}
             >
-              Search
+              {t("common.search")}
             </Button>
           </div>
         </div>
@@ -217,7 +231,7 @@ export function TorFilterBar({
         {chips.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">
-              Active filters:
+              {t("common.activeFilters")}
             </span>
             {chips.map((chip) => (
               <button
@@ -240,7 +254,7 @@ export function TorFilterBar({
                 })
               }
             >
-              Clear all
+              {t("common.clearAll")}
             </button>
           </div>
         ) : null}

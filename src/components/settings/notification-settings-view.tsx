@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, Bell, Mail } from "lucide-react"
 
 import { saveNotificationSettingsAction } from "@/actions/notification-settings"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -20,7 +21,8 @@ import {
   cloneNotificationSettings,
   DAILY_DIGEST_TIMES,
   DEFAULT_NOTIFICATION_SETTINGS,
-  NOTIFICATION_EVENTS,
+  NOTIFICATION_EVENT_IDS,
+  NOTIFICATION_EVENTS_WITH_DESCRIPTION,
   WEEKLY_DIGEST_DAYS,
 } from "@/lib/notification-settings"
 import { cn } from "@/lib/utils"
@@ -39,6 +41,7 @@ type NotificationSettingsViewProps = {
 export function NotificationSettingsView({
   initialSettings,
 }: NotificationSettingsViewProps) {
+  const { t } = useLocale()
   const [settings, setSettings] = useState(() =>
     cloneNotificationSettings(initialSettings)
   )
@@ -50,6 +53,23 @@ export function NotificationSettingsView({
 
   const isDirty =
     JSON.stringify(settings) !== JSON.stringify(savedSnapshot)
+
+  function eventLabel(eventId: NotificationEventId) {
+    return t(`notificationSettings.events.${eventId}.label`)
+  }
+
+  function eventDescription(eventId: NotificationEventId) {
+    if (!NOTIFICATION_EVENTS_WITH_DESCRIPTION.has(eventId)) return null
+    return t(`notificationSettings.events.${eventId}.description`)
+  }
+
+  function digestTimeLabel(value: DigestDeliveryTime) {
+    return t(`notificationSettings.digestTimes.${value}`)
+  }
+
+  function digestDayLabel(value: WeeklyDigestDay) {
+    return t(`notificationSettings.digestDays.${value}`)
+  }
 
   function updateSettings(
     updater: (current: NotificationSettings) => NotificationSettings
@@ -81,7 +101,7 @@ export function NotificationSettingsView({
 
   function handleReset() {
     updateSettings(() => cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS))
-    setStatusMessage("Restored default preferences. Click Save to apply.")
+    setStatusMessage(t("notificationSettings.restoredDefaults"))
   }
 
   function handleSave() {
@@ -90,10 +110,13 @@ export function NotificationSettingsView({
       if (result.ok) {
         setSavedSnapshot(cloneNotificationSettings(result.settings))
         setSettings(cloneNotificationSettings(result.settings))
-        setStatusMessage("Preferences saved.")
+        setStatusMessage(t("notificationSettings.preferencesSaved"))
       }
     })
   }
+
+  const weeklyDayLabel = digestDayLabel(settings.weeklyDigestDay)
+  const weeklyTimeLabel = digestTimeLabel(settings.weeklyDigestTime)
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
@@ -103,16 +126,15 @@ export function NotificationSettingsView({
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back to Settings
+          {t("notificationSettings.backToSettings")}
         </Link>
 
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold text-foreground">
-            Notification Settings
+            {t("notificationSettings.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Control how and when you receive alerts via In-App notifications and
-            Email.
+            {t("notificationSettings.subtitle")}
           </p>
         </header>
       </div>
@@ -120,15 +142,17 @@ export function NotificationSettingsView({
       <section className="grid gap-3 sm:grid-cols-2">
         <MasterSwitchCard
           icon={<Bell className="size-4" />}
-          title="In-App Notifications"
-          description="Enables the bell icon dropdown"
+          title={t("notificationSettings.inAppTitle")}
+          description={t("notificationSettings.inAppDesc")}
           checked={settings.inAppEnabled}
           onCheckedChange={(checked) => toggleMaster("inAppEnabled", checked)}
         />
         <MasterSwitchCard
           icon={<Mail className="size-4" />}
-          title="Email Notifications"
-          description={`Recipient: ${settings.emailRecipient}`}
+          title={t("notificationSettings.emailTitle")}
+          description={t("notificationSettings.emailRecipient", {
+            email: settings.emailRecipient,
+          })}
           checked={settings.emailEnabled}
           onCheckedChange={(checked) => toggleMaster("emailEnabled", checked)}
         />
@@ -137,10 +161,10 @@ export function NotificationSettingsView({
       <section className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="border-b border-border px-5 py-4">
           <h2 className="text-base font-semibold text-foreground">
-            Notification Event Matrix
+            {t("notificationSettings.matrixTitle")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose which events trigger In-App and Email alerts.
+            {t("notificationSettings.matrixSubtitle")}
           </p>
         </div>
 
@@ -148,26 +172,33 @@ export function NotificationSettingsView({
           <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/80 text-left text-xs tracking-wide text-muted-foreground uppercase">
-                <th className="px-5 py-3 font-medium">Event Category</th>
-                <th className="w-24 px-3 py-3 text-center font-medium">In-App</th>
-                <th className="w-24 px-3 py-3 text-center font-medium">Email</th>
+                <th className="px-5 py-3 font-medium">
+                  {t("notificationSettings.eventCategory")}
+                </th>
+                <th className="w-24 px-3 py-3 text-center font-medium">
+                  {t("notificationSettings.inAppColumn")}
+                </th>
+                <th className="w-24 px-3 py-3 text-center font-medium">
+                  {t("notificationSettings.emailColumn")}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {NOTIFICATION_EVENTS.map((event) => {
-                const preference = settings.events[event.id]
+              {NOTIFICATION_EVENT_IDS.map((eventId) => {
+                const preference = settings.events[eventId]
+                const label = eventLabel(eventId)
+                const description = eventDescription(eventId)
+
                 return (
                   <tr
-                    key={event.id}
+                    key={eventId}
                     className="border-b border-border last:border-b-0"
                   >
                     <td className="px-5 py-3.5">
-                      <div className="font-medium text-foreground">
-                        {event.label}
-                      </div>
-                      {event.description ? (
+                      <div className="font-medium text-foreground">{label}</div>
+                      {description ? (
                         <div className="mt-0.5 text-xs text-muted-foreground">
-                          {event.description}
+                          {description}
                         </div>
                       ) : null}
                     </td>
@@ -177,9 +208,11 @@ export function NotificationSettingsView({
                           checked={preference.inApp}
                           disabled={!settings.inAppEnabled}
                           onCheckedChange={(checked) =>
-                            toggleEvent(event.id, "inApp", checked === true)
+                            toggleEvent(eventId, "inApp", checked === true)
                           }
-                          aria-label={`${event.label} in-app`}
+                          aria-label={t("notificationSettings.ariaInApp", {
+                            event: label,
+                          })}
                         />
                       </div>
                     </td>
@@ -189,9 +222,11 @@ export function NotificationSettingsView({
                           checked={preference.email}
                           disabled={!settings.emailEnabled}
                           onCheckedChange={(checked) =>
-                            toggleEvent(event.id, "email", checked === true)
+                            toggleEvent(eventId, "email", checked === true)
                           }
-                          aria-label={`${event.label} email`}
+                          aria-label={t("notificationSettings.ariaEmail", {
+                            event: label,
+                          })}
                         />
                       </div>
                     </td>
@@ -206,17 +241,17 @@ export function NotificationSettingsView({
       <section className="space-y-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">
-            Email Delivery Frequency & Digests
+            {t("notificationSettings.digestTitle")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure instant alerts and bundled digest emails.
+            {t("notificationSettings.digestSubtitle")}
           </p>
         </div>
 
         <div className="space-y-3">
           <DigestCard
-            title="Instant Email Alerts"
-            description="Send immediate emails for Match Scores ≥ 90% and 24-Hour Final Call warnings."
+            title={t("notificationSettings.instantTitle")}
+            description={t("notificationSettings.instantDesc")}
             enabled={settings.instantEmailAlerts}
             disabled={!settings.emailEnabled}
             onEnabledChange={(checked) =>
@@ -228,8 +263,8 @@ export function NotificationSettingsView({
           />
 
           <DigestCard
-            title="Daily TOR Digest Email"
-            description="Bundles all newly scraped BMA TORs matching your profile into a single daily email."
+            title={t("notificationSettings.dailyTitle")}
+            description={t("notificationSettings.dailyDesc")}
             enabled={settings.dailyDigestEnabled}
             disabled={!settings.emailEnabled}
             onEnabledChange={(checked) =>
@@ -240,7 +275,9 @@ export function NotificationSettingsView({
             }
           >
             <div className="space-y-1.5">
-              <Label htmlFor="daily-digest-time">Delivery Time</Label>
+              <Label htmlFor="daily-digest-time">
+                {t("notificationSettings.deliveryTime")}
+              </Label>
               <Select
                 value={settings.dailyDigestTime}
                 disabled={!settings.emailEnabled || !settings.dailyDigestEnabled}
@@ -258,7 +295,7 @@ export function NotificationSettingsView({
                 <SelectContent>
                   {DAILY_DIGEST_TIMES.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {digestTimeLabel(option.value)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -267,8 +304,8 @@ export function NotificationSettingsView({
           </DigestCard>
 
           <DigestCard
-            title="Weekly Performance Summary Email"
-            description="Summary of active workspace pipeline cards, upcoming deadlines for the week, and team status changes."
+            title={t("notificationSettings.weeklyTitle")}
+            description={t("notificationSettings.weeklyDesc")}
             enabled={settings.weeklyDigestEnabled}
             disabled={!settings.emailEnabled}
             onEnabledChange={(checked) =>
@@ -280,7 +317,9 @@ export function NotificationSettingsView({
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="weekly-digest-day">Delivery Day</Label>
+                <Label htmlFor="weekly-digest-day">
+                  {t("notificationSettings.deliveryDay")}
+                </Label>
                 <Select
                   value={settings.weeklyDigestDay}
                   disabled={
@@ -303,14 +342,16 @@ export function NotificationSettingsView({
                   <SelectContent>
                     {WEEKLY_DIGEST_DAYS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {digestDayLabel(option.value)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="weekly-digest-time">Delivery Time</Label>
+                <Label htmlFor="weekly-digest-time">
+                  {t("notificationSettings.deliveryTime")}
+                </Label>
                 <Select
                   value={settings.weeklyDigestTime}
                   disabled={
@@ -333,7 +374,7 @@ export function NotificationSettingsView({
                   <SelectContent>
                     {DAILY_DIGEST_TIMES.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {digestTimeLabel(option.value)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -341,16 +382,10 @@ export function NotificationSettingsView({
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Currently: Every{" "}
-              {WEEKLY_DIGEST_DAYS.find(
-                (day) => day.value === settings.weeklyDigestDay
-              )?.label.replace("Every ", "")}{" "}
-              at{" "}
-              {
-                DAILY_DIGEST_TIMES.find(
-                  (time) => time.value === settings.weeklyDigestTime
-                )?.label
-              }
+              {t("notificationSettings.weeklySummary", {
+                day: weeklyDayLabel,
+                time: weeklyTimeLabel,
+              })}
             </p>
           </DigestCard>
         </div>
@@ -359,7 +394,9 @@ export function NotificationSettingsView({
       <footer className="sticky bottom-0 -mx-6 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
         <p className="text-sm text-muted-foreground">
           {statusMessage ??
-            (isDirty ? "You have unsaved changes." : "All changes saved.")}
+            (isDirty
+              ? t("notificationSettings.unsavedChanges")
+              : t("notificationSettings.allSaved"))}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -368,7 +405,7 @@ export function NotificationSettingsView({
             onClick={handleReset}
             disabled={isSaving}
           >
-            Reset to Defaults
+            {t("notificationSettings.resetDefaults")}
           </Button>
           <Button
             type="button"
@@ -376,7 +413,9 @@ export function NotificationSettingsView({
             onClick={handleSave}
             disabled={isSaving || !isDirty}
           >
-            {isSaving ? "Saving..." : "Save Preferences"}
+            {isSaving
+              ? t("notificationSettings.saving")
+              : t("notificationSettings.savePreferences")}
           </Button>
         </div>
       </footer>

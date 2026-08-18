@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, Languages } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { useTheme } from "@/components/theme/theme-provider";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,7 @@ import { browseActions } from "@/lib/browse-actions";
 import { cn } from "@/lib/utils";
 
 export type HeaderNavItem = {
-  label: string;
+  labelKey: string;
   href: string;
 };
 
@@ -31,9 +32,8 @@ type HeaderProps = {
 };
 
 const defaultNavItems: HeaderNavItem[] = [
-  { label: "Browse TORs", href: "/browse" },
-  // { label: "Dashboard", href: "/dashboard" },
-  { label: "Team Workspace", href: "/workspace" },
+  { labelKey: "header.browseTors", href: "/browse" },
+  { labelKey: "header.teamWorkspace", href: "/workspace" },
 ];
 
 function isNavActive(pathname: string, href: string) {
@@ -42,12 +42,13 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   className,
-  companyName = "Company Name",
+  companyName,
   navItems = defaultNavItems,
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useLocale();
 
   return (
     <header
@@ -76,7 +77,7 @@ export function Header({
                     : "border-transparent text-white/90 hover:text-white"
                 )}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -93,18 +94,10 @@ export function Header({
             className="inline-flex size-8 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 [&_svg]:size-4"
           />
 
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="text-white hover:bg-white/10 hover:text-white"
-            aria-label="Change language"
-            onClick={() => browseActions.changeLanguage()}
-          >
-            <Languages className="size-4" />
-          </Button>
+          <LanguageSwitcher variant="dark" />
 
           <span className="hidden text-sm text-white/90 lg:inline">
-            {companyName}
+            {companyName ?? t("header.companyName")}
           </span>
 
           <DropdownMenu>
@@ -115,7 +108,7 @@ export function Header({
                 "focus-visible:ring-2 focus-visible:ring-white/40",
               )}
             >
-              Company Profile
+              {t("header.companyProfile")}
               <ChevronDown className="size-3.5 opacity-70" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -125,12 +118,12 @@ export function Header({
               <DropdownMenuItem
                 onClick={() => router.push("/company-profile")}
               >
-                Company Profile
+                {t("header.companyProfile")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/settings")}
               >
-                Setting
+                {t("header.settings")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -139,7 +132,7 @@ export function Header({
                   router.push("/login");
                 }}
               >
-                Logout
+                {t("header.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

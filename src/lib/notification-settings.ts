@@ -1,39 +1,21 @@
 import type {
-  NotificationEventDefinition,
+  NotificationEventId,
   NotificationSettings,
 } from "@/types/notification-settings"
 
-export const NOTIFICATION_EVENTS: NotificationEventDefinition[] = [
-  {
-    id: "new-high-match",
-    label: "New TOR matching automatically verified qualifications",
-  },
-  {
-    id: "high-budget",
-    label: "High Budget Opportunity (> ฿10M)",
-  },
-  {
-    id: "deal-breaker",
-    label: "Deal-Breaker Alert",
-    description: "Saved TOR criteria changed",
-  },
-  {
-    id: "deadline-7-day",
-    label: "7-Day Deadline Reminder",
-  },
-  {
-    id: "deadline-3-day",
-    label: "3-Day Urgent Deadline Warning",
-  },
-  {
-    id: "deadline-24-hour",
-    label: "24-Hour Final Call",
-  },
-  {
-    id: "system-profile",
-    label: "System & Profile Verification",
-  },
+export const NOTIFICATION_EVENT_IDS: NotificationEventId[] = [
+  "new-high-match",
+  "high-budget",
+  "deal-breaker",
+  "deadline-7-day",
+  "deadline-3-day",
+  "deadline-24-hour",
+  "system-profile",
 ]
+
+export const NOTIFICATION_EVENTS_WITH_DESCRIPTION = new Set<NotificationEventId>([
+  "deal-breaker",
+])
 
 export const DAILY_DIGEST_TIMES = [
   { value: "06:00", label: "06:00 AM" },

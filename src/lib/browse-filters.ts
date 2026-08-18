@@ -93,68 +93,139 @@ export function countActiveDetailFilters(filters: TorDetailFilters): number {
 }
 
 export function getActiveDetailFilterChips(
-  filters: TorDetailFilters
+  filters: TorDetailFilters,
+  t?: (key: string, params?: Record<string, string | number>) => string
 ): { id: string; label: string }[] {
   const chips: { id: string; label: string }[] = []
+  const scaleLabel = (value: TorProjectScale) => {
+    const key = {
+      SMALL: "browse.scaleSmall",
+      MEDIUM: "browse.scaleMedium",
+      LARGE: "browse.scaleLarge",
+      ENTERPRISE: "browse.scaleEnterprise",
+    }[value]
+    return t?.(key) ?? PROJECT_SCALE_OPTIONS.find((option) => option.value === value)?.label ?? value
+  }
+  const durationLabel = (value: TorDurationPreset) =>
+    t?.(
+      (
+        {
+          "under-3m": "browse.durationUnder3m",
+          "3-6m": "browse.duration3to6m",
+          "6-12m": "browse.duration6to12m",
+          "1y-plus": "browse.duration1yPlus",
+        } as const
+      )[value]
+    ) ??
+    DURATION_PRESET_OPTIONS.find((option) => option.value === value)?.label ??
+    value
+  const methodLabel = (value: TorProcurementMethod) => {
+    const key =
+      {
+        "e-bidding": "browse.methodEbidding",
+        specific: "browse.methodSpecific",
+        selective: "browse.methodSelective",
+        "price-agreement": "browse.methodPriceAgreement",
+        "e-market": "browse.methodPriceAgreement",
+      }[value] ?? "browse.methodEbidding"
+    return (
+      t?.(key) ??
+      PROCUREMENT_METHOD_OPTIONS.find((option) => option.value === value)?.label ??
+      value
+    )
+  }
 
   if (filters.projectScales.length > 0) {
     chips.push({
       id: "scale",
-      label: `Scale: ${filters.projectScales
-        .map(
-          (value) =>
-            PROJECT_SCALE_OPTIONS.find((option) => option.value === value)
-              ?.label ?? value
-        )
-        .join(", ")}`,
+      label: t
+        ? t("browse.chipScale", {
+            value: filters.projectScales.map(scaleLabel).join(", "),
+          })
+        : `Scale: ${filters.projectScales
+            .map(
+              (value) =>
+                PROJECT_SCALE_OPTIONS.find((option) => option.value === value)
+                  ?.label ?? value
+            )
+            .join(", ")}`,
     })
   }
 
   if (filters.durationPresets.length > 0) {
     chips.push({
       id: "duration",
-      label: `Duration: ${filters.durationPresets
-        .map(
-          (value) =>
-            DURATION_PRESET_OPTIONS.find((option) => option.value === value)
-              ?.label ?? value
-        )
-        .join(", ")}`,
+      label: t
+        ? t("browse.chipDuration", {
+            value: filters.durationPresets.map(durationLabel).join(", "),
+          })
+        : `Duration: ${filters.durationPresets
+            .map(
+              (value) =>
+                DURATION_PRESET_OPTIONS.find((option) => option.value === value)
+                  ?.label ?? value
+            )
+            .join(", ")}`,
     })
   }
 
   if (filters.budgetMinThb.trim() || filters.budgetMaxThb.trim()) {
     const min = filters.budgetMinThb.trim() || "0"
     const max = filters.budgetMaxThb.trim() || "∞"
-    chips.push({ id: "budget", label: `Budget: ${min}–${max} THB` })
+    chips.push({
+      id: "budget",
+      label: t
+        ? t("browse.chipBudget", { min, max })
+        : `Budget: ${min}–${max} THB`,
+    })
   }
 
   if (filters.procurementMethods.length > 0) {
     chips.push({
       id: "method",
-      label: `Method: ${filters.procurementMethods
-        .map(
-          (value) =>
-            PROCUREMENT_METHOD_OPTIONS.find((option) => option.value === value)
-              ?.label ?? value
-        )
-        .join(", ")}`,
+      label: t
+        ? t("browse.chipMethod", {
+            value: filters.procurementMethods.map(methodLabel).join(", "),
+          })
+        : `Method: ${filters.procurementMethods
+            .map(
+              (value) =>
+                PROCUREMENT_METHOD_OPTIONS.find((option) => option.value === value)
+                  ?.label ?? value
+            )
+            .join(", ")}`,
     })
   }
 
   if (filters.deadlinePreset === "7-days") {
-    chips.push({ id: "deadline", label: "Closing in 7 Days" })
+    chips.push({
+      id: "deadline",
+      label: t?.("browse.deadline7Days") ?? "Closing in 7 Days",
+    })
   } else if (filters.deadlinePreset === "30-days") {
-    chips.push({ id: "deadline", label: "Closing in 30 Days" })
+    chips.push({
+      id: "deadline",
+      label: t?.("browse.deadline30Days") ?? "Closing in 30 Days",
+    })
   } else if (filters.deadlinePreset === "custom") {
     chips.push({
       id: "deadline",
-      label: `Deadline: ${filters.deadlineFrom || "…"} → ${filters.deadlineTo || "…"}`,
+      label: t
+        ? t("browse.chipDeadline", {
+            from: filters.deadlineFrom || "…",
+            to: filters.deadlineTo || "…",
+          })
+        : `Deadline: ${filters.deadlineFrom || "…"} → ${filters.deadlineTo || "…"}`,
     })
   }
 
   if (filters.fiscalYear !== "all") {
-    chips.push({ id: "fy", label: `FY ${filters.fiscalYear}` })
+    chips.push({
+      id: "fy",
+      label: t
+        ? t("browse.chipFy", { year: filters.fiscalYear })
+        : `FY ${filters.fiscalYear}`,
+    })
   }
 
   if (filters.localOffices.length > 0) {
@@ -163,7 +234,11 @@ export function getActiveDetailFilterChips(
       label:
         filters.localOffices.length === 1
           ? filters.localOffices[0]
-          : `${filters.localOffices.length} local offices`,
+          : t
+            ? t("browse.chipOffices", {
+                count: String(filters.localOffices.length),
+              })
+            : `${filters.localOffices.length} local offices`,
     })
   }
 

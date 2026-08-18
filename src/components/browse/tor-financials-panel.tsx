@@ -1,10 +1,14 @@
+"use client"
+
 import type { ComponentType } from "react"
 import { Coins, Gavel, Network } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import {
   formatMilestoneLabel,
   formatThb,
 } from "@/lib/format"
+import { procurementMethodLabel } from "@/lib/browse-labels"
 import type { TorFinancials } from "@/types/tor"
 
 type TorFinancialsPanelProps = {
@@ -12,37 +16,45 @@ type TorFinancialsPanelProps = {
 }
 
 export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
+  const { locale, t } = useLocale()
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <Metric
           icon={Coins}
-          label="Total Budget"
-          value={formatThb(financials.totalBudgetBaht)}
+          label={t("browse.financialPanel.totalBudget")}
+          value={formatThb(financials.totalBudgetBaht, locale)}
         />
         <Metric
           icon={Network}
-          label="Median Price"
-          value={formatThb(financials.medianPriceBaht)}
+          label={t("browse.financialPanel.medianPrice")}
+          value={formatThb(financials.medianPriceBaht, locale)}
         />
         <Metric
           icon={Gavel}
-          label="Procurement Method"
-          value={financials.method}
+          label={t("browse.financialPanel.procurementMethod")}
+          value={procurementMethodLabel(financials.method, t)}
         />
       </div>
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground">
-          Payment Milestones
+          {t("browse.financialPanel.paymentMilestones")}
         </h3>
         <div className="overflow-hidden rounded-lg border border-border">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="bg-primary text-primary-foreground">
-                <th className="px-4 py-3 font-medium">Day</th>
-                <th className="px-4 py-3 font-medium">Milestone</th>
-                <th className="px-4 py-3 font-medium">Deliverable</th>
+                <th className="px-4 py-3 font-medium">
+                  {t("browse.financialPanel.day")}
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  {t("browse.financialPanel.milestone")}
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  {t("browse.financialPanel.deliverable")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -52,13 +64,14 @@ export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
                   className="border-t border-border bg-card"
                 >
                   <td className="px-4 py-3 whitespace-nowrap text-foreground">
-                    {milestone.day} Days
+                    {t("browse.financialPanel.days", { count: milestone.day })}
                   </td>
                   <td className="px-4 py-3 text-foreground">
                     {formatMilestoneLabel(
                       milestone.milestoneNumber,
                       milestone.percent,
-                      milestone.amountBaht
+                      milestone.amountBaht,
+                      locale
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">

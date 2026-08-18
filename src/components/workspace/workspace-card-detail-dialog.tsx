@@ -26,7 +26,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { formatDaysLeft, formatThb } from "@/lib/format";
+import { pickLocalized } from "@/lib/localized-content";
 import { workspaceActions } from "@/lib/workspace-actions";
 import { cn } from "@/lib/utils";
 import { createDefaultChecklist } from "@/lib/workspace-checklist";
@@ -37,13 +39,13 @@ import type {
   WorkspaceChecklistItem,
   WorkspaceColumnId,
 } from "@/types/workspace";
-import { WORKSPACE_COLUMNS } from "@/types/workspace";
 
-const PRIORITY_OPTIONS: { value: TorPriority; label: string }[] = [
-  { value: "HIGH", label: "High" },
-  { value: "MEDIUM", label: "Medium" },
-  { value: "LOW", label: "Low" },
-];
+const COLUMN_KEYS: Record<WorkspaceColumnId, string> = {
+  bookmark: "workspace.columnBookmark",
+  todo: "workspace.columnTodo",
+  "in-progress": "workspace.columnInProgress",
+  done: "workspace.columnDone",
+};
 
 type WorkspaceCardDetailDialogProps = {
   open: boolean;
@@ -88,14 +90,30 @@ function WorkspaceCardDetailBody({
   onUpdateCard,
   onClose,
 }: WorkspaceCardDetailBodyProps) {
+  const { locale, t } = useLocale();
   const [draft, setDraft] = useState(card);
   const [checklist, setChecklist] = useState<WorkspaceChecklistItem[]>(() =>
-    createDefaultChecklist(card.torId),
+    createDefaultChecklist(card.torId, t),
   );
   const [newChecklistLabel, setNewChecklistLabel] = useState("");
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [newAssigneeName, setNewAssigneeName] = useState("");
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+
+  const title = pickLocalized(draft.title, draft.titleTh, locale);
+  const department = pickLocalized(draft.department, draft.departmentTh, locale);
+  const daysLeftLabels = {
+    dueToday: t("workspace.dueToday"),
+    oneDayLeft: t("workspace.oneDayLeft"),
+    daysLeft: t("workspace.daysLeft"),
+  };
+
+  const columnOptions: WorkspaceColumnId[] = [
+    "bookmark",
+    "todo",
+    "in-progress",
+    "done",
+  ];
 
   const assignees = useMemo(() => {
     return draft.assigneeIds
@@ -169,11 +187,11 @@ function WorkspaceCardDetailBody({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-2 pr-2">
             <DialogTitle className="text-lg font-semibold leading-snug text-foreground">
-              {draft.title}
+              {title}
             </DialogTitle>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <FolderOpen className="size-4 shrink-0" />
-              {draft.department}
+              {department}
             </p>
           </div>
 
@@ -181,11 +199,11 @@ function WorkspaceCardDetailBody({
             <div className="hidden space-y-1 text-right text-xs text-muted-foreground sm:block">
               <p className="flex items-center justify-end gap-1.5">
                 <Banknote className="size-3.5 text-primary" />
-                {formatThb(draft.budgetBaht)}
+                {formatThb(draft.budgetBaht, locale)}
               </p>
               <p className="flex items-center justify-end gap-1.5">
                 <Clock3 className="size-3.5 text-primary" />
-                {formatDaysLeft(draft.deadline)}
+                {formatDaysLeft(draft.deadline, locale, daysLeftLabels)}
               </p>
             </div>
             <Button
@@ -193,7 +211,7 @@ function WorkspaceCardDetailBody({
               size="icon-sm"
               className="size-8 shrink-0 text-muted-foreground"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("workspace.cardDetail.close")}
             >
               <X className="size-4" />
             </Button>
@@ -203,11 +221,11 @@ function WorkspaceCardDetailBody({
         <div className="mt-4 space-y-1 text-xs text-muted-foreground sm:hidden">
           <p className="flex items-center gap-1.5">
             <Banknote className="size-3.5 text-primary" />
-            {formatThb(draft.budgetBaht)}
+            {formatThb(draft.budgetBaht, locale)}
           </p>
           <p className="flex items-center gap-1.5">
             <Clock3 className="size-3.5 text-primary" />
-            {formatDaysLeft(draft.deadline)}
+            {formatDaysLeft(draft.deadline, locale, daysLeftLabels)}
           </p>
         </div>
 
@@ -221,14 +239,14 @@ function WorkspaceCardDetailBody({
               className="h-10 rounded-none px-0 after:bg-primary data-active:text-primary"
             >
               <FileText className="size-4" />
-              Details
+              {t("workspace.cardDetail.details")}
             </TabsTrigger>
             <TabsTrigger
               value="checklist"
               className="h-10 rounded-none px-0 after:bg-primary data-active:text-primary"
             >
               <ListChecks className="size-4" />
-              Internal Task Checklist
+              {t("workspace.cardDetail.checklist")}
             </TabsTrigger>
           </TabsList>
 
@@ -238,7 +256,9 @@ function WorkspaceCardDetailBody({
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="workspace-priority">Priority</Label>
+                <Label htmlFor="workspace-priority">
+                  {t("workspace.cardDetail.priority")}
+                </Label>
                 <Select
                   value={draft.priority}
                   onValueChange={(value) => {
@@ -252,17 +272,17 @@ function WorkspaceCardDetailBody({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRIORITY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="HIGH">{t("common.high")}</SelectItem>
+                    <SelectItem value="MEDIUM">{t("common.medium")}</SelectItem>
+                    <SelectItem value="LOW">{t("common.low")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="workspace-status">Status</Label>
+                <Label htmlFor="workspace-status">
+                  {t("workspace.cardDetail.status")}
+                </Label>
                 <Select
                   value={draft.column}
                   onValueChange={(value) => {
@@ -274,9 +294,9 @@ function WorkspaceCardDetailBody({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {WORKSPACE_COLUMNS.map((column) => (
-                      <SelectItem key={column.id} value={column.id}>
-                        {column.label}
+                    {columnOptions.map((columnId) => (
+                      <SelectItem key={columnId} value={columnId}>
+                        {t(COLUMN_KEYS[columnId])}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -285,7 +305,7 @@ function WorkspaceCardDetailBody({
             </div>
 
             <div className="mt-6 space-y-3">
-              <Label>Assignees</Label>
+              <Label>{t("workspace.cardDetail.assignees")}</Label>
 
               <div className="flex flex-wrap gap-2">
                 {assignees.map((member) => (
@@ -299,7 +319,9 @@ function WorkspaceCardDetailBody({
                       type="button"
                       className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
                       onClick={() => removeAssignee(member.id)}
-                      aria-label={`Remove ${member.name}`}
+                      aria-label={t("workspace.cardDetail.removeAssignee", {
+                        name: member.name,
+                      })}
                     >
                       <X className="size-3.5" />
                     </button>
@@ -314,7 +336,7 @@ function WorkspaceCardDetailBody({
                   className="h-10 w-full justify-start text-muted-foreground"
                   onClick={() => setAssigneeMenuOpen((open) => !open)}
                 >
-                  Add assignee
+                  {t("workspace.cardDetail.addAssignee")}
                 </Button>
 
                 {assigneeMenuOpen ? (
@@ -326,7 +348,7 @@ function WorkspaceCardDetailBody({
                         onChange={(event) =>
                           setAssigneeSearch(event.target.value)
                         }
-                        placeholder="Search..."
+                        placeholder={t("workspace.cardDetail.searchPlaceholder")}
                         className="h-9 pl-9"
                       />
                     </div>
@@ -357,7 +379,7 @@ function WorkspaceCardDetailBody({
                         onChange={(event) =>
                           setNewAssigneeName(event.target.value)
                         }
-                        placeholder="Name"
+                        placeholder={t("workspace.cardDetail.namePlaceholder")}
                         className="h-9"
                         onKeyDown={(event) => {
                           if (event.key === "Enter") addCustomAssignee();
@@ -369,7 +391,7 @@ function WorkspaceCardDetailBody({
                         className="h-9 shrink-0"
                         onClick={addCustomAssignee}
                       >
-                        Add people
+                        {t("workspace.cardDetail.addPeople")}
                       </Button>
                     </div>
                   </div>
@@ -386,7 +408,7 @@ function WorkspaceCardDetailBody({
               <Input
                 value={newChecklistLabel}
                 onChange={(event) => setNewChecklistLabel(event.target.value)}
-                placeholder="Checklist"
+                placeholder={t("workspace.cardDetail.checklistPlaceholder")}
                 className="h-10"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") addChecklistItem();
@@ -398,7 +420,7 @@ function WorkspaceCardDetailBody({
                 className="h-10 shrink-0"
                 onClick={addChecklistItem}
               >
-                Add Checklist
+                {t("workspace.cardDetail.addChecklist")}
               </Button>
             </div>
 
@@ -431,7 +453,7 @@ function WorkspaceCardDetailBody({
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => workspaceActions.seeFullTor(draft.torId)}
               >
-                See full TOR →
+                {t("workspace.cardDetail.seeFullTor")}
               </Button>
             </div>
           </TabsContent>

@@ -6,6 +6,8 @@ import { ChevronsUpDown, LogOut } from "lucide-react"
 
 import { adminLogoutAction } from "@/actions/admin-auth"
 import { adminNavItems } from "@/components/admin/admin-nav"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -37,6 +39,7 @@ type AdminAppSidebarProps = {
 
 export function AdminAppSidebar({ user }: AdminAppSidebarProps) {
   const pathname = usePathname()
+  const { t } = useLocale()
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -57,9 +60,12 @@ export function AdminAppSidebar({ user }: AdminAppSidebarProps) {
             className="h-8 w-8 object-contain"
           />
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            TORMatch Admin Panel
+            TORMatch {t("admin.settings")}
           </span>
         </Link>
+        <div className="mt-3 px-1 group-data-[collapsible=icon]:hidden">
+          <LanguageSwitcher variant="light" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -74,12 +80,12 @@ export function AdminAppSidebar({ user }: AdminAppSidebarProps) {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      tooltip={item.title}
+                      tooltip={t(item.titleKey)}
                       render={<Link href={item.href} />}
                       className="data-active:bg-primary/15 data-active:text-primary data-active:hover:bg-primary/20 data-active:hover:text-primary"
                     >
                       <item.icon />
-                      <span>{item.title}</span>
+                      <span>{t(item.titleKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
@@ -124,7 +130,7 @@ export function AdminAppSidebar({ user }: AdminAppSidebarProps) {
                   }}
                 >
                   <LogOut />
-                  Log out
+                  {t("header.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

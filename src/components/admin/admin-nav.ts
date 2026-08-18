@@ -2,33 +2,33 @@ import { Building2, /* CreditCard, */ LayoutDashboard, ScanSearch, Settings, Fil
 
 export const adminNavItems = [
   {
-    title: "Overview",
+    titleKey: "admin.overview",
     href: "/admin/overview",
     icon: LayoutDashboard,
   },
   {
-    title: "Scraper & OCR",
+    titleKey: "admin.scraperOcr",
     href: "/admin/scraper-ocr",
     icon: ScanSearch,
   },
   {
-    title: "TOR Review",
+    titleKey: "admin.torReview",
     href: "/admin/tor-review",
     icon: FileSearch,
   },
   {
-    title: "Companies",
+    titleKey: "admin.companies",
     href: "/admin/companies",
     icon: Building2,
   },
   // Subscriptions / plans (Pro, Enterprise, MRR) — hidden for now
   // {
-  //   title: "Subscriptions",
+  //   titleKey: "admin.subscriptions",
   //   href: "/admin/subscriptions",
   //   icon: CreditCard,
   // },
   {
-    title: "System Settings",
+    titleKey: "admin.settings",
     href: "/admin/settings",
     icon: Settings,
   },

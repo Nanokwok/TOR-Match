@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 import { AuthShell } from "@/components/auth/auth-shell"
 import { GoogleAuthButton } from "@/components/auth/google-auth-button"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ import { loginWithEmailAction, loginWithGoogleAction } from "@/actions/auth"
 
 export function LoginForm() {
   const router = useRouter()
+  const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(true)
@@ -51,28 +53,28 @@ export function LoginForm() {
       <div className="space-y-8">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-[#0088C9]">
-            Log In
+            {t("auth.loginTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Welcome back. Let me help your work!
+            {t("auth.loginSubtitle")}
           </p>
         </div>
 
         <div className="space-y-5">
           <GoogleAuthButton
-            label="Login with Google"
+            label={t("auth.loginGoogle")}
             onClick={handleGoogleLogin}
           />
 
           <div className="relative flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("common.or")}</span>
             <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="login-email">Email</Label>
+              <Label htmlFor="login-email">{t("common.email")}</Label>
               <Input
                 id="login-email"
                 type="email"
@@ -86,7 +88,7 @@ export function LoginForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="login-password">Password</Label>
+              <Label htmlFor="login-password">{t("common.password")}</Label>
               <Input
                 id="login-password"
                 type="password"
@@ -104,7 +106,7 @@ export function LoginForm() {
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked === true)}
               />
-              Remember me
+              {t("auth.rememberMe")}
             </label>
 
             {error ? (
@@ -116,18 +118,18 @@ export function LoginForm() {
               disabled={isPending}
               className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isPending ? "Signing in..." : "Log In"}
+              {isPending ? t("auth.signingIn") : t("auth.loginButton")}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account yet?{" "}
+          {t("auth.noAccount")}{" "}
           <Link
             href="/signup"
             className="font-medium text-[#0088C9] underline-offset-4 hover:underline"
           >
-            Create one now
+            {t("auth.createAccount")}
           </Link>
         </p>
       </div>

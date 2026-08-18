@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition, type ReactNode } from "rea
 import { Search, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -23,6 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  deadlinePresetLabel,
+  durationPresetLabel,
+  fiscalYearLabel,
+  procurementMethodLabel,
+  projectScaleLabel,
+} from "@/lib/browse-labels"
 import {
   cloneDetailFilters,
   DEADLINE_PRESET_OPTIONS,
@@ -58,6 +66,7 @@ export function BrowseMoreFiltersDialog({
   localOffices,
   onApply,
 }: BrowseMoreFiltersDialogProps) {
+  const { t } = useLocale()
   const [draft, setDraft] = useState(() => cloneDetailFilters(value))
   const [officeQuery, setOfficeQuery] = useState("")
   const [previewTotal, setPreviewTotal] = useState<number | null>(null)
@@ -138,8 +147,12 @@ export function BrowseMoreFiltersDialog({
 
   const resultLabel =
     previewTotal == null
-      ? "Apply Filters"
-      : `Apply Filters (${previewTotal} Result${previewTotal === 1 ? "" : "s"} Found)`
+      ? t("browse.moreFiltersModal.applyFilters")
+      : previewTotal === 1
+        ? t("browse.moreFiltersModal.applyFiltersCount", { count: previewTotal })
+        : t("browse.moreFiltersModal.applyFiltersCountPlural", {
+            count: previewTotal,
+          })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,48 +161,47 @@ export function BrowseMoreFiltersDialog({
         showCloseButton
       >
         <DialogHeader className="border-b border-border px-5 py-4">
-          <DialogTitle>More Filters</DialogTitle>
+          <DialogTitle>{t("browse.moreFiltersModal.title")}</DialogTitle>
           <DialogDescription>
-            Refine TOR results by scale, duration, budget, method, deadline, and
-            local office.
+            {t("browse.moreFiltersModal.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5">
-          <FilterSection title="Project Scale">
+          <FilterSection title={t("browse.moreFiltersModal.projectScale")}>
             <div className="grid gap-2 sm:grid-cols-2">
               {PROJECT_SCALE_OPTIONS.map((option) => (
                 <CheckboxRow
                   key={option.value}
                   checked={draft.projectScales.includes(option.value)}
-                  label={option.label}
+                  label={projectScaleLabel(option.value, t)}
                   onCheckedChange={() => toggleScale(option.value)}
                 />
               ))}
             </div>
           </FilterSection>
 
-          <FilterSection title="Project Duration">
+          <FilterSection title={t("browse.moreFiltersModal.projectDuration")}>
             <div className="grid gap-2 sm:grid-cols-2">
               {DURATION_PRESET_OPTIONS.map((option) => (
                 <CheckboxRow
                   key={option.value}
                   checked={draft.durationPresets.includes(option.value)}
-                  label={option.label}
+                  label={durationPresetLabel(option.value, t)}
                   onCheckedChange={() => toggleDuration(option.value)}
                 />
               ))}
             </div>
           </FilterSection>
 
-          <FilterSection title="Exact Budget Range (THB)">
+          <FilterSection title={t("browse.moreFiltersModal.exactBudget")}>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="budget-min">Min</Label>
+                <Label htmlFor="budget-min">{t("browse.moreFiltersModal.min")}</Label>
                 <Input
                   id="budget-min"
                   inputMode="numeric"
-                  placeholder="e.g. 1000000"
+                  placeholder={t("browse.moreFiltersModal.budgetMinPlaceholder")}
                   value={draft.budgetMinThb}
                   onChange={(event) =>
                     setDraft((current) => ({
@@ -201,11 +213,11 @@ export function BrowseMoreFiltersDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="budget-max">Max</Label>
+                <Label htmlFor="budget-max">{t("browse.moreFiltersModal.max")}</Label>
                 <Input
                   id="budget-max"
                   inputMode="numeric"
-                  placeholder="e.g. 10000000"
+                  placeholder={t("browse.moreFiltersModal.budgetMaxPlaceholder")}
                   value={draft.budgetMaxThb}
                   onChange={(event) =>
                     setDraft((current) => ({
@@ -219,20 +231,20 @@ export function BrowseMoreFiltersDialog({
             </div>
           </FilterSection>
 
-          <FilterSection title="Procurement Method">
+          <FilterSection title={t("browse.moreFiltersModal.procurementMethod")}>
             <div className="grid gap-2 sm:grid-cols-2">
               {PROCUREMENT_METHOD_OPTIONS.map((option) => (
                 <CheckboxRow
                   key={option.value}
                   checked={draft.procurementMethods.includes(option.value)}
-                  label={option.label}
+                  label={procurementMethodLabel(option.value, t)}
                   onCheckedChange={() => toggleMethod(option.value)}
                 />
               ))}
             </div>
           </FilterSection>
 
-          <FilterSection title="Submission Deadline">
+          <FilterSection title={t("browse.moreFiltersModal.submissionDeadline")}>
             <div className="space-y-3">
               <div className="grid gap-2 sm:grid-cols-2">
                 {DEADLINE_PRESET_OPTIONS.map((option) => (
@@ -252,7 +264,7 @@ export function BrowseMoreFiltersDialog({
                       }))
                     }
                   >
-                    {option.label}
+                    {deadlinePresetLabel(option.value, t)}
                   </button>
                 ))}
               </div>
@@ -260,7 +272,9 @@ export function BrowseMoreFiltersDialog({
               {draft.deadlinePreset === "custom" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="deadline-from">From</Label>
+                    <Label htmlFor="deadline-from">
+                      {t("browse.moreFiltersModal.from")}
+                    </Label>
                     <Input
                       id="deadline-from"
                       type="date"
@@ -275,7 +289,9 @@ export function BrowseMoreFiltersDialog({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="deadline-to">To</Label>
+                    <Label htmlFor="deadline-to">
+                      {t("browse.moreFiltersModal.to")}
+                    </Label>
                     <Input
                       id="deadline-to"
                       type="date"
@@ -294,7 +310,7 @@ export function BrowseMoreFiltersDialog({
             </div>
           </FilterSection>
 
-          <FilterSection title="Fiscal Year / Announcement Date">
+          <FilterSection title={t("browse.moreFiltersModal.fiscalYear")}>
             <Select
               value={draft.fiscalYear}
               onValueChange={(next) => {
@@ -303,26 +319,30 @@ export function BrowseMoreFiltersDialog({
               }}
             >
               <SelectTrigger className="h-10 w-full data-[size=default]:h-10">
-                <SelectValue placeholder="Select fiscal year" />
+                <SelectValue
+                  placeholder={t("browse.moreFiltersModal.fiscalYearPlaceholder")}
+                >
+                  {fiscalYearLabel(draft.fiscalYear, t)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {FISCAL_YEAR_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {fiscalYearLabel(option.value, t)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </FilterSection>
 
-          <FilterSection title="District / Local Office">
+          <FilterSection title={t("browse.moreFiltersModal.localOffice")}>
             <div className="space-y-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={officeQuery}
                   onChange={(event) => setOfficeQuery(event.target.value)}
-                  placeholder="Search districts or local offices..."
+                  placeholder={t("browse.moreFiltersModal.officeSearchPlaceholder")}
                   className="h-10 pl-9"
                 />
               </div>
@@ -346,7 +366,7 @@ export function BrowseMoreFiltersDialog({
               <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
                 {filteredOffices.length === 0 ? (
                   <p className="px-2 py-3 text-sm text-muted-foreground">
-                    No offices match your search.
+                    {t("browse.moreFiltersModal.noOfficesMatch")}
                   </p>
                 ) : (
                   filteredOffices.map((office) => (
@@ -369,11 +389,11 @@ export function BrowseMoreFiltersDialog({
             className="self-start text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             onClick={handleReset}
           >
-            Reset / Clear All
+            {t("browse.moreFiltersModal.resetClearAll")}
           </button>
           <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -381,7 +401,9 @@ export function BrowseMoreFiltersDialog({
               disabled={isCounting && previewTotal == null}
               onClick={handleApply}
             >
-              {isCounting && previewTotal == null ? "Counting..." : resultLabel}
+              {isCounting && previewTotal == null
+                ? t("browse.moreFiltersModal.counting")
+                : resultLabel}
             </Button>
           </div>
         </DialogFooter>

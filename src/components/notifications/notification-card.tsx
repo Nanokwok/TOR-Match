@@ -4,6 +4,7 @@ import { AlertTriangle, Bell, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type {
@@ -42,6 +43,7 @@ export function NotificationCard({
   onMarkRead,
 }: NotificationCardProps) {
   const router = useRouter();
+  const { locale, t } = useLocale();
   const category = CATEGORY_STYLES[notification.category];
   const Icon = category.icon;
   const actionLabel = notification.actionLabel;
@@ -84,7 +86,7 @@ export function NotificationCard({
           </span>
           {notification.autoVerifiedMatch ? (
             <Badge className="h-5 rounded-md border-transparent bg-emerald-100 px-1.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
-              Auto-verified match
+              {t("notifications.autoVerified")}
             </Badge>
           ) : null}
         </span>
@@ -94,7 +96,7 @@ export function NotificationCard({
         </span>
 
         <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatRelativeTime(notification.createdAt)}</span>
+          <span>{formatRelativeTime(notification.createdAt, locale)}</span>
           {notification.link ? (
             <span className="font-medium text-primary">{actionLabel}</span>
           ) : null}

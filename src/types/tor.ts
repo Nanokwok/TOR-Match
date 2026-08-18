@@ -29,6 +29,7 @@ export type TorPaymentMilestone = {
   percent: number
   amountBaht: number
   deliverable: string
+  deliverableTh?: string
 }
 
 export type TorFinancials = {
@@ -41,7 +42,9 @@ export type TorFinancials = {
 export type TorQualificationRequirement = {
   id: string
   requirement: string
+  requirementTh?: string
   torCriteria: string
+  torCriteriaTh?: string
   /** When true, eligibility can be checked against the company profile. */
   autoCheckable: boolean
 }
@@ -50,12 +53,16 @@ export type Tor = {
   id: string
   announcementNo: string
   title: string
+  titleTh?: string
   department: string
+  departmentTh?: string
   localOffice: string
+  localOfficeTh?: string
   budgetBaht: number
   projectScale: TorProjectScale
   durationDays: number
   durationLabel: string
+  durationLabelTh?: string
   method: TorProcurementMethod
   status: TorProcurementStatus
   eligible: boolean
@@ -64,7 +71,9 @@ export type Tor = {
   announcementDate: string
   sourceUrl: string
   summary: string
+  summaryTh?: string
   deliverables: string[]
+  deliverablesTh?: string[]
   techTags: string[]
   listTags: string[]
   financials: TorFinancials

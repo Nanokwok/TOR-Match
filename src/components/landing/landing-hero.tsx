@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useLocale } from "@/components/i18n/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Highlighter } from "@/components/ui/highlighter";
 import { PulsatingButton } from "@/components/ui/pulsating-button";
+import { cn } from "@/lib/utils";
 
 export function LandingHero() {
   const router = useRouter();
+  const { locale, t } = useLocale();
+  const scriptClass =
+    locale === "th" ? "font-script-th" : "font-script";
 
   return (
     <section className="relative overflow-hidden px-6 pt-20 pb-16 md:px-8 md:pt-28 md:pb-24">
@@ -32,26 +37,35 @@ export function LandingHero() {
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
         <h1 className="max-w-3xl text-4xl leading-[1.2] font-medium tracking-tight text-foreground sm:text-5xl md:text-[3.25rem]">
-          Built for tech agencies to
+          {t("landing.headlinePrefix")}
           <br />
           <Highlighter action="underline" color="#0088C9">
-            <span className="font-script text-5xl text-primary sm:text-6xl md:text-7xl">
-              Find
+            <span
+              className={cn(
+                scriptClass,
+                "text-5xl text-primary sm:text-6xl md:text-7xl"
+              )}
+            >
+              {t("landing.find")}
             </span>
           </Highlighter>{" "}
-          and{" "}
+          {t("landing.and")}{" "}
           <Highlighter action="highlight" color="rgba(135, 206, 250, 0.5)">
-            <span className="font-script text-5xl text-foreground sm:text-6xl md:text-7xl">
-              Match
+            <span
+              className={cn(
+                scriptClass,
+                "text-5xl text-foreground sm:text-6xl md:text-7xl"
+              )}
+            >
+              {t("landing.match")}
             </span>
           </Highlighter>
           <br />
-          Your BMA government projects
+          {t("landing.headlineSuffix")}
         </h1>
 
         <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-          Extract key TOR criteria, automate eligibility matching before
-          submitting your bid
+          {t("landing.subtitle")}
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
@@ -62,7 +76,7 @@ export function LandingHero() {
             distance="4px"
             onClick={() => router.push("/browse")}
           >
-            Start Searching for Free
+            {t("landing.ctaSearch")}
           </PulsatingButton>
           <Button
             variant="outline"
@@ -71,7 +85,7 @@ export function LandingHero() {
             render={<Link href="/eligibility" />}
             className="h-11 min-w-[220px] border-border bg-card text-sm font-medium text-foreground hover:bg-muted"
           >
-            Check Company Eligibility
+            {t("landing.ctaEligibility")}
           </Button>
         </div>
       </div>

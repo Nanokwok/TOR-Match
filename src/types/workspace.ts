@@ -12,7 +12,9 @@ export type WorkspaceCard = {
   torId: string
   announcementNo: string
   title: string
+  titleTh?: string
   department: string
+  departmentTh?: string
   budgetBaht: number
   deadline: string
   priority: TorPriority

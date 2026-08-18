@@ -13,6 +13,7 @@ import { Plus, X } from "lucide-react"
 import { saveCompanySetupProfileAction } from "@/actions/company-setup"
 import { useCompanySetupDemoFill } from "@/components/company-setup/company-setup-demo-fill"
 import { CompanySetupStepper } from "@/components/company-setup/company-setup-stepper"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -33,7 +34,6 @@ import {
   createDefaultCompanySetupProfile,
   createEmptyPastProject,
   SPECIALIZATION_OPTIONS,
-  STEP_DESCRIPTIONS,
 } from "@/lib/company-setup"
 import { cn } from "@/lib/utils"
 import type {
@@ -56,6 +56,7 @@ export function CompanySetupWizard({
   mode = "setup",
 }: CompanySetupWizardProps) {
   const router = useRouter()
+  const { t } = useLocale()
   const isEdit = mode === "edit"
   const [stepIndex, setStepIndex] = useState(0)
   const [profile, setProfile] = useState<CompanySetupProfile>(
@@ -88,17 +89,17 @@ export function CompanySetupWizard({
     switch (stepId) {
       case "general":
         if (!profile.companyNameThai.trim()) {
-          return "Company Name (Thai) is required."
+          return t("companySetup.validation.companyNameThaiRequired")
         }
-        if (!profile.companySize) return "Company Size is required."
-        if (!profile.contactEmail.trim()) return "Contact Email is required."
+        if (!profile.companySize) return t("companySetup.validation.companySizeRequired")
+        if (!profile.contactEmail.trim()) return t("companySetup.validation.contactEmailRequired")
         return null
       case "financial":
         if (!profile.registeredCapitalThb.trim()) {
-          return "Paid-up Registered Capital is required."
+          return t("companySetup.validation.registeredCapitalRequired")
         }
         if (!profile.notBlacklisted) {
-          return "Please confirm the blacklist declaration."
+          return t("companySetup.validation.blacklistRequired")
         }
         return null
       case "certifications": {
@@ -109,7 +110,7 @@ export function CompanySetupWizard({
             !item.certificateNumber.trim() || !item.expirationDate.trim()
         )
         if (incomplete) {
-          return "Fill certificate number and expiration for selected certifications."
+          return t("companySetup.validation.certificationIncomplete")
         }
         return null
       }
@@ -117,7 +118,7 @@ export function CompanySetupWizard({
         return null
       case "capabilities":
         if (profile.specializations.length === 0) {
-          return "Select at least one specialization."
+          return t("companySetup.validation.specializationRequired")
         }
         return null
       default:
@@ -156,7 +157,9 @@ export function CompanySetupWizard({
   }
 
   const nextLabel =
-    isLastStep && isEdit ? "Save Changes" : currentStep.nextLabel
+    isLastStep && isEdit
+      ? t("companySetup.saveChanges")
+      : t(`companySetup.steps.${currentStep.id}.nextLabel`)
 
   function addTechTag(raw: string) {
     const tag = raw.trim()
@@ -205,12 +208,10 @@ export function CompanySetupWizard({
       <section className="mx-auto w-full max-w-4xl">
         <div className="mb-8 space-y-2 text-center">
           <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
-            {currentStep.label === "Capabilities"
-              ? "Capabilities & Tech Stack"
-              : currentStep.label}
+            {t(`companySetup.steps.${currentStep.id}.title`)}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {STEP_DESCRIPTIONS[currentStep.id]}
+            {t(`companySetup.steps.${currentStep.id}.description`)}
           </p>
         </div>
 
@@ -261,7 +262,7 @@ export function CompanySetupWizard({
               className="h-10 min-w-[96px] bg-muted text-foreground hover:bg-muted/80"
               onClick={handleCancel}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           ) : (
             <Button
@@ -270,7 +271,7 @@ export function CompanySetupWizard({
               className="h-10 min-w-[96px] bg-muted text-foreground hover:bg-muted/80"
               onClick={handleBack}
             >
-              Back
+              {t("common.back")}
             </Button>
           )}
           <Button
@@ -279,7 +280,7 @@ export function CompanySetupWizard({
             disabled={isSaving}
             onClick={handleNext}
           >
-            {isSaving ? "Saving..." : nextLabel}
+            {isSaving ? t("companySetup.saving") : nextLabel}
           </Button>
         </div>
       </section>
@@ -295,9 +296,11 @@ type StepProps = {
 }
 
 function GeneralStep({ profile, onChange }: StepProps) {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-5">
-      <Field label="Company Name (Thai)" required htmlFor="company-name-thai">
+      <Field label={t("companySetup.fields.companyNameThai")} required htmlFor="company-name-thai">
         <Input
           id="company-name-thai"
           value={profile.companyNameThai}
@@ -307,12 +310,12 @@ function GeneralStep({ profile, onChange }: StepProps) {
               companyNameThai: event.target.value,
             }))
           }
-          placeholder="e.g. บริษัท เอ็กซ์เทค จำกัด"
+          placeholder={t("companySetup.placeholders.companyNameThai")}
           className="h-11 rounded-md bg-background"
         />
       </Field>
 
-      <Field label="Company Name (English)" htmlFor="company-name-english">
+      <Field label={t("companySetup.fields.companyNameEnglish")} htmlFor="company-name-english">
         <Input
           id="company-name-english"
           value={profile.companyNameEnglish}
@@ -322,13 +325,13 @@ function GeneralStep({ profile, onChange }: StepProps) {
               companyNameEnglish: event.target.value,
             }))
           }
-          placeholder="e.g. ExTech Co., Ltd."
+          placeholder={t("companySetup.placeholders.companyNameEnglish")}
           className="h-11 rounded-md bg-background"
         />
       </Field>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Corporate Tax ID (13 Digits)" htmlFor="tax-id">
+        <Field label={t("companySetup.fields.taxId")} htmlFor="tax-id">
           <Input
             id="tax-id"
             value={profile.taxId}
@@ -338,13 +341,13 @@ function GeneralStep({ profile, onChange }: StepProps) {
                 taxId: event.target.value.replace(/\D/g, "").slice(0, 13),
               }))
             }
-            placeholder="0105565012345"
+            placeholder={t("companySetup.placeholders.taxId")}
             inputMode="numeric"
             className="h-11 rounded-md bg-background"
           />
         </Field>
 
-        <Field label="Company Size" required htmlFor="company-size">
+        <Field label={t("companySetup.fields.companySize")} required htmlFor="company-size">
           <Select
             value={profile.companySize || null}
             onValueChange={(value) => {
@@ -359,12 +362,12 @@ function GeneralStep({ profile, onChange }: StepProps) {
               id="company-size"
               className="h-11 w-full rounded-md bg-background data-[size=default]:h-11"
             >
-              <SelectValue placeholder="Select Size" />
+              <SelectValue placeholder={t("companySetup.placeholders.selectSize")} />
             </SelectTrigger>
             <SelectContent>
               {COMPANY_SIZE_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`companySetup.companySize.${option.value}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -373,7 +376,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Contact Email" required htmlFor="contact-email">
+        <Field label={t("companySetup.fields.contactEmail")} required htmlFor="contact-email">
           <Input
             id="contact-email"
             type="email"
@@ -384,12 +387,12 @@ function GeneralStep({ profile, onChange }: StepProps) {
                 contactEmail: event.target.value,
               }))
             }
-            placeholder="bidding@company.com"
+            placeholder={t("companySetup.placeholders.contactEmail")}
             className="h-11 rounded-md bg-background"
           />
         </Field>
 
-        <Field label="Phone" htmlFor="phone">
+        <Field label={t("companySetup.fields.phone")} htmlFor="phone">
           <Input
             id="phone"
             value={profile.phone}
@@ -399,7 +402,7 @@ function GeneralStep({ profile, onChange }: StepProps) {
                 phone: event.target.value,
               }))
             }
-            placeholder="02-123-4567"
+            placeholder={t("companySetup.placeholders.phone")}
             className="h-11 rounded-md bg-background"
           />
         </Field>
@@ -409,10 +412,12 @@ function GeneralStep({ profile, onChange }: StepProps) {
 }
 
 function FinancialStep({ profile, onChange }: StepProps) {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-5">
       <Field
-        label="Paid-up Registered Capital (THB)"
+        label={t("companySetup.fields.registeredCapital")}
         required
         htmlFor="registered-capital"
       >
@@ -426,7 +431,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
                 registeredCapitalThb: event.target.value,
               }))
             }
-            placeholder="e.g. 5,000,000"
+            placeholder={t("companySetup.placeholders.registeredCapital")}
             className="h-10 pr-14"
           />
           <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
@@ -437,14 +442,15 @@ function FinancialStep({ profile, onChange }: StepProps) {
 
       <div className="space-y-2">
         <Label>
-          e-GP Registration Status <span className="text-destructive">*</span>
+          {t("companySetup.fields.egpStatus")}{" "}
+          <span className="text-destructive">*</span>
         </Label>
         <div className="space-y-2">
           {(
             [
-              { value: "registered", label: "Registered" },
-              { value: "in-progress", label: "In Progress" },
-              { value: "not-registered", label: "Not Registered" },
+              { value: "registered", labelKey: "registered" },
+              { value: "in-progress", labelKey: "in-progress" },
+              { value: "not-registered", labelKey: "not-registered" },
             ] as const
           ).map((option) => (
             <label
@@ -463,7 +469,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
                 }
                 className="size-4 accent-primary"
               />
-              {option.label}
+              {t(`companySetup.egpStatus.${option.labelKey}`)}
             </label>
           ))}
         </div>
@@ -480,10 +486,7 @@ function FinancialStep({ profile, onChange }: StepProps) {
           }
           className="mt-0.5"
         />
-        <span>
-          I declare that our company is NOT listed on the Comptroller
-          General&apos;s Department blacklisted registry.
-        </span>
+        <span>{t("companySetup.fields.blacklistDeclaration")}</span>
       </label>
     </div>
   )
@@ -494,6 +497,8 @@ function CertificationsStep({
   onChange,
   onToggle,
 }: StepProps & { onToggle: (id: CertificationId) => void }) {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-3">
       {CERTIFICATION_OPTIONS.map((option) => {
@@ -510,13 +515,13 @@ function CertificationsStep({
                 checked={entry.selected}
                 onCheckedChange={() => onToggle(option.id)}
               />
-              {option.label}
+              {t(`companySetup.certification.${option.id}`)}
             </label>
 
             {entry.selected ? (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Field
-                  label="Certificate Number"
+                  label={t("companySetup.fields.certificateNumber")}
                   required
                   htmlFor={`${option.id}-number`}
                 >
@@ -536,12 +541,12 @@ function CertificationsStep({
                         ),
                       }))
                     }
-                    placeholder="e.g. CERT-2023-889"
+                    placeholder={t("companySetup.placeholders.certificateNumber")}
                     className="h-10"
                   />
                 </Field>
                 <Field
-                  label="Expiration Date"
+                  label={t("companySetup.fields.expirationDate")}
                   required
                   htmlFor={`${option.id}-expiry`}
                 >
@@ -575,6 +580,8 @@ function CertificationsStep({
 }
 
 function PastPerformanceStep({ profile, onChange }: StepProps) {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-6">
       {profile.pastProjects.map((project, index) => (
@@ -582,7 +589,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
           {index > 0 ? (
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-foreground">
-                Past Project {index + 1}
+                {t("companySetup.fields.pastProject", { number: index + 1 })}
               </p>
               <Button
                 type="button"
@@ -598,13 +605,13 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
                   }))
                 }
               >
-                Remove
+                {t("companySetup.actions.remove")}
               </Button>
             </div>
           ) : null}
 
           <Field
-            label="Project / Contract Title"
+            label={t("companySetup.fields.projectTitle")}
             htmlFor={`project-title-${project.id}`}
           >
             <Input
@@ -620,13 +627,13 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
                   ),
                 }))
               }
-              placeholder="e.g. BMA Web Application & Portal Development"
+              placeholder={t("companySetup.placeholders.projectTitle")}
               className="h-10"
             />
           </Field>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Client Sector" htmlFor={`sector-${project.id}`}>
+            <Field label={t("companySetup.fields.clientSector")} htmlFor={`sector-${project.id}`}>
               <Select
                 value={project.clientSector || null}
                 onValueChange={(value) => {
@@ -645,12 +652,12 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
                   id={`sector-${project.id}`}
                   className="h-10 w-full bg-background data-[size=default]:h-10"
                 >
-                  <SelectValue placeholder="Select Sector" />
+                  <SelectValue placeholder={t("companySetup.placeholders.selectSector")} />
                 </SelectTrigger>
                 <SelectContent>
                   {CLIENT_SECTOR_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(`companySetup.clientSector.${option.value}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -658,7 +665,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
             </Field>
 
             <Field
-              label="Contract Value (THB)"
+              label={t("companySetup.fields.contractValue")}
               htmlFor={`value-${project.id}`}
             >
               <Input
@@ -674,13 +681,13 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
                     ),
                   }))
                 }
-                placeholder="e.g. 2,000,000"
+                placeholder={t("companySetup.placeholders.contractValue")}
                 className="h-10"
               />
             </Field>
 
             <Field
-              label="Completion Year"
+              label={t("companySetup.fields.completionYear")}
               htmlFor={`year-${project.id}`}
             >
               <Select
@@ -701,7 +708,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
                   id={`year-${project.id}`}
                   className="h-10 w-full bg-background data-[size=default]:h-10"
                 >
-                  <SelectValue placeholder="Select Year" />
+                  <SelectValue placeholder={t("companySetup.placeholders.selectYear")} />
                 </SelectTrigger>
                 <SelectContent>
                   {COMPLETION_YEAR_OPTIONS.map((option) => (
@@ -728,7 +735,7 @@ function PastPerformanceStep({ profile, onChange }: StepProps) {
         }
       >
         <Plus className="size-4" />
-        Add Another Past Project
+        {t("companySetup.actions.addPastProject")}
       </Button>
     </div>
   )
@@ -751,17 +758,19 @@ function CapabilitiesStep({
   onRemoveTech: (tag: string) => void
   onToggleSpecialization: (id: SpecializationId) => void
 }) {
+  const { t } = useLocale()
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="tech-stack">Primary Tech Stack & Tools</Label>
+        <Label htmlFor="tech-stack">{t("companySetup.fields.techStack")}</Label>
         <Input
           id="tech-stack"
           value={techInput}
           onChange={(event) => onTechInputChange(event.target.value)}
           onKeyDown={onTechKeyDown}
           onBlur={onAddTech}
-          placeholder="Type technology (e.g. React, Next.js, OCR) and press Enter..."
+          placeholder={t("companySetup.placeholders.techStack")}
           className="h-10"
         />
         {profile.techStack.length > 0 ? (
@@ -774,7 +783,7 @@ function CapabilitiesStep({
                 {tag}
                 <button
                   type="button"
-                  aria-label={`Remove ${tag}`}
+                  aria-label={t("companySetup.actions.removeTech", { tag })}
                   className="rounded-full p-0.5 hover:bg-primary/10"
                   onClick={() => onRemoveTech(tag)}
                 >
@@ -787,7 +796,7 @@ function CapabilitiesStep({
       </div>
 
       <div className="space-y-2">
-        <Label>Core Specialization Categories</Label>
+        <Label>{t("companySetup.fields.specializations")}</Label>
         <div className="space-y-2">
           {SPECIALIZATION_OPTIONS.map((option) => {
             const selected = profile.specializations.includes(option.id)
@@ -804,7 +813,7 @@ function CapabilitiesStep({
                   onCheckedChange={() => onToggleSpecialization(option.id)}
                 />
                 <span className="font-medium text-foreground">
-                  {option.label}
+                  {t(`companySetup.specialization.${option.id}`)}
                 </span>
               </label>
             )

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Bell, ChevronRight, LogOut, Monitor } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { browseActions } from "@/lib/browse-actions"
 import { cn } from "@/lib/utils"
@@ -11,20 +12,21 @@ import { cn } from "@/lib/utils"
 const SETTINGS_LINKS = [
   {
     href: "/settings/notifications",
-    title: "Notification Settings",
-    description: "Control in-app and email alerts, digests, and event preferences.",
+    titleKey: "settings.notificationsTitle",
+    descriptionKey: "settings.notificationsDesc",
     icon: Bell,
   },
   {
     href: "/settings/appearance",
-    title: "Appearance & Display",
-    description: "Adjust theme, density, and how content is shown across TOR Match.",
+    titleKey: "settings.appearanceTitle",
+    descriptionKey: "settings.appearanceDesc",
     icon: Monitor,
   },
 ] as const
 
 export function SettingsHubView() {
   const router = useRouter()
+  const { t } = useLocale()
 
   function handleLogout() {
     browseActions.logout()
@@ -34,9 +36,9 @@ export function SettingsHubView() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("settings.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your account preferences and session.
+          {t("settings.subtitle")}
         </p>
       </header>
 
@@ -58,10 +60,10 @@ export function SettingsHubView() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-foreground">
-                  {item.title}
+                  {t(item.titleKey)}
                 </span>
                 <span className="mt-0.5 block text-sm text-muted-foreground">
-                  {item.description}
+                  {t(item.descriptionKey)}
                 </span>
               </span>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -73,9 +75,11 @@ export function SettingsHubView() {
       <section className="overflow-hidden rounded-xl border border-border bg-card p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-foreground">Log Out</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("settings.logoutTitle")}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Securely end your current session on this device.
+              {t("settings.logoutDesc")}
             </p>
           </div>
           <Button
@@ -85,7 +89,7 @@ export function SettingsHubView() {
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
-            Sign Out
+            {t("settings.signOut")}
           </Button>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import type { CompanyProfile, Tor } from "@/types/tor";
+import { applyTorTranslations } from "@/server/db/mock/tor-translations";
 
 function milestonesForBudget(totalBudgetBaht: number) {
   const schedule = [
@@ -652,7 +653,7 @@ export function getMockTors(): Tor[] {
       },
       qualificationRequirements: defaultQualifications(2_000_000, 1_500_000),
     },
-  ])
+  ]).map(applyTorTranslations)
 }
 
 /**

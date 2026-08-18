@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Settings } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import type { TorQualificationCheck } from "@/types/tor"
 import { cn } from "@/lib/utils"
@@ -36,11 +37,12 @@ function ProfileCell({
   showSetupPrompt?: boolean
 }) {
   const router = useRouter()
+  const { t } = useLocale()
 
   if (!row.autoCheckable) {
     return (
       <span className="text-sm text-muted-foreground italic">
-        Self-assessment required
+        {t("browse.qualificationPanel.selfAssessment")}
       </span>
     )
   }
@@ -54,14 +56,14 @@ function ProfileCell({
       <div className="flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg bg-muted/70 px-4 py-6 text-center">
         <Settings className="size-7 text-muted-foreground" />
         <p className="max-w-[220px] text-sm text-muted-foreground">
-          Set up your company profile to automatically verify eligibility
+          {t("browse.qualificationPanel.setupPrompt")}
         </p>
         <Button
           variant="link"
           className="h-auto p-0 text-primary"
           onClick={() => router.push("/company-profile")}
         >
-          Company Setup →
+          {t("browse.qualificationPanel.companySetup")}
         </Button>
       </div>
     )
@@ -110,6 +112,7 @@ function RequirementRows({
 }
 
 export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
+  const { t } = useLocale()
   const autoRows = check.rows.filter((row) => row.autoCheckable)
   const manualRows = check.rows.filter((row) => !row.autoCheckable)
 
@@ -118,15 +121,23 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
       <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="bg-primary text-primary-foreground">
-            <th className="px-4 py-3 font-medium">Qualification Requirement</th>
-            <th className="px-4 py-3 font-medium">TOR Minimum Criteria</th>
-            <th className="px-4 py-3 font-medium">Your Company Profile</th>
+            <th className="px-4 py-3 font-medium">
+              {t("browse.qualificationPanel.requirement")}
+            </th>
+            <th className="px-4 py-3 font-medium">
+              {t("browse.qualificationPanel.torCriteria")}
+            </th>
+            <th className="px-4 py-3 font-medium">
+              {t("browse.qualificationPanel.companyProfile")}
+            </th>
           </tr>
         </thead>
         <tbody>
           {autoRows.length > 0 ? (
             <>
-              <SectionHeaderRow label="Automatically verified" />
+              <SectionHeaderRow
+                label={t("browse.qualificationPanel.autoVerified")}
+              />
               <RequirementRows
                 rows={autoRows}
                 profileSetup={check.profileSetup}
@@ -137,7 +148,9 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
 
           {manualRows.length > 0 ? (
             <>
-              <SectionHeaderRow label="Manual review required" />
+              <SectionHeaderRow
+                label={t("browse.qualificationPanel.manualReview")}
+              />
               <RequirementRows
                 rows={manualRows}
                 profileSetup={check.profileSetup}

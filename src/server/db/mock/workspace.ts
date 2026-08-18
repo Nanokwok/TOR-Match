@@ -9,12 +9,58 @@ const DEPARTMENTS: Record<string, string> = {
   "BMA-EDD": "Education Department (EDD)",
 }
 
+const DEPARTMENTS_TH: Record<string, string> = {
+  "BMA-SED": "สำนักการวางแผนและประเมินผล (SED)",
+  "BMA-ENV": "สำนักสิ่งแวดล้อม (ENV)",
+  "BMA-ITD": "สำนักเทคโนโลยีสารสนเทศ (ITD)",
+  "BMA-PHD": "สำนักการแพทย์ (PHD)",
+  "BMA-FIN": "สำนักการคลัง (FIN)",
+  "BMA-EDD": "สำนักการศึกษา (EDD)",
+}
+
+const WORKSPACE_TITLE_TH: Record<string, string> = {
+  "Smart Drainage & Flood Early Warning System":
+    "ระบบระบายน้ำอัจฉริยะและเตือนภัยน้ำท่วมล่วงหน้า",
+  "Smart School Management System for BMA Schools":
+    "ระบบจัดการโรงเรียนอัจฉริยะสำหรับโรงเรียน กทม.",
+  "AI-Powered Traffic Monitoring & Smart Signal Control":
+    "ระบบติดตามการจราจรด้วย AI และควบคุมสัญญาณอัจฉริยะ",
+  "Digital Health Records Integration System for BMA Hospitals":
+    "ระบบบูรณาการเวชระเบียนดิจิทal สำหรับโรงพยาบาล กทม.",
+  "Smart City Traffic Analytics Platform for Bangkok":
+    "แพลตฟอร์มวิเคราะห์การจราจร Smart City สำหรับกรุงเทพฯ",
+  "Environmental Sensor Dashboard & Alert System":
+    "แดชบอร์ดเซนเซอร์สิ่งแวดล้อมและระบบแจ้งเตือน",
+  "Municipal Tax Payment Mobile Application Redesign":
+    "ออกแบบใหม่แอปมือถือชำระภาษีท้องถิ่น",
+  "E-Learning Content Management System for BMA Schools":
+    "ระบบจัดการเนื้อหา E-Learning สำหรับโรงเรียน กทม.",
+  "BMA Procurement & Budget Tracking Information System":
+    "ระบบติดตามการจัดซื้อจัดจ้างและงบประมาณ กทม.",
+}
+
 function departmentFromAnnouncement(announcementNo: string) {
   const prefix = announcementNo.split("-").slice(0, 2).join("-")
   return (
     DEPARTMENTS[prefix] ??
     "Strategy and Evaluation Department (SED)"
   )
+}
+
+function departmentThFromAnnouncement(announcementNo: string) {
+  const prefix = announcementNo.split("-").slice(0, 2).join("-")
+  return (
+    DEPARTMENTS_TH[prefix] ??
+    "สำนักการวางแผนและประเมินผล (SED)"
+  )
+}
+
+function localizeWorkspaceCard(card: WorkspaceCard): WorkspaceCard {
+  return {
+    ...card,
+    titleTh: WORKSPACE_TITLE_TH[card.title] ?? card.title,
+    departmentTh: departmentThFromAnnouncement(card.announcementNo),
+  }
 }
 
 const INITIAL_WORKSPACE_CARDS: WorkspaceCard[] = [
@@ -135,7 +181,7 @@ export function getMockTeamMembers(): TeamMember[] {
 }
 
 export function getMockWorkspaceCards(): WorkspaceCard[] {
-  return workspaceCards
+  return workspaceCards.map(localizeWorkspaceCard)
 }
 
 export function setMockWorkspaceCards(cards: WorkspaceCard[]) {

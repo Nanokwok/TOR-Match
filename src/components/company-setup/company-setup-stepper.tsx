@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { COMPANY_SETUP_STEPS } from "@/lib/company-setup"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { cn } from "@/lib/utils"
 import type { CompanySetupStepId } from "@/types/company-setup"
 
@@ -29,6 +30,7 @@ type CompanySetupStepperProps = {
 export function CompanySetupStepper({
   currentStepId,
 }: CompanySetupStepperProps) {
+  const { t } = useLocale()
   const currentIndex = COMPANY_SETUP_STEPS.findIndex(
     (step) => step.id === currentStepId
   )
@@ -80,7 +82,7 @@ export function CompanySetupStepper({
                   active ? "text-muted-foreground" : "text-muted-foreground/70"
                 )}
               >
-                STEP {index + 1}
+                {t("companySetup.step", { number: index + 1 })}
               </p>
               <p
                 className={cn(
@@ -90,7 +92,7 @@ export function CompanySetupStepper({
                   !active && !completed && "font-medium text-muted-foreground"
                 )}
               >
-                {step.label}
+                {t(`companySetup.steps.${step.id}.label`)}
               </p>
             </div>
           </li>

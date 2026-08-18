@@ -4,6 +4,8 @@ import { useState, useTransition, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { adminLoginAction } from "@/actions/admin-auth"
+import { LanguageSwitcher } from "@/components/i18n/language-switcher"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -18,6 +20,7 @@ import { Label } from "@/components/ui/label"
 export function AdminLoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -45,45 +48,48 @@ export function AdminLoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Admin Login</CardTitle>
-        <CardDescription>
-          Sign in to the TOR Match admin panel.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="admin-email">Email</Label>
-            <Input
-              id="admin-email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@example.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="admin-password">Password</Label>
-            <Input
-              id="admin-password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit" disabled={isPending} className="w-full">
-            {isPending ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="relative w-full max-w-sm">
+      <div className="absolute -top-12 right-0">
+        <LanguageSwitcher variant="light" />
+      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>{t("admin.loginTitle")}</CardTitle>
+          <CardDescription>{t("admin.loginSubtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">{t("common.email")}</Label>
+              <Input
+                id="admin-email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="admin@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="admin-password">{t("common.password")}</Label>
+              <Input
+                id="admin-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? t("auth.signingIn") : t("admin.loginButton")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

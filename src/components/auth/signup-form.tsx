@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 import { AuthShell } from "@/components/auth/auth-shell"
 import { GoogleAuthButton } from "@/components/auth/google-auth-button"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,7 @@ import {
 
 export function SignupForm() {
   const router = useRouter()
+  const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -27,7 +29,7 @@ export function SignupForm() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.")
+      setError(t("auth.passwordMismatch"))
       return
     }
 
@@ -58,28 +60,28 @@ export function SignupForm() {
       <div className="space-y-8">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-[#0088C9]">
-            Sign Up
+            {t("auth.signupTitle")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Welcome. Let&apos;s make your own account!
+            {t("auth.signupSubtitle")}
           </p>
         </div>
 
         <div className="space-y-5">
           <GoogleAuthButton
-            label="Register with Google"
+            label={t("auth.signupGoogle")}
             onClick={handleGoogleRegister}
           />
 
           <div className="relative flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("common.or")}</span>
             <div className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="signup-email">Email</Label>
+              <Label htmlFor="signup-email">{t("common.email")}</Label>
               <Input
                 id="signup-email"
                 type="email"
@@ -94,7 +96,7 @@ export function SignupForm() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">{t("common.password")}</Label>
                 <Input
                   id="signup-password"
                   type="password"
@@ -108,7 +110,9 @@ export function SignupForm() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                <Label htmlFor="signup-confirm-password">
+                  {t("auth.confirmPassword")}
+                </Label>
                 <Input
                   id="signup-confirm-password"
                   type="password"
@@ -132,18 +136,18 @@ export function SignupForm() {
               disabled={isPending}
               className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isPending ? "Creating account..." : "Register"}
+              {isPending ? t("auth.creatingAccount") : t("auth.registerButton")}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("auth.hasAccount")}{" "}
           <Link
             href="/login"
             className="font-medium text-[#0088C9] underline-offset-4 hover:underline"
           >
-            Log in now
+            {t("auth.loginNow")}
           </Link>
         </p>
       </div>

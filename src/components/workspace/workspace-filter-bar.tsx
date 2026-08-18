@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LabeledFilterSelect } from "@/components/ui/labeled-filter-select"
@@ -30,6 +31,8 @@ export function WorkspaceFilterBar({
   onChange,
   onSearch,
 }: WorkspaceFilterBarProps) {
+  const { t } = useLocale()
+
   return (
     <div className="border-b border-border bg-card px-4 py-3 shadow-sm md:px-6">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -43,21 +46,26 @@ export function WorkspaceFilterBar({
             onKeyDown={(event) => {
               if (event.key === "Enter") onSearch()
             }}
-            placeholder="Search tracked TORs..."
+            placeholder={t("workspace.searchPlaceholder")}
             className="h-9 bg-background pl-9"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <LabeledFilterSelect
-            label="Assignee"
+            label={t("workspace.assignee")}
             value={filters.assigneeId}
+            formatValue={(value) =>
+              value === "all"
+                ? t("common.all")
+                : (members.find((m) => m.id === value)?.name ?? value)
+            }
             onValueChange={(value) =>
               onChange({ ...filters, assigneeId: value })
             }
             triggerClassName="min-w-[7rem]"
           >
-            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="all">{t("common.all")}</SelectItem>
             {members.map((member) => (
               <SelectItem key={member.id} value={member.id}>
                 {member.name}
@@ -66,8 +74,15 @@ export function WorkspaceFilterBar({
           </LabeledFilterSelect>
 
           <LabeledFilterSelect
-            label="Priority"
+            label={t("workspace.priority")}
             value={filters.priority}
+            formatValue={(value) => {
+              if (value === "all") return t("common.all")
+              if (value === "HIGH") return t("common.high")
+              if (value === "MEDIUM") return t("common.medium")
+              if (value === "LOW") return t("common.low")
+              return value
+            }}
             onValueChange={(value) =>
               onChange({
                 ...filters,
@@ -75,10 +90,10 @@ export function WorkspaceFilterBar({
               })
             }
           >
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="LOW">Low</SelectItem>
+            <SelectItem value="all">{t("common.all")}</SelectItem>
+            <SelectItem value="HIGH">{t("common.high")}</SelectItem>
+            <SelectItem value="MEDIUM">{t("common.medium")}</SelectItem>
+            <SelectItem value="LOW">{t("common.low")}</SelectItem>
           </LabeledFilterSelect>
 
           <div className="flex items-center gap-2">
@@ -87,7 +102,7 @@ export function WorkspaceFilterBar({
               onChange={(event) =>
                 onChange({ ...filters, torIdInput: event.target.value })
               }
-              placeholder="Add TOR by ID"
+              placeholder={t("workspace.addTorPlaceholder")}
               className="h-9 w-[160px] bg-background"
             />
             <Button
@@ -99,7 +114,7 @@ export function WorkspaceFilterBar({
                 }
               }}
             >
-              Add New TOR
+              {t("workspace.addNewTor")}
             </Button>
           </div>
         </div>

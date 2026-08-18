@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Bookmark,
   CalendarDays,
@@ -19,11 +19,14 @@ import {
 import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
 import { TorFinancialsPanel } from "@/components/browse/tor-financials-panel";
 import { TorQualificationPanel } from "@/components/browse/tor-qualification-panel";
+import { useLocale } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { browseActions } from "@/lib/browse-actions";
-import { formatTorDeadline } from "@/lib/format";
+import { formatTorDeadline } from "@/lib/format"
+import { projectScaleLabel, procurementMethodLabel } from "@/lib/browse-labels";
+import { localizeTor } from "@/lib/localized-tor";
 import { buildQualificationCheck } from "@/lib/qualification";
 import { cn } from "@/lib/utils";
 import { getMockCompanyProfile } from "@/server/db/mock/tors";
@@ -35,10 +38,12 @@ type TorDetailProps = {
 };
 
 export function TorDetail({ tor, onToggleBookmark }: TorDetailProps) {
+  const { t } = useLocale();
+
   if (!tor) {
     return (
       <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-card p-8 text-sm text-muted-foreground">
-        Select a TOR to view details.
+        {t("browse.selectTor")}
       </div>
     );
   }
@@ -55,11 +60,15 @@ function TorDetailContent({
   tor: Tor;
   onToggleBookmark: (torId: string) => void;
 }) {
+  const { locale, t } = useLocale();
   const [shareOpen, setShareOpen] = useState(false);
+  const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
-  // TODO: replace getMockCompanyProfile() with a real company-profile fetch
   const qualificationCheck = buildQualificationCheck(
-    tor,
+    {
+      ...tor,
+      qualificationRequirements: localized.qualificationRequirements,
+    },
     getMockCompanyProfile(),
   );
 
@@ -71,19 +80,21 @@ function TorDetailContent({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {tor.eligible ? (
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-950">
-                  Eligible
+                  {t("common.eligible")}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Not Eligible
+                  {t("common.notEligible")}
                 </Badge>
               )}
-              <p className="text-sm text-muted-foreground">{tor.department}</p>
+              <p className="text-sm text-muted-foreground">
+                {localized.department}
+              </p>
             </div>
             <AnnouncementNoCopy announcementNo={tor.announcementNo} />
           </div>
           <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-            {tor.title}
+            {localized.title}
           </h2>
         </div>
 
@@ -91,8 +102,8 @@ function TorDetailContent({
           <div className="w-[300px] md:w-[325px] lg:w-[350px] shrink-0">
             <MetaItem
               icon={CalendarDays}
-              label="Submission Deadline"
-              value={formatTorDeadline(tor.deadline)}
+              label={t("browse.submissionDeadline")}
+              value={formatTorDeadline(tor.deadline, locale)}
             />
           </div>
 
@@ -100,19 +111,23 @@ function TorDetailContent({
             <div className="flex-1 min-w-0">
               <MetaItem
                 icon={Scale}
-                label="Project Scale"
-                value={tor.projectScale}
+                label={t("browse.projectScale")}
+                value={projectScaleLabel(tor.projectScale, t)}
               />
             </div>
             <div className="flex-1 min-w-0">
               <MetaItem
                 icon={Clock3}
-                label="Duration"
-                value={tor.durationLabel}
+                label={t("browse.duration")}
+                value={localized.durationLabel}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <MetaItem icon={Gavel} label="Method" value={tor.method} />
+              <MetaItem
+                icon={Gavel}
+                label={t("browse.method")}
+                value={procurementMethodLabel(tor.method, t)}
+              />
             </div>
           </div>
         </div>
@@ -125,7 +140,7 @@ function TorDetailContent({
             }
           >
             <ExternalLink data-icon="inline-start" />
-            View Original Source Page
+            {t("browse.viewSource")}
           </Button>
           <Button
             variant="outline"
@@ -141,7 +156,7 @@ function TorDetailContent({
               data-icon="inline-start"
               className={cn(tor.bookmarked && "fill-current")}
             />
-            {tor.bookmarked ? "Bookmarked" : "Bookmark"}
+            {tor.bookmarked ? t("common.bookmarked") : t("common.bookmark")}
           </Button>
           <Button
             variant="outline"
@@ -149,7 +164,7 @@ function TorDetailContent({
             onClick={() => setShareOpen(true)}
           >
             <Share2 data-icon="inline-start" />
-            Share
+            {t("common.share")}
           </Button>
         </div>
       </div>
@@ -168,21 +183,21 @@ function TorDetailContent({
               className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <ListChecks data-icon="inline-start" />
-              Summary & Key Deliverables
+              {t("browse.summaryDeliverables")}
             </TabsTrigger>
             <TabsTrigger
               value="qualification"
               className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <FileCheck2 data-icon="inline-start" />
-              Qualification Check
+              {t("browse.qualificationCheck")}
             </TabsTrigger>
             <TabsTrigger
               value="financials"
               className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
             >
               <CircleDollarSign data-icon="inline-start" />
-              Financials
+              {t("browse.financials")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -191,19 +206,19 @@ function TorDetailContent({
           <TabsContent value="summary" className="mt-0 space-y-6">
             <section className="space-y-2">
               <h3 className="text-sm font-semibold text-foreground">
-                Summary
+                {t("common.summary")}
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {tor.summary}
+                {localized.summary}
               </p>
             </section>
 
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">
-                Key Deliverables
+                {t("browse.keyDeliverables")}
               </h3>
               <ol className="space-y-2">
-                {tor.deliverables.map((item, index) => (
+                {localized.deliverables.map((item, index) => (
                   <li
                     key={item}
                     className="flex gap-3 text-sm text-muted-foreground"
@@ -234,7 +249,7 @@ function TorDetailContent({
           </TabsContent>
 
           <TabsContent value="financials" className="mt-0">
-            <TorFinancialsPanel financials={tor.financials} />
+            <TorFinancialsPanel financials={localized.financials} />
           </TabsContent>
         </div>
       </Tabs>
@@ -249,19 +264,16 @@ function TorDetailContent({
 }
 
 function AnnouncementNoCopy({ announcementNo }: { announcementNo: string }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(announcementNo);
       setCopied(true);
-      console.log("Action clicked: Copy Announcement No", { announcementNo });
       window.setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.log("Action failed: Copy Announcement No", {
-        announcementNo,
-        error,
-      });
+    } catch {
+      // Ignore clipboard errors
     }
   }
 
@@ -269,12 +281,12 @@ function AnnouncementNoCopy({ announcementNo }: { announcementNo: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      title="Click to copy announcement number"
+      title={t("browse.copyAnnouncement")}
       className="group inline-flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
     >
-      <span>No: {announcementNo}</span>
+      <span>{t("browse.announcementNo", { no: announcementNo })}</span>
       <Copy className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
-      {copied ? <span className="text-xs text-emerald-600">Copied</span> : null}
+      {copied ? <span className="text-xs text-emerald-600">{t("common.copied")}</span> : null}
     </button>
   );
 }

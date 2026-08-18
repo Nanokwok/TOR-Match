@@ -7,6 +7,7 @@ import {
   addTorToWorkspaceAction,
   searchTorsForWorkspaceAction,
 } from "@/actions/workspace"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,10 +18,17 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { formatThb } from "@/lib/format"
+import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
 import type { Tor } from "@/types/tor"
 import type { WorkspaceCard, WorkspaceColumnId } from "@/types/workspace"
-import { WORKSPACE_COLUMNS } from "@/types/workspace"
+
+const COLUMN_KEYS: Record<WorkspaceColumnId, string> = {
+  bookmark: "workspace.columnBookmark",
+  todo: "workspace.columnTodo",
+  "in-progress": "workspace.columnInProgress",
+  done: "workspace.columnDone",
+}
 
 type AddTorToColumnDialogProps = {
   open: boolean
@@ -65,15 +73,14 @@ function AddTorToColumnDialogBody({
   onOpenChange,
   onAdded,
 }: AddTorToColumnDialogBodyProps) {
+  const { locale, t } = useLocale()
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Tor[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isSearching, startSearch] = useTransition()
   const [isAdding, startAdd] = useTransition()
 
-  const columnLabel =
-    WORKSPACE_COLUMNS.find((column) => column.id === columnId)?.label ??
-    "column"
+  const columnLabel = t(COLUMN_KEYS[columnId])
 
   const existingSet = useMemo(
     () => new Set(existingTorIds),
@@ -116,9 +123,11 @@ function AddTorToColumnDialogBody({
       showCloseButton
     >
       <DialogHeader className="border-b border-border px-5 py-4">
-        <DialogTitle>Add TOR to {columnLabel}</DialogTitle>
+        <DialogTitle>
+          {t("workspace.addTorDialog.title", { column: columnLabel })}
+        </DialogTitle>
         <DialogDescription>
-          Search by TOR name or ID, then select one to add.
+          {t("workspace.addTorDialog.description")}
         </DialogDescription>
       </DialogHeader>
 
@@ -129,7 +138,7 @@ function AddTorToColumnDialogBody({
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search TOR name or ID..."
+            placeholder={t("workspace.addTorDialog.searchPlaceholder")}
             className="h-10 pl-9"
           />
         </div>
@@ -139,12 +148,15 @@ function AddTorToColumnDialogBody({
         <div className="max-h-[320px] overflow-y-auto rounded-lg border border-border">
           {results.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-              {isSearching ? "Searching..." : "No TORs found"}
+              {isSearching
+                ? t("workspace.addTorDialog.searching")
+                : t("workspace.addTorDialog.noResults")}
             </div>
           ) : (
             <ul className="divide-y divide-border">
               {results.map((tor) => {
                 const alreadyAdded = existingSet.has(tor.id)
+                const title = pickLocalized(tor.title, tor.titleTh, locale)
 
                 return (
                   <li key={tor.id}>
@@ -158,17 +170,17 @@ function AddTorToColumnDialogBody({
                       )}
                     >
                       <span className="line-clamp-1 text-sm font-medium text-foreground">
-                        {tor.title}
+                        {title}
                       </span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         <span>{tor.id}</span>
                         <span aria-hidden>•</span>
                         <span>{tor.announcementNo}</span>
                         <span aria-hidden>•</span>
-                        <span>{formatThb(tor.budgetBaht)}</span>
+                        <span>{formatThb(tor.budgetBaht, locale)}</span>
                         {alreadyAdded ? (
                           <span className="rounded-md bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
-                            On board
+                            {t("workspace.addTorDialog.onBoard")}
                           </span>
                         ) : null}
                       </span>
@@ -187,7 +199,7 @@ function AddTorToColumnDialogBody({
           variant="outline"
           onClick={() => onOpenChange(false)}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </DialogContent>
