@@ -40,7 +40,9 @@
     "companyName": "Company Name",
     "notifications": "Notifications",
     "notificationsUnread": "Notifications, {count} unread",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "menu": "Menu",
+    "openMenu": "Open menu"
   },
   "footer": {
     "copyright": "© {year} TOR Match. All rights reserved."
@@ -51,35 +53,72 @@
     "and": "and",
     "match": "Match",
     "headlineSuffix": "Your BMA government projects",
-    "subtitle": "Extract key TOR criteria, automate eligibility matching before submitting your bid",
-    "ctaSearch": "Start Searching for Free",
-    "ctaEligibility": "Check Company Eligibility",
+    "subtitle": "Turn 30-page TORs into a clear yes or no — before your team spends a week writing a bid.",
+    "ctaSearch": "Start searching free",
+    "ctaEligibility": "Check eligibility",
+    "scrollMore": "Scroll to see more",
+    "featuresEyebrow": "Product",
+    "featuresTitle": "Everything you need before you bid",
+    "featuresSubtitle": "Stop discovering you were never eligible on page 27.",
     "features": {
       "aiSummary": {
-        "title": "AI Executive TOR Summary",
-        "description": "Parses 30-page PDF documents into 1-minute summary cards covering budget, deadlines, and core deliverables."
+        "title": "AI executive summary",
+        "description": "Budget, deadline, and deliverables from a 30-page PDF — in one minute."
       },
       "searchFilters": {
-        "title": "Tech Stack & Advanced Search Filters",
-        "description": "Filter BMA procurement listings instantly by technology keywords, departments, or budget ranges."
+        "title": "Search that speaks tech",
+        "description": "Filter BMA listings by stack, department, or budget range instantly."
       },
       "eligibility": {
-        "title": "Automated Eligibility Matching",
-        "description": "Cross-checks company registered capital, past project values, and ISO certifications directly against TOR criteria."
+        "title": "Eligibility, before you write",
+        "description": "Registered capital, past project value, and ISO — scored against the TOR."
       },
       "dealBreaker": {
-        "title": "Deal-Breaker Clause Detector",
-        "description": "Highlights disqualifying clauses and mandatory qualifications immediately so you never waste time on ineligible bids."
+        "title": "Catch deal-breakers early",
+        "description": "Mandatory clauses that would disqualify you are highlighted immediately."
       },
       "ocrSearch": {
-        "title": "In-Document OCR Search",
-        "description": "Converts scanned or image-based PDF TOR documents into searchable text."
+        "title": "Search inside scanned PDFs",
+        "description": "Image-only TOR documents become text you can actually search."
       },
       "alerts": {
-        "title": "Real-Time Deadline & Match Alerts",
-        "description": "Receive instant notifications via Email, or Push Notification the moment a new TOR matches your company profile."
+        "title": "Know when a match appears",
+        "description": "Email or push the moment a new TOR fits your company profile."
       }
-    }
+    },
+    "preview1Department": "BMA Digital Office",
+    "preview1Title": "Smart City Operations Dashboard",
+    "preview1Budget": "฿12.4M",
+    "preview1Deadline": "12 days left",
+    "preview1Score": "92% match",
+    "preview2Department": "BMA Public Works",
+    "preview2Title": "Traffic Sensor Network",
+    "preview2Budget": "฿8.1M",
+    "preview2Deadline": "6 days left",
+    "preview2Score": "81% match",
+    "preview3Department": "BMA Strategy Office",
+    "preview3Title": "e-Service Portal Upgrade",
+    "preview3Budget": "฿5.6M",
+    "preview3Deadline": "18 days left",
+    "preview3Score": "74% match",
+    "previewDepartment": "BMA Digital Office",
+    "previewBudget": "฿12.4M",
+    "previewDeadline": "12 days left",
+    "previewEligible": "Eligible",
+    "previewScore": "92% match",
+    "previewStatBudget": "Budget",
+    "previewStatDeadline": "Deadline",
+    "previewStatScope": "Scope",
+    "previewCapital": "Registered capital",
+    "previewIso": "ISO 27001",
+    "previewExperience": "Past project value",
+    "previewPass": "Pass",
+    "previewFail": "Fail",
+    "previewClause": "Registered capital of not less than 50 million baht is required.",
+    "previewNotifTitle": "New match",
+    "previewNotifBody": "A TOR matches your profile",
+    "ctaTitle": "See which BMA projects you can win",
+    "ctaSubtitle": "Start with a free search, or check eligibility against your company profile."
   },
   "browse": {
     "searchPlaceholder": "Search your keyword...",

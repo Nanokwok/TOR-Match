@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useLocale } from "@/components/i18n/locale-provider";
@@ -17,6 +18,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { browseActions } from "@/lib/browse-actions";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +57,12 @@ export function Header({
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const { t } = useLocale();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function goTo(href: string) {
+    setMenuOpen(false);
+    router.push(href);
+  }
 
   return (
     <header
@@ -57,9 +71,9 @@ export function Header({
         className
       )}
     >
-      <div className="relative flex h-14 items-center justify-between gap-6 px-6 md:px-8">
+      <div className="relative flex h-14 items-center justify-between gap-3 px-4 md:gap-6 md:px-8">
         <Link href="/" className="relative z-10 shrink-0">
-          <TorMatchLogo />
+          <TorMatchLogo className="h-6 md:h-7" />
         </Link>
 
         <nav className="absolute top-0 left-1/2 hidden h-full -translate-x-1/2 items-center gap-8 md:flex">
@@ -83,7 +97,7 @@ export function Header({
           })}
         </nav>
 
-        <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
+        <div className="relative z-10 flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
           <NotificationCenter />
 
           <AnimatedThemeToggler
@@ -103,8 +117,7 @@ export function Header({
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-md bg-card/10 dark:bg-secondary px-3 text-sm font-medium text-background dark:text-foreground",
-                "outline-none transition-colors",
+                "hidden h-8 items-center gap-1.5 rounded-md bg-card/10 px-3 text-sm font-medium text-background outline-none transition-colors md:inline-flex dark:bg-secondary dark:text-foreground",
                 "focus-visible:ring-2 focus-visible:ring-white/40",
               )}
             >
@@ -136,6 +149,71 @@ export function Header({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger
+              className="inline-flex size-8 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10 md:hidden"
+              aria-label={t("header.openMenu")}
+            >
+              <Menu className="size-5" />
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[min(20rem,calc(100vw-1.5rem))] border-white/10 bg-[#0a0a0a] text-white"
+            >
+              <SheetHeader>
+                <SheetTitle className="text-white">{t("header.menu")}</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-1 px-2">
+                {navItems.map((item) => {
+                  const active = isNavActive(pathname, item.href);
+
+                  return (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => goTo(item.href)}
+                      className={cn(
+                        "rounded-md px-3 py-2.5 text-left text-sm transition-colors",
+                        active
+                          ? "bg-white/10 text-white"
+                          : "text-white/80 hover:bg-white/5 hover:text-white"
+                      )}
+                    >
+                      {t(item.labelKey)}
+                    </button>
+                  );
+                })}
+              </nav>
+              <div className="mt-auto flex flex-col gap-1 border-t border-white/10 p-4">
+                <button
+                  type="button"
+                  onClick={() => goTo("/company-profile")}
+                  className="rounded-md px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {t("header.companyProfile")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goTo("/settings")}
+                  className="rounded-md px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {t("header.settings")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    browseActions.logout();
+                    router.push("/login");
+                  }}
+                  className="rounded-md px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {t("header.logout")}
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

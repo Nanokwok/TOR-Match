@@ -81,6 +81,29 @@
       transform: translateY(-12px) rotate(-4deg);
     }
   }
+  --animate-landing-fan-in: landing-fan-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  @keyframes landing-fan-in {
+    0% {
+      opacity: 0;
+      transform: translateY(36px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  --animate-scroll-hint: scroll-hint 1.6s ease-in-out infinite;
+  @keyframes scroll-hint {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translateY(7px);
+      opacity: 1;
+    }
+  }
 }
 
 :root {
