@@ -46,7 +46,7 @@ function FeatureCard({
       <div
         aria-hidden
         className={cn(
-          "relative overflow-hidden bg-muted/35",
+          "relative hidden overflow-hidden bg-muted/35 md:block",
           layout === "wide"
             ? "min-h-40 p-4 sm:p-5 lg:w-[52%] lg:min-h-0"
             : "min-h-36 p-4"
@@ -54,7 +54,7 @@ function FeatureCard({
       >
         {preview}
       </div>
-      <div className="flex flex-1 flex-col justify-center p-5">
+      <div className="flex flex-1 flex-col justify-center p-4 md:p-5">
         <h3 className="text-base font-semibold text-pretty text-foreground">
           {title}
         </h3>
@@ -281,13 +281,14 @@ export function LandingFeatures() {
           />
           <FeatureCard
             href="/browse"
+            className="hidden md:flex"
             title={t("landing.features.ocrSearch.title")}
             description={t("landing.features.ocrSearch.description")}
             preview={<OcrPreview />}
           />
           <FeatureCard
             href="/browse"
-            className="md:col-span-2 lg:col-span-3"
+            className="hidden md:flex md:col-span-2 lg:col-span-3"
             layout="wide"
             title={t("landing.features.alerts.title")}
             description={t("landing.features.alerts.description")}

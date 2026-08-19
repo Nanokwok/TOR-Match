@@ -67,7 +67,7 @@ export function LandingHero() {
   }
 
   return (
-    <section className="relative flex h-[calc(100dvh-3.5rem)] min-h-[40rem] flex-col overflow-hidden px-4 pt-16 sm:px-6 sm:pt-12 md:px-8 md:pt-24">
+    <section className="relative flex flex-col overflow-hidden px-4 pt-10 pb-8 sm:px-6 md:h-[calc(100dvh-3.5rem)] md:min-h-[40rem] md:px-8 md:pt-24 md:pb-0">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_160%_90%_at_50%_100%,rgba(113,220,255,0.35)_0%,rgba(0,136,201,0.14)_40%,transparent_75%)]"
@@ -78,7 +78,7 @@ export function LandingHero() {
         width={140}
         height={110}
         aria-hidden
-        className="pointer-events-none absolute top-[30%] left-[4%] w-20 -scale-x-100 animate-float opacity-50 sm:w-24 md:top-[26%] md:left-[6%] md:w-32 lg:w-40"
+        className="pointer-events-none absolute top-[30%] left-[4%] hidden w-20 -scale-x-100 animate-float opacity-50 md:block md:top-[26%] md:left-[6%] md:w-32 lg:w-40"
       />
       <Image
         src="/paper-plane.svg"
@@ -86,11 +86,11 @@ export function LandingHero() {
         width={280}
         height={180}
         aria-hidden
-        className="pointer-events-none absolute top-[22%] right-[2%] w-24 rotate-12 animate-float opacity-80 sm:w-32 md:top-[20%] md:right-[6%] md:w-40 lg:w-48 [animation-duration:5s]"
+        className="pointer-events-none absolute top-[22%] right-[2%] hidden w-24 rotate-12 animate-float opacity-80 md:block md:top-[20%] md:right-[6%] md:w-40 lg:w-48 [animation-duration:5s]"
       />
 
       <div className="relative mx-auto flex w-full max-w-4xl shrink-0 flex-col items-center text-center">
-        <h1 className="max-w-3xl text-[1.75rem] leading-[1.3] font-medium tracking-tight text-pretty text-foreground sm:text-5xl sm:leading-[1.2] md:text-[3.25rem]">
+        <h1 className="max-w-3xl text-[1.65rem] leading-[1.35] font-medium tracking-tight text-pretty text-foreground sm:text-5xl sm:leading-[1.2] md:text-[3.25rem]">
           {t("landing.headlinePrefix")}
           <br />
           <Highlighter action="underline" color="#0088C9">
@@ -139,14 +139,18 @@ export function LandingHero() {
         </div>
       </div>
 
-      <div className="relative mt-5 min-h-0 w-full flex-1 overflow-hidden pt-4 pb-14 [--fan-spread:12%] sm:mt-6 sm:pt-6 sm:pb-16 sm:[--fan-spread:20%] lg:[--fan-spread:26%]">
+      <div className="relative mx-auto mt-8 w-full max-w-sm md:hidden">
+        <MobilePreviewCard />
+      </div>
+
+      <div className="relative mt-5 hidden min-h-0 w-full flex-1 overflow-hidden pt-4 pb-14 [--fan-spread:12%] md:mt-6 md:block md:pt-6 md:pb-16 md:[--fan-spread:20%] lg:[--fan-spread:26%]">
         <HeroPreviewFan />
       </div>
 
       <button
         type="button"
         onClick={scrollToFeatures}
-        className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground sm:bottom-5"
+        className="absolute bottom-3 left-1/2 z-30 hidden -translate-x-1/2 flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground md:flex md:bottom-5"
         aria-label={t("landing.scrollMore")}
       >
         <span className="text-[11px] font-medium tracking-wide sm:text-xs">
@@ -155,6 +159,35 @@ export function LandingHero() {
         <ChevronDown className="size-5 animate-scroll-hint motion-reduce:animate-none" />
       </button>
     </section>
+  );
+}
+
+function MobilePreviewCard() {
+  const { t } = useLocale();
+  const card = PREVIEW_CARDS[1];
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-border/80 bg-card/95 text-left shadow-[0_18px_40px_-28px_rgba(0,136,201,0.45)] ring-1 ring-foreground/5">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-pretty text-foreground">
+            {t(card.titleKey)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t(card.budgetKey)} · {t(card.deadlineKey)}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+          {t("landing.previewEligible")}
+        </span>
+      </div>
+      <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
+        <span className="text-xs text-muted-foreground">{t(card.scoreKey)}</span>
+        <span className="h-1.5 w-24 overflow-hidden rounded-full bg-primary/15">
+          <span className={cn("block h-full rounded-full bg-primary", card.scoreWidth)} />
+        </span>
+      </div>
+    </article>
   );
 }
 
