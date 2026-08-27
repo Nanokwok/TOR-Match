@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { localizeNotification, MOCK_NOTIFICATIONS } from "@/server/db/mock/notifications"
+import { MOCK_NOTIFICATIONS } from "@/server/db/mock/notifications"
 import { cn } from "@/lib/utils"
 import type { AppNotification } from "@/types/notification"
 
@@ -49,16 +49,11 @@ type NotificationCenterProps = {
 }
 
 export function NotificationCenter({ className }: NotificationCenterProps) {
-  const { locale, t } = useLocale()
+  const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<NotificationTab>("all")
   const [notifications, setNotifications] =
     useState<AppNotification[]>(MOCK_NOTIFICATIONS)
-
-  const localizedNotifications = useMemo(
-    () => notifications.map((item) => localizeNotification(item, locale)),
-    [notifications, locale]
-  )
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
@@ -66,8 +61,8 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   )
 
   const visibleNotifications = useMemo(
-    () => filterNotifications(localizedNotifications, activeTab),
-    [activeTab, localizedNotifications]
+    () => filterNotifications(notifications, activeTab),
+    [activeTab, notifications]
   )
 
   function markAsRead(id: string) {

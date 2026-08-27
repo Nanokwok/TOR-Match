@@ -1,3 +1,4 @@
+import { localizedIncludes } from "@/lib/localized-content"
 import type {
   WorkspaceCard,
   WorkspaceColumnId,
@@ -76,7 +77,7 @@ export function filterWorkspaceCards(
     if (query.keyword?.trim()) {
       const q = query.keyword.trim().toLowerCase()
       const matches =
-        card.title.toLowerCase().includes(q) ||
+        localizedIncludes(card.title, q) ||
         card.announcementNo.toLowerCase().includes(q)
       if (!matches) return false
     }

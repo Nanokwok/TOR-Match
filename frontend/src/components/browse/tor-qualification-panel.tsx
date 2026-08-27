@@ -6,6 +6,7 @@ import { Settings } from "lucide-react"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import type { TorQualificationCheck } from "@/types/tor"
+import { localizedKey, pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
 
 type TorQualificationPanelProps = {
@@ -94,12 +95,19 @@ function RequirementRows({
   profileSetup: boolean
   showSetupPrompt?: boolean
 }) {
+  const { locale } = useLocale()
+
   return rows.map((row, index) => (
-    <tr key={row.requirement} className="border-t border-border bg-card">
+    <tr
+      key={localizedKey(row.requirement)}
+      className="border-t border-border bg-card"
+    >
       <td className="px-4 py-3 font-medium text-foreground">
-        {row.requirement}
+        {pickLocalized(row.requirement, locale)}
       </td>
-      <td className="px-4 py-3 text-muted-foreground">{row.torCriteria}</td>
+      <td className="px-4 py-3 text-muted-foreground">
+        {pickLocalized(row.torCriteria, locale)}
+      </td>
       <td className="px-4 py-3">
         <ProfileCell
           row={row}

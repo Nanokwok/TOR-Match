@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/types/localized"
 import type { TorPriority } from "@/types/tor"
 
 export type WorkspaceColumnId = "bookmark" | "todo" | "in-progress" | "done"
@@ -11,10 +12,8 @@ export type TeamMember = {
 export type WorkspaceCard = {
   torId: string
   announcementNo: string
-  title: string
-  titleTh?: string
-  department: string
-  departmentTh?: string
+  title: LocalizedText
+  department: LocalizedText
   budgetBaht: number
   deadline: string
   priority: TorPriority

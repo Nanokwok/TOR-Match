@@ -9,10 +9,11 @@ import {
   formatThb,
 } from "@/lib/format"
 import { procurementMethodLabel } from "@/lib/browse-labels"
-import type { TorFinancials } from "@/types/tor"
+import type { LocalizedTorView } from "@/lib/localized-tor"
 
 type TorFinancialsPanelProps = {
-  financials: TorFinancials
+  /** Already flattened to the active locale by `localizeTor`. */
+  financials: LocalizedTorView["financials"]
 }
 
 export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {

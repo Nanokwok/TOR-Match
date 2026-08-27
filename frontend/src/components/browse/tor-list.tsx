@@ -36,12 +36,8 @@ export function TorList({
     <div className="flex flex-col gap-2 p-3">
       {items.map((tor) => {
         const selected = tor.id === selectedId;
-        const title = pickLocalized(tor.title, tor.titleTh, locale);
-        const department = pickLocalized(
-          tor.department,
-          tor.departmentTh,
-          locale
-        );
+        const title = pickLocalized(tor.title, locale);
+        const department = pickLocalized(tor.department, locale);
 
         return (
           <div

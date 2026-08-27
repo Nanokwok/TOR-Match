@@ -1,3 +1,4 @@
+import { localizedKey } from "@/lib/localized-content"
 import type {
   Tor,
   TorDeadlinePreset,
@@ -330,7 +331,7 @@ export function matchesDetailFilters(
 
   if (
     detail.localOffices.length > 0 &&
-    !detail.localOffices.includes(tor.localOffice)
+    !detail.localOffices.includes(localizedKey(tor.localOffice))
   ) {
     return false
   }

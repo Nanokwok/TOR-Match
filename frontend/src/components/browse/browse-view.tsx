@@ -12,6 +12,7 @@ import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
 import { browseActions } from "@/lib/browse-actions"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
+import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
 const initialFilters: BrowseFiltersState = {
@@ -25,7 +26,7 @@ const initialFilters: BrowseFiltersState = {
 
 type BrowseViewProps = {
   initialItems: Tor[]
-  departments: string[]
+  departments: LocalizedText[]
   localOffices: string[]
 }
 

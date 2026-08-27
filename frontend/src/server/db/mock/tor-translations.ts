@@ -1,4 +1,39 @@
-import type { Tor } from "@/types/tor"
+import { localizedList, localizedText } from "@/types/localized"
+import type { Tor, TorPaymentMilestone, TorQualificationRequirement } from "@/types/tor"
+
+/**
+ * The mock dataset is authored in English only; Thai content is layered on here
+ * by {@link applyTorTranslations}. A seed is therefore a TOR whose localizable
+ * fields are still plain strings.
+ */
+export type TorSeed = Omit<
+  Tor,
+  | "title"
+  | "department"
+  | "localOffice"
+  | "summary"
+  | "deliverables"
+  | "financials"
+  | "qualificationRequirements"
+> & {
+  title: string
+  department: string
+  localOffice: string
+  summary: string
+  deliverables: string[]
+  financials: Omit<Tor["financials"], "milestones"> & {
+    milestones: (Omit<TorPaymentMilestone, "deliverable"> & {
+      deliverable: string
+    })[]
+  }
+  qualificationRequirements: (Omit<
+    TorQualificationRequirement,
+    "requirement" | "torCriteria"
+  > & {
+    requirement: string
+    torCriteria: string
+  })[]
+}
 
 export const LOCAL_OFFICE_TH: Record<string, string> = {
   "Phra Nakhon District": "เขตพระนคร",
@@ -80,7 +115,6 @@ export const TOR_TRANSLATIONS: Record<
   {
     titleTh: string
     summaryTh: string
-    durationLabelTh: string
     deliverablesTh: string[]
   }
 > = {
@@ -89,7 +123,6 @@ export const TOR_TRANSLATIONS: Record<
       "พัฒนาระบบติดตามการจัดซื้อจัดจ้างและงบประมาณ กทม. (BMA Procurement Tracker)",
     summaryTh:
       "พัฒนาเว็บแอปพลิเคชันติดตามการจัดซื้อจัดจ้างและงบประมาณ กทม. รวมระบบ OCR สำหรับใบแจ้งหนี้ PDF แดชบอร์ดวิเคราะห์แบบเรียลไทม์ และไปป์ไลน์กระทบยอดงบประมาณอัตโนมัติ",
-    durationLabelTh: "180 วัน (6 เดือน)",
     deliverablesTh: [
       "ระบบแปลง PDF และ OCR",
       "แดชบอร์ดวิเคราะห์แบบเรียลไทม์",
@@ -102,7 +135,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "แพลตฟอร์มวิเคราะห์การจราจร Smart City สำหรับกรุงเทพมหานคร",
     summaryTh:
       "สร้างแพลตฟอร์มวิเคราะห์การจราจรทั่วเมือง รับข้อมูลจากเซนเซอร์ IoT คาดการณ์ความแออัด และให้แดชบอร์ดปฏิบัติการแก่สำนักงานเขต",
-    durationLabelTh: "365 วัน (12 เดือน)",
     deliverablesTh: [
       "ชั้นรับข้อมูล IoT",
       "โมเดลคาดการณ์ความแออัด",
@@ -115,7 +147,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ระบบบูรณาการเวชระเบียนดิจิทัลสำหรับโรงพยาบาล กทม.",
     summaryTh:
       "บูรณาการระบบเวชระเบียนที่กระจัดกระจายให้เป็นแพลตฟอร์มสุขภาพดิจิทal เดียว รองรับ HL7/FHIR และการยินยอมผู้ป่วยอย่างปลอดภัย",
-    durationLabelTh: "270 วัน (9 เดือน)",
     deliverablesTh: [
       "เกตเวย์เชื่อมต่อ FHIR",
       "ดัชนีผู้ป่วยรวม",
@@ -128,7 +159,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ระบบจัดการเนื้อหา E-Learning สำหรับโรงเรียน กทม.",
     summaryTh:
       "ส่งมอบ CMS เบาๆ ให้ครูสร้าง จัดการ และเผยแพร่สื่อการเรียนรู้ดิจิทal ไปยังโรงเรียน กทม.",
-    durationLabelTh: "120 วัน (4 เดือน)",
     deliverablesTh: [
       "พื้นที่สร้างเนื้อหา",
       "คลังสื่อดิจิทal",
@@ -140,7 +170,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "แดชบอร์ดเซนเซอร์สิ่งแวดล้อมและระบบแจ้งเตือน",
     summaryTh:
       "สร้างแดชบอร์ดคุณภาพอากาศและน้ำแบบเรียลไทม์ พร้อมแจ้งเตือนผ่าน LINE และอีเมลเมื่อเกินเกณฑ์",
-    durationLabelTh: "150 วัน (5 เดือน)",
     deliverablesTh: [
       "API รับข้อมูลเซนเซอร์",
       "แดชบอร์ดเรียลไทม์",
@@ -152,7 +181,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ออกแบบใหม่แอปมือถือชำระภาษีท้องถิ่น",
     summaryTh:
       "ออกแบบและพัฒนาแอปมือถือชำระภาษีท้องถิ่นใหม่ รองรับ e-Payment และใบเสร็จดิจิทal",
-    durationLabelTh: "150 วัน (5 เดือน)",
     deliverablesTh: [
       "UI/UX แอปมือถือ",
       "เชื่อมต่อช่องทางชำระเงิน",
@@ -164,7 +192,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ระบบระบายน้ำอัจฉริยะและเตือนภัยน้ำท่วมล่วงหน้า",
     summaryTh:
       "พัฒนาระบบติดตามระดับน้ำและพยากรณ์น้ำท่วม แจ้งเตือนประชาชนและหน่วยงานล่วงหน้า",
-    durationLabelTh: "210 วัน (7 เดือน)",
     deliverablesTh: [
       "ระบบติดตามระดับน้ำ",
       "โมเดลพยากรณ์น้ำท่วม",
@@ -176,7 +203,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "เว็บแอปจัดการเคสสวัสดิการสังคม",
     summaryTh:
       "พัฒนาระบบจัดการเคสสวัสดิการสังคม ติดตามสิทธิ เอกสาร และการให้บริการ",
-    durationLabelTh: "180 วัน (6 เดือน)",
     deliverablesTh: [
       "ระบบลงทะเบียนเคส",
       "ติดตามเอกสารและสิทธิ",
@@ -188,7 +214,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "คลังมรดกทางวัฒนธรรมดิจิทal และทัวร์เสมือนจริง",
     summaryTh:
       "สร้างคลังข้อมูลมรดกทางวัฒนธรรมดิจิทal พร้อมทัวร์เสมือนจริงสำหรับประชาชน",
-    durationLabelTh: "240 วัน (8 เดือน)",
     deliverablesTh: [
       "คลังข้อมูลมรดก",
       "ทัวร์เสมือนจริง",
@@ -200,7 +225,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ระบบอัตโนมัติเอกสารทางกฎหมายและพอร์ทal ลายเซ็นอิเล็กทรอนิกส์",
     summaryTh:
       "พัฒนาระบบจัดการเอกสารทางกฎหมายและลงนามอิเล็กทรอนิกส์อย่างปลอดภัย",
-    durationLabelTh: "180 วัน (6 เดือน)",
     deliverablesTh: [
       "ระบบจัดการเอกสาร",
       "ลายเซ็นอิเล็กทรอนิกส์",
@@ -212,7 +236,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "พอร์ทal HR Self-Service และระบบจัดการลา",
     summaryTh:
       "พัฒนาพอร์ทal บริการตนเองสำหรับพนักงาน กทม. และระบบจัดการลา",
-    durationLabelTh: "150 วัน (5 เดือน)",
     deliverablesTh: [
       "พอร์ทal บริการตนเอง",
       "ระบบจัดการลา",
@@ -224,7 +247,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "แพลตฟอร์มมือถือบำรุงรักษาทรัพย์สินโยธา",
     summaryTh:
       "พัฒนาแอปมือถือสำหรับบันทึกและติดตามการบำรุงรักษาทรัพย์สินโยธา",
-    durationLabelTh: "180 วัน (6 เดือน)",
     deliverablesTh: [
       "แอปมือถือสำหรับภาคสนาม",
       "ระบบติดตามงานซ่อม",
@@ -236,7 +258,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "แชทบอทประชาชนและระบบ Service Desk อัตโนมัติ กทม.",
     summaryTh:
       "พัฒนาแชทบอทตอบคำถามประชาชนและระบบ Service Desk อัตโนมัติ",
-    durationLabelTh: "210 วัน (7 เดือน)",
     deliverablesTh: [
       "แชทบอทประชาชน",
       "ระบบ Service Desk",
@@ -248,7 +269,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "ระบบวิเคราะห์วิดีโอ CCTV และตรวจจับเหตุการณ์",
     summaryTh:
       "พัฒนาระบบวิเคราะห์ภาพจาก CCTV เพื่อตรวจจับเหตุการณ์และแจ้งเตือน",
-    durationLabelTh: "270 วัน (9 เดือน)",
     deliverablesTh: [
       "ระบบวิเคราะห์วิดีโอ",
       "ตรวจจับเหตุการณ์",
@@ -260,7 +280,6 @@ export const TOR_TRANSLATIONS: Record<
     titleTh: "พื้นที่ทำงานร่วม GIS สำหรับการวางผังเมือง",
     summaryTh:
       "สร้างพื้นที่ทำงานร่วม GIS สำหรับทีมวางผังเมือง กทม.",
-    durationLabelTh: "240 วัน (8 เดือน)",
     deliverablesTh: [
       "พื้นที่ทำงาน GIS ร่วม",
       "เครื่องมือวิเคราะห์",
@@ -270,36 +289,45 @@ export const TOR_TRANSLATIONS: Record<
   },
 }
 
-export function applyTorTranslations(tor: Tor): Tor {
-  const translation = TOR_TRANSLATIONS[tor.id]
+export function applyTorTranslations(seed: TorSeed): Tor {
+  const translation = TOR_TRANSLATIONS[seed.id]
 
   return {
-    ...tor,
-    departmentTh: DEPARTMENT_TH[tor.department],
-    localOfficeTh: LOCAL_OFFICE_TH[tor.localOffice],
-    ...(translation ?? {}),
-    qualificationRequirements: tor.qualificationRequirements.map((req) => {
+    ...seed,
+    title: localizedText(seed.title, translation?.titleTh),
+    department: localizedText(seed.department, DEPARTMENT_TH[seed.department]),
+    localOffice: localizedText(
+      seed.localOffice,
+      LOCAL_OFFICE_TH[seed.localOffice]
+    ),
+    summary: localizedText(seed.summary, translation?.summaryTh),
+    deliverables: localizedList(seed.deliverables, translation?.deliverablesTh),
+    qualificationRequirements: seed.qualificationRequirements.map((req) => {
       const qualTh =
         QUALIFICATION_TH[req.requirement as keyof typeof QUALIFICATION_TH]
-      if (!qualTh) return req
+
+      const torCriteriaTh =
+        typeof qualTh?.torCriteriaTh === "function"
+          ? qualTh.torCriteriaTh(
+              parseInt(req.torCriteria.replace(/[^\d]/g, ""), 10) || 0
+            )
+          : qualTh?.torCriteriaTh
 
       return {
-        ...req,
-        requirementTh: qualTh.requirementTh,
-        torCriteriaTh:
-          typeof qualTh.torCriteriaTh === "function"
-            ? qualTh.torCriteriaTh(
-                parseInt(req.torCriteria.replace(/[^\d]/g, ""), 10) || 0
-              )
-            : qualTh.torCriteriaTh,
+        id: req.id,
+        autoCheckable: req.autoCheckable,
+        requirement: localizedText(req.requirement, qualTh?.requirementTh),
+        torCriteria: localizedText(req.torCriteria, torCriteriaTh),
       }
     }),
     financials: {
-      ...tor.financials,
-      milestones: tor.financials.milestones.map((milestone, index) => ({
+      ...seed.financials,
+      milestones: seed.financials.milestones.map((milestone, index) => ({
         ...milestone,
-        deliverableTh:
-          MILESTONE_DELIVERABLES_TH[index] ?? milestone.deliverable,
+        deliverable: localizedText(
+          milestone.deliverable,
+          MILESTONE_DELIVERABLES_TH[index]
+        ),
       })),
     },
   }

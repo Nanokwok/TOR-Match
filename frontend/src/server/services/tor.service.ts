@@ -1,6 +1,8 @@
 import { getMockCompanyProfile, getMockTors, listMockLocalOffices } from "@/server/db/mock/tors";
 import { matchesDetailFilters } from "@/lib/browse-filters";
+import { localizedIncludes, localizedKey } from "@/lib/localized-content";
 import { buildQualificationCheck } from "@/lib/qualification";
+import type { LocalizedText } from "@/types/localized";
 import type {
   Tor,
   TorFinancials,
@@ -20,12 +22,12 @@ function matchesKeyword(tor: Tor, keyword?: string) {
   if (!keyword?.trim()) return true;
   const q = keyword.trim().toLowerCase();
   return (
-    tor.title.toLowerCase().includes(q) ||
-    tor.department.toLowerCase().includes(q) ||
-    tor.localOffice.toLowerCase().includes(q) ||
+    localizedIncludes(tor.title, q) ||
+    localizedIncludes(tor.department, q) ||
+    localizedIncludes(tor.localOffice, q) ||
     tor.announcementNo.toLowerCase().includes(q) ||
     tor.techTags.some((tag) => tag.toLowerCase().includes(q)) ||
-    tor.summary.toLowerCase().includes(q)
+    localizedIncludes(tor.summary, q)
   );
 }
 
@@ -53,7 +55,7 @@ export async function listTors(
     if (
       query.department &&
       query.department !== "all" &&
-      tor.department !== query.department
+      localizedKey(tor.department) !== query.department
     ) {
       return false;
     }
@@ -71,9 +73,12 @@ export async function getTorById(id: string): Promise<Tor | null> {
   return getMockTors().find((tor) => tor.id === id) ?? null;
 }
 
-export async function listTorDepartments(): Promise<string[]> {
-  const departments = new Set(getMockTors().map((tor) => tor.department));
-  return [...departments].sort();
+export async function listTorDepartments(): Promise<LocalizedText[]> {
+  const byKey = new Map<string, LocalizedText>();
+  for (const tor of getMockTors()) {
+    byKey.set(localizedKey(tor.department), tor.department);
+  }
+  return [...byKey.values()].sort((a, b) => a.en.localeCompare(b.en));
 }
 
 export async function listTorLocalOffices(): Promise<string[]> {

@@ -71,7 +71,7 @@ export function WorkspaceTorCard({
   const { locale, t } = useLocale()
   const priority = priorityStyles[card.priority]
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const title = pickLocalized(card.title, card.titleTh, locale)
+  const title = pickLocalized(card.title, locale)
   const daysLeftLabels = {
     dueToday: t("workspace.dueToday"),
     oneDayLeft: t("workspace.oneDayLeft"),

@@ -23,6 +23,27 @@ export function formatMilestoneLabel(
   return `Milestone ${milestoneNumber} (${percent}% - ฿${amountBaht.toLocaleString(intl)})`
 }
 
+/**
+ * Renders a contract duration from its canonical day count.
+ * Replaces the old `durationLabel` / `durationLabelTh` fields, which duplicated
+ * what `durationDays` already carries.
+ */
+export function formatDuration(days: number, locale: Locale = "en") {
+  const months = Math.round(days / 30)
+  const intl = localeToIntl(locale)
+  const dayCount = days.toLocaleString(intl)
+
+  if (locale === "th") {
+    return months >= 1 ? `${dayCount} วัน (${months} เดือน)` : `${dayCount} วัน`
+  }
+
+  const dayUnit = days === 1 ? "Day" : "Days"
+  if (months < 1) return `${dayCount} ${dayUnit}`
+
+  const monthUnit = months === 1 ? "Month" : "Months"
+  return `${dayCount} ${dayUnit} (${months} ${monthUnit})`
+}
+
 export function formatTorDeadline(isoDate: string, locale: Locale = "en") {
   const date = new Date(isoDate)
   const intl = localeToIntl(locale)

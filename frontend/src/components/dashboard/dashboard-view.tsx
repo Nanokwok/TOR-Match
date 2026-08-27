@@ -3,8 +3,10 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { browseActions } from "@/lib/browse-actions"
+import { pickLocalized } from "@/lib/localized-content"
 import { formatDaysLeft, formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { DashboardData } from "@/types/dashboard"
@@ -146,6 +148,7 @@ function RecommendedTorRow({
   index: number
 }) {
   const router = useRouter()
+  const { locale } = useLocale()
 
   return (
     <article className="grid gap-4 py-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6">
@@ -154,11 +157,11 @@ function RecommendedTorRow({
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="text-base font-semibold text-foreground sm:text-lg">
-            {tor.title}
+            {pickLocalized(tor.title, locale)}
           </h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          {tor.department}
+          {pickLocalized(tor.department, locale)}
           <span className="mx-2 text-border">·</span>
           {formatThb(tor.budgetBaht)}
           <span className="mx-2 text-border">·</span>

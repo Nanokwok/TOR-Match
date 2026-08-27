@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { Check, Copy, Mail, MessageCircle } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
 import type { Tor } from "@/types/tor"
 
@@ -67,6 +69,7 @@ export function ShareTorDialog({
   onOpenChange,
   tor,
 }: ShareTorDialogProps) {
+  const { locale } = useLocale()
   const [copied, setCopied] = useState(false)
 
   const shareUrl = useMemo(() => {
@@ -132,7 +135,7 @@ export function ShareTorDialog({
         <DialogHeader className="border-b border-border px-5 py-4">
           <DialogTitle>Share TOR</DialogTitle>
           <DialogDescription className="line-clamp-2">
-            {tor.title}
+            {pickLocalized(tor.title, locale)}
           </DialogDescription>
         </DialogHeader>
 

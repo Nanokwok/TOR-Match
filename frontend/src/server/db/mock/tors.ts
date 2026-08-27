@@ -1,5 +1,8 @@
 import type { CompanyProfile, Tor } from "@/types/tor";
-import { applyTorTranslations } from "@/server/db/mock/tor-translations";
+import {
+  applyTorTranslations,
+  type TorSeed,
+} from "@/server/db/mock/tor-translations";
 
 function milestonesForBudget(totalBudgetBaht: number) {
   const schedule = [
@@ -46,7 +49,7 @@ function milestonesForBudget(totalBudgetBaht: number) {
 function defaultQualifications(
   minCapital: number,
   pastContractMin: number,
-): Tor["qualificationRequirements"] {
+): TorSeed["qualificationRequirements"] {
   return [
     {
       id: "registered-capital",
@@ -75,7 +78,7 @@ function defaultQualifications(
   ]
 }
 
-function manualQualifications(): Tor["qualificationRequirements"] {
+function manualQualifications(): TorSeed["qualificationRequirements"] {
   return [
     {
       id: "manual-experience",
@@ -116,9 +119,10 @@ const LOCAL_OFFICES = [
   "Public Works District Office",
 ] as const
 
-type TorSeed = Omit<Tor, "localOffice" | "announcementDate">
+/** A seed before browse metadata (local office, announcement date) is filled in. */
+type RawTorSeed = Omit<TorSeed, "localOffice" | "announcementDate">
 
-function withBrowseMeta(tors: TorSeed[]): Tor[] {
+function withBrowseMeta(tors: RawTorSeed[]): TorSeed[] {
   return tors.map((tor, index) => {
     const deadline = new Date(tor.deadline)
     const announced = new Date(deadline)
@@ -159,7 +163,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 4_500_000,
       projectScale: "MEDIUM",
       durationDays: 180,
-      durationLabel: "180 Days (6 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,
@@ -197,7 +200,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 12_800_000,
       projectScale: "LARGE",
       durationDays: 365,
-      durationLabel: "365 Days (12 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,
@@ -231,7 +233,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 8_200_000,
       projectScale: "LARGE",
       durationDays: 270,
-      durationLabel: "270 Days (9 Months)",
       method: "selective",
       status: "closing-soon",
       eligible: false,
@@ -265,7 +266,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 2_100_000,
       projectScale: "SMALL",
       durationDays: 120,
-      durationLabel: "120 Days (4 Months)",
       method: "e-market",
       status: "open",
       eligible: true,
@@ -298,7 +298,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 3_650_000,
       projectScale: "MEDIUM",
       durationDays: 150,
-      durationLabel: "150 Days (5 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,
@@ -331,7 +330,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 5_900_000,
       projectScale: "MEDIUM",
       durationDays: 210,
-      durationLabel: "210 Days (7 Months)",
       method: "e-bidding",
       status: "closed",
       eligible: false,
@@ -364,7 +362,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 9_400_000,
       projectScale: "LARGE",
       durationDays: 300,
-      durationLabel: "300 Days (10 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,
@@ -397,7 +394,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 3_200_000,
       projectScale: "MEDIUM",
       durationDays: 180,
-      durationLabel: "180 Days (6 Months)",
       method: "e-market",
       status: "open",
       eligible: true,
@@ -430,7 +426,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 6_750_000,
       projectScale: "MEDIUM",
       durationDays: 240,
-      durationLabel: "240 Days (8 Months)",
       method: "selective",
       status: "open",
       eligible: false,
@@ -463,7 +458,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 2_850_000,
       projectScale: "SMALL",
       durationDays: 150,
-      durationLabel: "150 Days (5 Months)",
       method: "e-bidding",
       status: "closing-soon",
       eligible: true,
@@ -496,7 +490,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 1_950_000,
       projectScale: "SMALL",
       durationDays: 120,
-      durationLabel: "120 Days (4 Months)",
       method: "e-market",
       status: "open",
       eligible: true,
@@ -529,7 +522,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 7_100_000,
       projectScale: "LARGE",
       durationDays: 270,
-      durationLabel: "270 Days (9 Months)",
       method: "e-bidding",
       status: "open",
       eligible: false,
@@ -562,7 +554,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 4_050_000,
       projectScale: "MEDIUM",
       durationDays: 180,
-      durationLabel: "180 Days (6 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,
@@ -595,7 +586,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 15_600_000,
       projectScale: "LARGE",
       durationDays: 365,
-      durationLabel: "365 Days (12 Months)",
       method: "specific",
       status: "awarded",
       eligible: false,
@@ -628,7 +618,6 @@ export function getMockTors(): Tor[] {
       budgetBaht: 5_250_000,
       projectScale: "MEDIUM",
       durationDays: 210,
-      durationLabel: "210 Days (7 Months)",
       method: "e-bidding",
       status: "open",
       eligible: true,

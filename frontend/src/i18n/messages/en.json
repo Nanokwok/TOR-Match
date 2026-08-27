@@ -244,7 +244,11 @@
     "emptyTitle": "No notifications found",
     "emptyAll": "You're all caught up for now.",
     "emptyTab": "Nothing in {tab} yet.",
-    "autoVerified": "Auto-verified match"
+    "autoVerified": "Auto-verified match",
+    "action": {
+      "viewTor": "View TOR →",
+      "openWorkspace": "Open Workspace"
+    }
   },
   "auth": {
     "loginTitle": "Log In",

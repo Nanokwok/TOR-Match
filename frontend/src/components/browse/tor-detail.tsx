@@ -65,10 +65,7 @@ function TorDetailContent({
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
   const qualificationCheck = buildQualificationCheck(
-    {
-      ...tor,
-      qualificationRequirements: localized.qualificationRequirements,
-    },
+    tor,
     getMockCompanyProfile(),
   );
 

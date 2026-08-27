@@ -100,8 +100,8 @@ function WorkspaceCardDetailBody({
   const [newAssigneeName, setNewAssigneeName] = useState("");
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
 
-  const title = pickLocalized(draft.title, draft.titleTh, locale);
-  const department = pickLocalized(draft.department, draft.departmentTh, locale);
+  const title = pickLocalized(draft.title, locale);
+  const department = pickLocalized(draft.department, locale);
   const daysLeftLabels = {
     dueToday: t("workspace.dueToday"),
     oneDayLeft: t("workspace.oneDayLeft"),

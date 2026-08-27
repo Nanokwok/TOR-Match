@@ -6,11 +6,18 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { formatRelativeTime } from "@/lib/format";
+import { pickLocalized } from "@/lib/localized-content";
 import { cn } from "@/lib/utils";
 import type {
   AppNotification,
+  NotificationAction,
   NotificationCategory,
 } from "@/types/notification";
+
+const ACTION_LABEL_KEYS: Record<NotificationAction, string> = {
+  "view-tor": "notifications.action.viewTor",
+  "open-workspace": "notifications.action.openWorkspace",
+};
 
 const CATEGORY_STYLES: Record<
   NotificationCategory,
@@ -46,7 +53,9 @@ export function NotificationCard({
   const { locale, t } = useLocale();
   const category = CATEGORY_STYLES[notification.category];
   const Icon = category.icon;
-  const actionLabel = notification.actionLabel;
+  const actionLabel = notification.action
+    ? t(ACTION_LABEL_KEYS[notification.action])
+    : null;
 
   function handleActivate() {
     onMarkRead(notification.id);
@@ -82,7 +91,7 @@ export function NotificationCard({
       <span className="min-w-0 flex-1 space-y-1">
         <span className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-foreground">
-            {notification.title}
+            {pickLocalized(notification.title, locale)}
           </span>
           {notification.autoVerifiedMatch ? (
             <Badge className="h-5 rounded-md border-transparent bg-emerald-100 px-1.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
@@ -92,12 +101,12 @@ export function NotificationCard({
         </span>
 
         <span className="line-clamp-2 text-sm text-muted-foreground">
-          {notification.description}
+          {pickLocalized(notification.description, locale)}
         </span>
 
         <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{formatRelativeTime(notification.createdAt, locale)}</span>
-          {notification.link ? (
+          {notification.link && actionLabel ? (
             <span className="font-medium text-primary">{actionLabel}</span>
           ) : null}
         </span>

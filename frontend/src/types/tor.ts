@@ -1,3 +1,5 @@
+import type { LocalizedList, LocalizedText } from "@/types/localized"
+
 export type TorProjectScale = "SMALL" | "MEDIUM" | "LARGE" | "ENTERPRISE"
 
 export type TorPriority = "HIGH" | "MEDIUM" | "LOW"
@@ -28,8 +30,7 @@ export type TorPaymentMilestone = {
   milestoneNumber: number
   percent: number
   amountBaht: number
-  deliverable: string
-  deliverableTh?: string
+  deliverable: LocalizedText
 }
 
 export type TorFinancials = {
@@ -41,10 +42,8 @@ export type TorFinancials = {
 
 export type TorQualificationRequirement = {
   id: string
-  requirement: string
-  requirementTh?: string
-  torCriteria: string
-  torCriteriaTh?: string
+  requirement: LocalizedText
+  torCriteria: LocalizedText
   /** When true, eligibility can be checked against the company profile. */
   autoCheckable: boolean
 }
@@ -52,17 +51,13 @@ export type TorQualificationRequirement = {
 export type Tor = {
   id: string
   announcementNo: string
-  title: string
-  titleTh?: string
-  department: string
-  departmentTh?: string
-  localOffice: string
-  localOfficeTh?: string
+  title: LocalizedText
+  department: LocalizedText
+  localOffice: LocalizedText
   budgetBaht: number
   projectScale: TorProjectScale
+  /** Canonical contract length. Render with `formatDuration(durationDays, locale)`. */
   durationDays: number
-  durationLabel: string
-  durationLabelTh?: string
   method: TorProcurementMethod
   status: TorProcurementStatus
   eligible: boolean
@@ -70,10 +65,8 @@ export type Tor = {
   deadline: string
   announcementDate: string
   sourceUrl: string
-  summary: string
-  summaryTh?: string
-  deliverables: string[]
-  deliverablesTh?: string[]
+  summary: LocalizedText
+  deliverables: LocalizedList
   techTags: string[]
   listTags: string[]
   financials: TorFinancials
@@ -95,8 +88,8 @@ export type CompanyProfile = {
 export type TorQualificationCheck = {
   profileSetup: boolean
   rows: {
-    requirement: string
-    torCriteria: string
+    requirement: LocalizedText
+    torCriteria: LocalizedText
     companyValue: string | null
     passed: boolean | null
     autoCheckable: boolean

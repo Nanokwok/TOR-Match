@@ -244,7 +244,11 @@
     "emptyTitle": "ไม่พบการแจ้งเตือน",
     "emptyAll": "คุณอ่านครบแล้ว",
     "emptyTab": "ยังไม่มีรายการใน {tab}",
-    "autoVerified": "จับคู่อัตโนมัติแล้ว"
+    "autoVerified": "จับคู่อัตโนมัติแล้ว",
+    "action": {
+      "viewTor": "ดู TOR →",
+      "openWorkspace": "เปิด Workspace"
+    }
   },
   "auth": {
     "loginTitle": "เข้าสู่ระบบ",

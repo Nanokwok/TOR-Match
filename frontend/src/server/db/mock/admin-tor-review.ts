@@ -1,12 +1,19 @@
 import { getMockTors } from "@/server/db/mock/tors"
+import type { TorSeed } from "@/server/db/mock/tor-translations"
 import type {
   Tor,
-  TorPaymentMilestone,
   TorProcurementMethod,
   TorProcurementStatus,
   TorProjectScale,
-  TorQualificationRequirement,
 } from "@/types/tor"
+
+/**
+ * The admin review screen is an editing form, so it works with flat strings
+ * rather than {@link LocalizedText}. English is the editing surface; the Thai
+ * title is carried alongside it in `projectTitleTh`.
+ */
+export type ReviewMilestone = TorSeed["financials"]["milestones"][number]
+export type ReviewQualification = TorSeed["qualificationRequirements"][number]
 
 export type TorReviewStatus = "need-review" | "auto-approved" | "approved"
 
@@ -28,7 +35,6 @@ export type TorReviewDetail = TorReviewListItem & {
   localOffice: string
   projectScale: TorProjectScale
   durationDays: number
-  durationLabel: string
   method: TorProcurementMethod
   status: TorProcurementStatus
   deadline: string
@@ -39,8 +45,8 @@ export type TorReviewDetail = TorReviewListItem & {
   techTags: string[]
   listTags: string[]
   medianPriceBaht: number
-  milestones: TorPaymentMilestone[]
-  qualificationRequirements: TorQualificationRequirement[]
+  milestones: ReviewMilestone[]
+  qualificationRequirements: ReviewQualification[]
   pdfUrl: string
 }
 
@@ -107,7 +113,7 @@ function defaultReviewMeta(tor: Tor, index: number) {
   return {
     aiConfidence,
     reviewStatus,
-    titleTh: tor.title,
+    titleTh: tor.title.th,
   }
 }
 
@@ -116,8 +122,8 @@ function toReviewListItem(tor: Tor, index: number): TorReviewListItem {
   return {
     id: tor.id,
     announcementId: tor.announcementNo,
-    projectTitle: tor.title,
-    department: tor.department,
+    projectTitle: tor.title.en,
+    department: tor.department.en,
     budgetBaht: tor.budgetBaht,
     aiConfidence: meta.aiConfidence,
     reviewStatus: meta.reviewStatus,
@@ -131,24 +137,28 @@ function toReviewDetail(tor: Tor, index: number): TorReviewDetail {
   return {
     ...list,
     projectTitleTh: meta.titleTh,
-    projectTitleEn: tor.title,
-    localOffice: tor.localOffice,
+    projectTitleEn: tor.title.en,
+    localOffice: tor.localOffice.en,
     projectScale: tor.projectScale,
     durationDays: tor.durationDays,
-    durationLabel: tor.durationLabel,
     method: tor.method,
     status: tor.status,
     deadline: tor.deadline,
     announcementDate: tor.announcementDate,
     sourceUrl: tor.sourceUrl,
-    summary: tor.summary,
-    deliverables: [...tor.deliverables],
+    summary: tor.summary.en,
+    deliverables: [...tor.deliverables.en],
     techTags: [...tor.techTags],
     listTags: [...tor.listTags],
     medianPriceBaht: tor.financials.medianPriceBaht,
-    milestones: tor.financials.milestones.map((item) => ({ ...item })),
+    milestones: tor.financials.milestones.map((item) => ({
+      ...item,
+      deliverable: item.deliverable.en,
+    })),
     qualificationRequirements: tor.qualificationRequirements.map((item) => ({
       ...item,
+      requirement: item.requirement.en,
+      torCriteria: item.torCriteria.en,
     })),
     pdfUrl: MOCK_TOR_PDF_URL,
   }
@@ -166,7 +176,7 @@ export function getTorReviewById(id: string): TorReviewDetail | null {
 }
 
 export const torReviewDepartments = Array.from(
-  new Set(getMockTors().map((tor) => tor.department))
+  new Set(getMockTors().map((tor) => tor.department.en))
 ).sort()
 
 export function confidenceLevel(
@@ -180,7 +190,7 @@ export function confidenceLevel(
 export function createEmptyMilestone(
   milestoneNumber: number,
   budgetBaht: number
-): TorPaymentMilestone {
+): ReviewMilestone {
   const percent = 10
   return {
     day: milestoneNumber * 30,
@@ -191,7 +201,7 @@ export function createEmptyMilestone(
   }
 }
 
-export function createEmptyQualification(): TorQualificationRequirement {
+export function createEmptyQualification(): ReviewQualification {
   return {
     id: `req-${Math.random().toString(36).slice(2, 8)}`,
     requirement: "",

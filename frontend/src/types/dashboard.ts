@@ -1,3 +1,5 @@
+import type { LocalizedText } from "@/types/localized"
+
 export type DashboardMetric = {
   id: "active-bids" | "upcoming-deadlines"
   label: string
@@ -7,9 +9,9 @@ export type DashboardMetric = {
 
 export type DashboardRecommendedTor = {
   id: string
-  title: string
-  department: string
-  localOffice: string
+  title: LocalizedText
+  department: LocalizedText
+  localOffice: LocalizedText
   budgetBaht: number
   deadline: string
   projectScale: string

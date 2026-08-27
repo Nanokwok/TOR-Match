@@ -1,3 +1,4 @@
+import { localizedIncludes } from "@/lib/localized-content"
 import {
   getMockTeamMembers,
   getMockWorkspaceCards,
@@ -43,7 +44,7 @@ function matchesWorkspaceQuery(
   if (query.keyword?.trim()) {
     const q = query.keyword.trim().toLowerCase()
     const matches =
-      card.title.toLowerCase().includes(q) ||
+      localizedIncludes(card.title, q) ||
       card.announcementNo.toLowerCase().includes(q)
     if (!matches) return false
   }
@@ -135,7 +136,7 @@ export async function searchTorsForWorkspace(keyword = "") {
       return (
         tor.id.toLowerCase().includes(q) ||
         tor.announcementNo.toLowerCase().includes(q) ||
-        tor.title.toLowerCase().includes(q)
+        localizedIncludes(tor.title, q)
       )
     })
     .slice(0, 20)

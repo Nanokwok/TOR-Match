@@ -1,22 +1,25 @@
+import type { LocalizedText } from "@/types/localized"
+
 export type NotificationCategory =
   | "match"
   | "deadline"
   | "system"
 
-export type NotificationActionLabel = "View TOR →" | "Open Workspace"
+/**
+ * The call-to-action rendered on a notification. This is a UI label, not data —
+ * the wording lives in the i18n dictionary under `notifications.action.*`.
+ */
+export type NotificationAction = "view-tor" | "open-workspace"
 
 export type AppNotification = {
   id: string
   category: NotificationCategory
-  title: string
-  titleTh?: string
-  description: string
-  descriptionTh?: string
+  title: LocalizedText
+  description: LocalizedText
   createdAt: string
   isRead: boolean
   /** True when the TOR matches automatically verified qualification criteria. */
   autoVerifiedMatch?: boolean
   link?: string
-  actionLabel?: NotificationActionLabel
-  actionLabelTh?: string
+  action?: NotificationAction
 }

@@ -1,4 +1,11 @@
+import { localizedText } from "@/types/localized"
 import type { TeamMember, WorkspaceCard } from "@/types/workspace"
+
+/** Seed rows are authored in English; Thai is layered on by {@link localizeWorkspaceCard}. */
+type WorkspaceCardSeed = Omit<WorkspaceCard, "title" | "department"> & {
+  title: string
+  department: string
+}
 
 const DEPARTMENTS: Record<string, string> = {
   "BMA-SED": "Strategy and Evaluation Department (SED)",
@@ -55,15 +62,18 @@ function departmentThFromAnnouncement(announcementNo: string) {
   )
 }
 
-function localizeWorkspaceCard(card: WorkspaceCard): WorkspaceCard {
+function localizeWorkspaceCard(card: WorkspaceCardSeed): WorkspaceCard {
   return {
     ...card,
-    titleTh: WORKSPACE_TITLE_TH[card.title] ?? card.title,
-    departmentTh: departmentThFromAnnouncement(card.announcementNo),
+    title: localizedText(card.title, WORKSPACE_TITLE_TH[card.title]),
+    department: localizedText(
+      card.department,
+      departmentThFromAnnouncement(card.announcementNo)
+    ),
   }
 }
 
-const INITIAL_WORKSPACE_CARDS: WorkspaceCard[] = [
+const INITIAL_WORKSPACE_CARDS: WorkspaceCardSeed[] = [
   {
     torId: "ws-001",
     announcementNo: "BMA-SED-69-08-0142",
@@ -165,7 +175,8 @@ const INITIAL_WORKSPACE_CARDS: WorkspaceCard[] = [
   },
 ]
 
-let workspaceCards = [...INITIAL_WORKSPACE_CARDS]
+let workspaceCards: WorkspaceCard[] =
+  INITIAL_WORKSPACE_CARDS.map(localizeWorkspaceCard)
 
 /**
  * Mock workspace board data. Replace getMockWorkspaceCards() body
@@ -181,7 +192,7 @@ export function getMockTeamMembers(): TeamMember[] {
 }
 
 export function getMockWorkspaceCards(): WorkspaceCard[] {
-  return workspaceCards.map(localizeWorkspaceCard)
+  return workspaceCards
 }
 
 export function setMockWorkspaceCards(cards: WorkspaceCard[]) {

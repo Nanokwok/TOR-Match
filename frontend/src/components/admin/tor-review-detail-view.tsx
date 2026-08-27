@@ -21,12 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { formatDuration } from "@/lib/format"
 import type {
-  TorPaymentMilestone,
+  ReviewMilestone,
+  ReviewQualification,
+} from "@/server/db/mock/admin-tor-review"
+import type {
   TorProcurementMethod,
   TorProcurementStatus,
   TorProjectScale,
-  TorQualificationRequirement,
 } from "@/types/tor"
 
 type TorReviewDetailViewProps = {
@@ -76,7 +79,6 @@ export function TorReviewDetailView({
   const [medianPrice, setMedianPrice] = useState(String(tor.medianPriceBaht))
   const [projectScale, setProjectScale] = useState(tor.projectScale)
   const [durationDays, setDurationDays] = useState(String(tor.durationDays))
-  const [durationLabel, setDurationLabel] = useState(tor.durationLabel)
   const [method, setMethod] = useState(tor.method)
   const [status, setStatus] = useState(tor.status)
   const [deadline, setDeadline] = useState(toDateTimeLocal(tor.deadline))
@@ -115,7 +117,7 @@ export function TorReviewDetailView({
 
   function updateMilestone(
     index: number,
-    patch: Partial<TorPaymentMilestone>
+    patch: Partial<ReviewMilestone>
   ) {
     setMilestones((current) =>
       current.map((item, i) => {
@@ -131,7 +133,7 @@ export function TorReviewDetailView({
 
   function updateQualification(
     index: number,
-    patch: Partial<TorQualificationRequirement>
+    patch: Partial<ReviewQualification>
   ) {
     setQualifications((current) =>
       current.map((item, i) => (i === index ? { ...item, ...patch } : item))
@@ -332,26 +334,28 @@ export function TorReviewDetailView({
                     id="duration-days"
                     inputMode="numeric"
                     value={durationDays}
-                    onChange={(event) => {
-                      const next = event.target.value
-                      setDurationDays(next)
-                      const days = Number(next)
-                      if (days > 0) {
-                        const months = Math.round(days / 30)
-                        setDurationLabel(
-                          `${days} Days (${months} Month${months === 1 ? "" : "s"})`
-                        )
-                      }
-                    }}
+                    onChange={(event) => setDurationDays(event.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration-label">Duration Label</Label>
+                  <Label htmlFor="duration-preview">Duration Label</Label>
                   <Input
-                    id="duration-label"
-                    value={durationLabel}
-                    onChange={(event) => setDurationLabel(event.target.value)}
+                    id="duration-preview"
+                    value={
+                      Number(durationDays) > 0
+                        ? formatDuration(Number(durationDays))
+                        : ""
+                    }
+                    readOnly
+                    aria-describedby="duration-preview-hint"
+                    className="bg-muted text-muted-foreground"
                   />
+                  <p
+                    id="duration-preview-hint"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Derived from the day count — rendered per locale at display time.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="deadline">Submission Deadline</Label>

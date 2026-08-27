@@ -1,14 +1,16 @@
 import { Schema, model, type InferSchemaType, type HydratedDocument } from "mongoose"
+import {
+  localizedListSchema,
+  localizedTextSchema,
+} from "@/models/localized.schema"
 
-/** Mirrors src/types/tor.ts (Tor) on the frontend. */
 const paymentMilestoneSchema = new Schema(
   {
     day: { type: Number, required: true },
     milestoneNumber: { type: Number, required: true },
     percent: { type: Number, required: true },
     amountBaht: { type: Number, required: true },
-    deliverable: { type: String, required: true },
-    deliverableTh: { type: String },
+    deliverable: { type: localizedTextSchema, required: true },
   },
   { _id: false }
 )
@@ -29,10 +31,8 @@ const financialsSchema = new Schema(
 
 const qualificationRequirementSchema = new Schema(
   {
-    requirement: { type: String, required: true },
-    requirementTh: { type: String },
-    torCriteria: { type: String, required: true },
-    torCriteriaTh: { type: String },
+    requirement: { type: localizedTextSchema, required: true },
+    torCriteria: { type: localizedTextSchema, required: true },
     autoCheckable: { type: Boolean, default: false },
   },
   { _id: false }
@@ -41,21 +41,17 @@ const qualificationRequirementSchema = new Schema(
 const torSchema = new Schema(
   {
     announcementNo: { type: String, required: true, unique: true },
-    title: { type: String, required: true },
-    titleTh: { type: String },
-    department: { type: String, required: true, index: true },
-    departmentTh: { type: String },
-    localOffice: { type: String, required: true },
-    localOfficeTh: { type: String },
+    title: { type: localizedTextSchema, required: true },
+    department: { type: localizedTextSchema, required: true },
+    localOffice: { type: localizedTextSchema, required: true },
     budgetBaht: { type: Number, required: true },
     projectScale: {
       type: String,
       enum: ["SMALL", "MEDIUM", "LARGE", "ENTERPRISE"],
       required: true,
     },
+    /** Canonical contract length. The display label is derived from this. */
     durationDays: { type: Number, required: true },
-    durationLabel: { type: String, required: true },
-    durationLabelTh: { type: String },
     method: {
       type: String,
       enum: ["e-bidding", "e-market", "selective", "specific", "price-agreement"],
@@ -70,10 +66,8 @@ const torSchema = new Schema(
     deadline: { type: String, required: true },
     announcementDate: { type: String, required: true },
     sourceUrl: { type: String, default: "" },
-    summary: { type: String, default: "" },
-    summaryTh: { type: String },
-    deliverables: { type: [String], default: [] },
-    deliverablesTh: { type: [String], default: [] },
+    summary: { type: localizedTextSchema, required: true },
+    deliverables: { type: localizedListSchema, default: () => ({}) },
     techTags: { type: [String], default: [], index: true },
     listTags: { type: [String], default: [] },
     financials: { type: financialsSchema, required: true },
@@ -81,6 +75,9 @@ const torSchema = new Schema(
   },
   { timestamps: true }
 )
+
+/** English is the canonical identity used for filtering and cross-referencing. */
+torSchema.index({ "department.en": 1 })
 
 export type TorDoc = HydratedDocument<InferSchemaType<typeof torSchema>>
 

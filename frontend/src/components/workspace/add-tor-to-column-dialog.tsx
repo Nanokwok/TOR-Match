@@ -156,7 +156,7 @@ function AddTorToColumnDialogBody({
             <ul className="divide-y divide-border">
               {results.map((tor) => {
                 const alreadyAdded = existingSet.has(tor.id)
-                const title = pickLocalized(tor.title, tor.titleTh, locale)
+                const title = pickLocalized(tor.title, locale)
 
                 return (
                   <li key={tor.id}>

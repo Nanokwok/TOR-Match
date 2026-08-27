@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LabeledFilterSelect } from "@/components/ui/labeled-filter-select"
+import { localizedKey, pickLocalized } from "@/lib/localized-content"
 import { SelectItem } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -20,6 +21,7 @@ import {
   budgetRangeLabel,
   procurementStatusLabel,
 } from "@/lib/browse-labels"
+import type { LocalizedText } from "@/types/localized"
 import type {
   TorDetailFilters,
   TorListQuery,
@@ -37,7 +39,7 @@ export type BrowseFiltersState = {
 
 type TorFilterBarProps = {
   filters: BrowseFiltersState
-  departments: string[]
+  departments: LocalizedText[]
   localOffices: string[]
   onChange: (next: BrowseFiltersState) => void
   onSearch: () => void
@@ -61,8 +63,15 @@ export function TorFilterBar({
   onChange,
   onSearch,
 }: TorFilterBarProps) {
-  const { t } = useLocale()
+  const { locale, t } = useLocale()
   const [moreOpen, setMoreOpen] = useState(false)
+
+  /** Department filter values are the canonical English names; labels follow the locale. */
+  const departmentLabel = (value: string) => {
+    const match = departments.find((item) => localizedKey(item) === value)
+    return match ? pickLocalized(match, locale) : value
+  }
+
   const activeDetailCount = countActiveDetailFilters(filters.detail)
   const chips = useMemo(
     () => getActiveDetailFilterChips(filters.detail, t),
@@ -189,7 +198,7 @@ export function TorFilterBar({
               label={t("browse.department")}
               value={filters.department}
               formatValue={(value) =>
-                value === "all" ? t("common.all") : value
+                value === "all" ? t("common.all") : departmentLabel(value)
               }
               onValueChange={(value) =>
                 onChange({ ...filters, department: value })
@@ -198,8 +207,11 @@ export function TorFilterBar({
             >
               <SelectItem value="all">{t("common.all")}</SelectItem>
               {departments.map((department) => (
-                <SelectItem key={department} value={department}>
-                  {department}
+                <SelectItem
+                  key={localizedKey(department)}
+                  value={localizedKey(department)}
+                >
+                  {pickLocalized(department, locale)}
                 </SelectItem>
               ))}
             </LabeledFilterSelect>
