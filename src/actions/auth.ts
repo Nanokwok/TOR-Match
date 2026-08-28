@@ -52,3 +52,40 @@ export async function registerWithGoogleAction(): Promise<AuthResult> {
   console.log("Action clicked: Register with Google")
   return { ok: true }
 }
+
+export type RequestPasswordResetInput = {
+  email: string
+}
+
+export async function requestPasswordResetAction({
+  email,
+}: RequestPasswordResetInput): Promise<AuthResult> {
+  if (!email.trim()) {
+    return { ok: false, error: "Email is required." }
+  }
+  console.log("Action clicked: Request password reset", { email })
+  return { ok: true }
+}
+
+export type ResetPasswordInput = {
+  token?: string
+  password: string
+}
+
+export async function resetPasswordAction({
+  token,
+  password,
+}: ResetPasswordInput): Promise<AuthResult> {
+  if (!password.trim()) {
+    return { ok: false, error: "Password is required." }
+  }
+  if (password.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." }
+  }
+  console.log("Action clicked: Reset password", {
+    token: token ?? "mock_reset_token",
+    passwordLength: password.length,
+  })
+  return { ok: true }
+}
+
