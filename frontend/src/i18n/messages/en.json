@@ -1,0 +1,504 @@
+{
+  "common": {
+    "search": "Search",
+    "all": "All",
+    "filters": "Filters",
+    "clearAll": "Clear all",
+    "activeFilters": "Active filters:",
+    "email": "Email",
+    "password": "Password",
+    "or": "or",
+    "share": "Share",
+    "bookmark": "Bookmark",
+    "bookmarked": "Bookmarked",
+    "copied": "Copied",
+    "summary": "Summary",
+    "eligible": "Eligible",
+    "notEligible": "Not Eligible",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "baht": "Baht",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "viewTor": "View TOR →",
+    "openWorkspace": "Open Workspace"
+  },
+  "header": {
+    "browseTors": "Browse TORs",
+    "teamWorkspace": "Team Workspace",
+    "companyProfile": "Company Profile",
+    "settings": "Setting",
+    "logout": "Logout",
+    "companyName": "Company Name",
+    "notifications": "Notifications",
+    "notificationsUnread": "Notifications, {count} unread",
+    "changeLanguage": "Change language"
+  },
+  "footer": {
+    "copyright": "© {year} TOR Match. All rights reserved."
+  },
+  "landing": {
+    "headlinePrefix": "Built for tech agencies to",
+    "find": "Find",
+    "and": "and",
+    "match": "Match",
+    "headlineSuffix": "Your BMA government projects",
+    "subtitle": "Extract key TOR criteria, automate eligibility matching before submitting your bid",
+    "ctaSearch": "Start Searching for Free",
+    "ctaEligibility": "Check Company Eligibility",
+    "features": {
+      "aiSummary": {
+        "title": "AI Executive TOR Summary",
+        "description": "Parses 30-page PDF documents into 1-minute summary cards covering budget, deadlines, and core deliverables."
+      },
+      "searchFilters": {
+        "title": "Tech Stack & Advanced Search Filters",
+        "description": "Filter BMA procurement listings instantly by technology keywords, departments, or budget ranges."
+      },
+      "eligibility": {
+        "title": "Automated Eligibility Matching",
+        "description": "Cross-checks company registered capital, past project values, and ISO certifications directly against TOR criteria."
+      },
+      "dealBreaker": {
+        "title": "Deal-Breaker Clause Detector",
+        "description": "Highlights disqualifying clauses and mandatory qualifications immediately so you never waste time on ineligible bids."
+      },
+      "ocrSearch": {
+        "title": "In-Document OCR Search",
+        "description": "Converts scanned or image-based PDF TOR documents into searchable text."
+      },
+      "alerts": {
+        "title": "Real-Time Deadline & Match Alerts",
+        "description": "Receive instant notifications via Email, or Push Notification the moment a new TOR matches your company profile."
+      }
+    }
+  },
+  "browse": {
+    "searchPlaceholder": "Search your keyword...",
+    "eligibleOnly": "Eligible Only",
+    "budgetRange": "Budget Range",
+    "procurementStatus": "Procurement Status",
+    "department": "Department",
+    "moreFilters": "More filters",
+    "noMatch": "No TORs match your filters.",
+    "selectTor": "Select a TOR to view details.",
+    "removeBookmark": "Remove bookmark",
+    "bookmarkTor": "Bookmark TOR",
+    "submissionDeadline": "Submission Deadline",
+    "projectScale": "Project Scale",
+    "duration": "Duration",
+    "method": "Method",
+    "viewSource": "View Original Source Page",
+    "summaryDeliverables": "Summary & Key Deliverables",
+    "qualificationCheck": "Qualification Check",
+    "qualificationPanel": {
+      "requirement": "Qualification Requirement",
+      "torCriteria": "TOR Minimum Criteria",
+      "companyProfile": "Your Company Profile",
+      "autoVerified": "Automatically verified",
+      "manualReview": "Manual review required",
+      "selfAssessment": "Self-assessment required",
+      "setupPrompt": "Set up your company profile to automatically verify eligibility",
+      "companySetup": "Company Setup →"
+    },
+    "financials": "Financials",
+    "keyDeliverables": "Key Deliverables",
+    "copyAnnouncement": "Click to copy announcement number",
+    "announcementNo": "No: {no}",
+    "budgetUnder3m": "Under 3M",
+    "budget3m6m": "3M – 6M",
+    "budget6m10m": "6M – 10M",
+    "budgetOver10m": "Over 10M",
+    "statusOpen": "Open",
+    "statusClosingSoon": "Closing Soon",
+    "statusClosed": "Closed",
+    "statusAwarded": "Awarded",
+    "scaleSmall": "Small",
+    "scaleMedium": "Medium",
+    "scaleLarge": "Large",
+    "scaleEnterprise": "Enterprise",
+    "durationUnder3m": "< 3 Months",
+    "duration3to6m": "3–6 Months",
+    "duration6to12m": "6–12 Months",
+    "duration1yPlus": "1+ Year",
+    "methodEbidding": "e-bidding",
+    "methodSpecific": "Specific Method",
+    "methodSelective": "Selection Method",
+    "methodPriceAgreement": "Price Agreement",
+    "deadlineAny": "Any deadline",
+    "deadline7Days": "Closing in 7 Days",
+    "deadline30Days": "Closing in 30 Days",
+    "deadlineCustom": "Custom Date Range",
+    "fiscalAll": "All years",
+    "chipScale": "Scale: {value}",
+    "chipDuration": "Duration: {value}",
+    "chipBudget": "Budget: {min}–{max} THB",
+    "chipMethod": "Method: {value}",
+    "chipDeadline": "Deadline: {from} → {to}",
+    "chipFy": "FY {year}",
+    "chipOffices": "{count} local offices",
+    "financialPanel": {
+      "totalBudget": "Total Budget",
+      "medianPrice": "Median Price",
+      "procurementMethod": "Procurement Method",
+      "paymentMilestones": "Payment Milestones",
+      "day": "Day",
+      "milestone": "Milestone",
+      "deliverable": "Deliverable",
+      "days": "{count} Days"
+    },
+    "moreFiltersModal": {
+      "title": "More Filters",
+      "description": "Refine TOR results by scale, duration, budget, method, deadline, and local office.",
+      "projectScale": "Project Scale",
+      "projectDuration": "Project Duration",
+      "exactBudget": "Exact Budget Range (THB)",
+      "min": "Min",
+      "max": "Max",
+      "budgetMinPlaceholder": "e.g. 1000000",
+      "budgetMaxPlaceholder": "e.g. 10000000",
+      "procurementMethod": "Procurement Method",
+      "submissionDeadline": "Submission Deadline",
+      "fiscalYear": "Fiscal Year / Announcement Date",
+      "fiscalYearPlaceholder": "Select fiscal year",
+      "localOffice": "District / Local Office",
+      "officeSearchPlaceholder": "Search districts or local offices...",
+      "noOfficesMatch": "No offices match your search.",
+      "resetClearAll": "Reset / Clear All",
+      "applyFilters": "Apply Filters",
+      "applyFiltersCount": "Apply Filters ({count} Result Found)",
+      "applyFiltersCountPlural": "Apply Filters ({count} Results Found)",
+      "counting": "Counting...",
+      "from": "From",
+      "to": "To"
+    }
+  },
+  "workspace": {
+    "searchPlaceholder": "Search tracked TORs...",
+    "assignee": "Assignee",
+    "priority": "Priority",
+    "addTorPlaceholder": "Add TOR by ID",
+    "addNewTor": "Add New TOR",
+    "columnBookmark": "Bookmark",
+    "columnTodo": "To Do",
+    "columnInProgress": "In Progress",
+    "columnDone": "Done",
+    "daysLeft": "{days} Days Left",
+    "oneDayLeft": "1 Day Left",
+    "dueToday": "Due today",
+    "cardDetail": {
+      "details": "Details",
+      "checklist": "Internal Task Checklist",
+      "priority": "Priority",
+      "status": "Status",
+      "assignees": "Assignees",
+      "addAssignee": "Add assignee",
+      "searchPlaceholder": "Search...",
+      "namePlaceholder": "Name",
+      "addPeople": "Add people",
+      "checklistPlaceholder": "Checklist",
+      "addChecklist": "Add Checklist",
+      "seeFullTor": "See full TOR →",
+      "removeAssignee": "Remove {name}",
+      "close": "Close"
+    },
+    "addTorDialog": {
+      "title": "Add TOR to {column}",
+      "description": "Search by TOR name or ID, then select one to add.",
+      "searchPlaceholder": "Search TOR name or ID...",
+      "searching": "Searching...",
+      "noResults": "No TORs found",
+      "onBoard": "On board"
+    },
+    "checklistDefaults": {
+      "capital": "Check Registered Capital Criteria (5M > 2M THB)",
+      "iso": "Verify ISO/IEC 29110 Certificate Expiry",
+      "reference": "Select Reference Project Contract (#2024-A)",
+      "proposal": "Prepare Price Bidding Proposal (~4.2% below median)",
+      "egp": "Finalize e-GP Envelopes"
+    },
+    "seeFullTor": "See full TOR →",
+    "deleteCardTitle": "Delete card?",
+    "deleteCardDesc": "Remove {title} from the workspace board. This cannot be undone.",
+    "viewEditDetails": "View/Edit Full Details",
+    "deleteCard": "Delete Card",
+    "cardOptions": "Card options"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "newCount": "{count} New",
+    "markAllRead": "Mark all as read",
+    "settings": "Notification settings",
+    "tabAll": "All",
+    "tabUnread": "Unread",
+    "tabMatches": "Matches",
+    "tabDeadlines": "Deadlines",
+    "emptyTitle": "No notifications found",
+    "emptyAll": "You're all caught up for now.",
+    "emptyTab": "Nothing in {tab} yet.",
+    "autoVerified": "Auto-verified match",
+    "action": {
+      "viewTor": "View TOR →",
+      "openWorkspace": "Open Workspace"
+    }
+  },
+  "auth": {
+    "loginTitle": "Log In",
+    "loginSubtitle": "Welcome back. Let me help your work!",
+    "loginGoogle": "Login with Google",
+    "rememberMe": "Remember me",
+    "signingIn": "Signing in...",
+    "loginButton": "Log In",
+    "noAccount": "Don't have an account yet?",
+    "createAccount": "Create one now",
+    "signupTitle": "Sign Up",
+    "signupSubtitle": "Welcome. Let's make your own account!",
+    "signupGoogle": "Register with Google",
+    "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords do not match.",
+    "creatingAccount": "Creating account...",
+    "registerButton": "Register",
+    "hasAccount": "Already have an account?",
+    "loginNow": "Log in now"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences and session.",
+    "notificationsTitle": "Notification Settings",
+    "notificationsDesc": "Control in-app and email alerts, digests, and event preferences.",
+    "appearanceTitle": "Appearance & Display",
+    "appearanceDesc": "Adjust theme, density, and how content is shown across TOR Match.",
+    "logoutTitle": "Log Out",
+    "logoutDesc": "Securely end your current session on this device.",
+    "signOut": "Sign Out"
+  },
+  "appearanceSettings": {
+    "backToSettings": "Back to Settings",
+    "title": "Appearance & Display",
+    "subtitle": "Customize how TOR Match looks and how information is presented.",
+    "themeLabel": "Theme preference",
+    "themePlaceholder": "Select theme",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeHint": "Use system preference, or lock the app to light or dark.",
+    "highlightDeadlines": "Highlight deadlines",
+    "highlightDeadlinesHint": "Emphasize approaching submission dates in browse and workspace.",
+    "highlightDeadlinesAria": "Highlight deadlines"
+  },
+  "format": {
+    "justNow": "Just now",
+    "minutesAgo": "{minutes}m ago",
+    "hoursAgo": "{hours}h ago",
+    "yesterday": "Yesterday",
+    "daysAgo": "{days}d ago",
+    "milestone": "Milestone {number} ({percent}% - ฿{amount})"
+  },
+  "admin": {
+    "overview": "Overview",
+    "scraperOcr": "Scraper & OCR",
+    "torReview": "TOR Review",
+    "companies": "Companies",
+    "subscriptions": "Subscriptions",
+    "settings": "Settings",
+    "loginTitle": "Admin Login",
+    "loginSubtitle": "Sign in to the TOR Match admin panel.",
+    "loginButton": "Sign In"
+  },
+  "notificationSettings": {
+    "backToSettings": "Back to Settings",
+    "title": "Notification Settings",
+    "subtitle": "Control how and when you receive alerts via In-App notifications and Email.",
+    "inAppTitle": "In-App Notifications",
+    "inAppDesc": "Enables the bell icon dropdown",
+    "emailTitle": "Email Notifications",
+    "emailRecipient": "Recipient: {email}",
+    "matrixTitle": "Notification Event Matrix",
+    "matrixSubtitle": "Choose which events trigger In-App and Email alerts.",
+    "eventCategory": "Event Category",
+    "inAppColumn": "In-App",
+    "emailColumn": "Email",
+    "digestTitle": "Email Delivery Frequency & Digests",
+    "digestSubtitle": "Configure instant alerts and bundled digest emails.",
+    "instantTitle": "Instant Email Alerts",
+    "instantDesc": "Send immediate emails for Match Scores ≥ 90% and 24-Hour Final Call warnings.",
+    "dailyTitle": "Daily TOR Digest Email",
+    "dailyDesc": "Bundles all newly scraped BMA TORs matching your profile into a single daily email.",
+    "weeklyTitle": "Weekly Performance Summary Email",
+    "weeklyDesc": "Summary of active workspace pipeline cards, upcoming deadlines for the week, and team status changes.",
+    "deliveryTime": "Delivery Time",
+    "deliveryDay": "Delivery Day",
+    "weeklySummary": "Currently: {day} at {time}",
+    "resetDefaults": "Reset to Defaults",
+    "savePreferences": "Save Preferences",
+    "saving": "Saving...",
+    "restoredDefaults": "Restored default preferences. Click Save to apply.",
+    "preferencesSaved": "Preferences saved.",
+    "unsavedChanges": "You have unsaved changes.",
+    "allSaved": "All changes saved.",
+    "ariaInApp": "{event} in-app",
+    "ariaEmail": "{event} email",
+    "events": {
+      "new-high-match": {
+        "label": "New TOR matching automatically verified qualifications"
+      },
+      "high-budget": {
+        "label": "High Budget Opportunity (> ฿10M)"
+      },
+      "deal-breaker": {
+        "label": "Deal-Breaker Alert",
+        "description": "Saved TOR criteria changed"
+      },
+      "deadline-7-day": {
+        "label": "7-Day Deadline Reminder"
+      },
+      "deadline-3-day": {
+        "label": "3-Day Urgent Deadline Warning"
+      },
+      "deadline-24-hour": {
+        "label": "24-Hour Final Call"
+      },
+      "system-profile": {
+        "label": "System & Profile Verification"
+      }
+    },
+    "digestTimes": {
+      "06:00": "06:00 AM",
+      "08:00": "08:00 AM",
+      "09:00": "09:00 AM",
+      "12:00": "12:00 PM",
+      "17:00": "05:00 PM",
+      "20:00": "08:00 PM"
+    },
+    "digestDays": {
+      "monday": "Every Monday",
+      "tuesday": "Every Tuesday",
+      "wednesday": "Every Wednesday",
+      "thursday": "Every Thursday",
+      "friday": "Every Friday"
+    }
+  },
+  "companySetup": {
+    "step": "STEP {number}",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "steps": {
+      "general": {
+        "label": "General Company Info",
+        "title": "General Company Info",
+        "nextLabel": "Next: Financial & Legal",
+        "description": "Fill in your basic corporate identification and contact details"
+      },
+      "financial": {
+        "label": "Financial & Legal Eligibility",
+        "title": "Financial & Legal Eligibility",
+        "nextLabel": "Next: Certifications",
+        "description": "Capital and regulatory status for automated deal-breaker checks."
+      },
+      "certifications": {
+        "label": "Certifications & Standards",
+        "title": "Certifications & Standards",
+        "nextLabel": "Next: Past Performance",
+        "description": "Select active technical standards to qualify for specialized TORs"
+      },
+      "past-performance": {
+        "label": "Past Performance Contracts",
+        "title": "Past Performance Contracts",
+        "nextLabel": "Next: Capabilities",
+        "description": "Add past projects to match minimum contract value requirements"
+      },
+      "capabilities": {
+        "label": "Capabilities",
+        "title": "Capabilities & Tech Stack",
+        "nextLabel": "Save Profile & Start Matching",
+        "description": "Define your core technologies for automated search and tag matching"
+      }
+    },
+    "fields": {
+      "companyNameThai": "Company Name (Thai)",
+      "companyNameEnglish": "Company Name (English)",
+      "taxId": "Corporate Tax ID (13 Digits)",
+      "companySize": "Company Size",
+      "contactEmail": "Contact Email",
+      "phone": "Phone",
+      "registeredCapital": "Paid-up Registered Capital (THB)",
+      "egpStatus": "e-GP Registration Status",
+      "blacklistDeclaration": "I declare that our company is NOT listed on the Comptroller General's Department blacklisted registry.",
+      "certificateNumber": "Certificate Number",
+      "expirationDate": "Expiration Date",
+      "projectTitle": "Project / Contract Title",
+      "clientSector": "Client Sector",
+      "contractValue": "Contract Value (THB)",
+      "completionYear": "Completion Year",
+      "techStack": "Primary Tech Stack & Tools",
+      "specializations": "Core Specialization Categories",
+      "pastProject": "Past Project {number}"
+    },
+    "placeholders": {
+      "companyNameThai": "e.g. บริษัท เอ็กซ์เทค จำกัด",
+      "companyNameEnglish": "e.g. ExTech Co., Ltd.",
+      "taxId": "0105565012345",
+      "selectSize": "Select Size",
+      "contactEmail": "bidding@company.com",
+      "phone": "02-123-4567",
+      "registeredCapital": "e.g. 5,000,000",
+      "certificateNumber": "e.g. CERT-2023-889",
+      "projectTitle": "e.g. BMA Web Application & Portal Development",
+      "selectSector": "Select Sector",
+      "contractValue": "e.g. 2,000,000",
+      "selectYear": "Select Year",
+      "techStack": "Type technology (e.g. React, Next.js, OCR) and press Enter..."
+    },
+    "companySize": {
+      "micro": "Micro (1–5 employees)",
+      "small": "Small (6–50 employees)",
+      "medium": "Medium (51–200 employees)",
+      "large": "Large (200+ employees)"
+    },
+    "egpStatus": {
+      "registered": "Registered",
+      "in-progress": "In Progress",
+      "not-registered": "Not Registered"
+    },
+    "clientSector": {
+      "government": "Government",
+      "state-enterprise": "State Enterprise",
+      "private": "Private Sector",
+      "ngo": "NGO / International Org"
+    },
+    "specialization": {
+      "software-development": "Software Development",
+      "system-maintenance": "System Maintenance",
+      "data-ai": "Data & AI",
+      "mobile-app": "Mobile App"
+    },
+    "certification": {
+      "iso-29110": "ISO/IEC 29110",
+      "iso-27001": "ISO/IEC 27001",
+      "cmmi-2": "CMMI Level 2+",
+      "iso-9001": "ISO 9001"
+    },
+    "actions": {
+      "remove": "Remove",
+      "addPastProject": "Add Another Past Project",
+      "removeTech": "Remove {tag}"
+    },
+    "validation": {
+      "companyNameThaiRequired": "Company Name (Thai) is required.",
+      "companySizeRequired": "Company Size is required.",
+      "contactEmailRequired": "Contact Email is required.",
+      "registeredCapitalRequired": "Paid-up Registered Capital is required.",
+      "blacklistRequired": "Please confirm the blacklist declaration.",
+      "certificationIncomplete": "Fill certificate number and expiration for selected certifications.",
+      "specializationRequired": "Select at least one specialization."
+    }
+  }
+}
