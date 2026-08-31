@@ -25,6 +25,12 @@ jobs:
       # npm workspaces: one lockfile at the root installs both packages.
       - run: npm ci
 
+      # Next generates route/layout types (LayoutProps, PageProps) into .next/types.
+      # They are gitignored, so tsc cannot resolve them on a fresh checkout.
+      - name: Generate route types
+        run: npx next typegen
+        working-directory: frontend
+
       - name: Typecheck
         run: npx tsc --noEmit
         working-directory: frontend
