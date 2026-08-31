@@ -21,8 +21,8 @@ interface AnimatedThemeTogglerProps extends React.ComponentPropsWithoutRef<"butt
   /** When true, the transition expands from the viewport center instead of the button center. */
   fromCenter?: boolean
   /**
-   * Controlled theme value. When provided, the parent owns persistence
-   * (e.g. `next-themes`) and this component will not write to localStorage.
+   * Controlled theme value. When provided, the parent owns persistence.
+   * This app always drives it from ThemeProvider, which persists to a cookie.
    */
   theme?: "light" | "dark"
   /** Called on toggle. Pair with `theme` for controlled usage. */
@@ -222,8 +222,9 @@ export const AnimatedThemeToggler = ({
       if (isControlled) {
         onThemeChange?.(newTheme ? "dark" : "light")
       } else {
+        // Uncontrolled mode keeps the toggle visual-only; persistence is the
+        // parent's job (see ThemeProvider).
         setInternalIsDark(newTheme)
-        localStorage.setItem("theme", newTheme ? "dark" : "light")
       }
     }
 

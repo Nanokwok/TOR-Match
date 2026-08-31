@@ -1,4 +1,3 @@
-export const THEME_STORAGE_KEY = "tor-match-theme"
 export const FORCE_LIGHT_ATTR = "data-force-light"
 
 export type ThemePreference = "system" | "light" | "dark"

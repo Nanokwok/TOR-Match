@@ -6,17 +6,18 @@ import {
   useContext,
   useEffect,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from "react"
 
-import { createPersistedStore } from "@/lib/persisted-store"
+import {
+  RESOLVED_THEME_COOKIE,
+  THEME_COOKIE,
+  writePreferenceCookie,
+} from "@/lib/preferences"
 import {
   applyThemeClass,
   isForceLightMode,
-  isThemePreference,
   resolveTheme,
-  THEME_STORAGE_KEY,
   type ResolvedTheme,
   type ThemePreference,
 } from "@/lib/theme"
@@ -30,19 +31,19 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-const themeStore = createPersistedStore<ThemePreference>(
-  THEME_STORAGE_KEY,
-  "system",
-  isThemePreference
-)
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useSyncExternalStore(
-    themeStore.subscribe,
-    themeStore.getSnapshot,
-    themeStore.getServerSnapshot
-  )
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light")
+export function ThemeProvider({
+  children,
+  initialTheme,
+  initialResolvedTheme,
+}: {
+  children: ReactNode
+  /** Read from the theme cookie by the root layout, so SSR already matches. */
+  initialTheme: ThemePreference
+  initialResolvedTheme: ResolvedTheme
+}) {
+  const [theme, setThemeState] = useState<ThemePreference>(initialTheme)
+  const [resolvedTheme, setResolvedTheme] =
+    useState<ResolvedTheme>(initialResolvedTheme)
 
   const applyResolved = useCallback((preference: ThemePreference) => {
     if (isForceLightMode()) {
@@ -57,19 +58,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     )
     applyThemeClass(resolved)
     setResolvedTheme(resolved)
+
+    // The server cannot read `prefers-color-scheme`, so remember the outcome
+    // for the next server render. Without this, a "system" user on a dark
+    // device would get a light first paint on every fresh load.
+    writePreferenceCookie(RESOLVED_THEME_COOKIE, resolved)
     return resolved
   }, [])
 
   const setTheme = useCallback((next: ThemePreference) => {
-    themeStore.set(next)
+    setThemeState(next)
+    writePreferenceCookie(THEME_COOKIE, next)
   }, [])
 
   const resyncTheme = useCallback(() => {
     applyResolved(theme)
   }, [applyResolved, theme])
 
-  // Applies the theme to the DOM and mirrors what was applied into state.
-  // This runs after paint, so it never blocks hydration.
+  // Keeps the DOM in step with the preference and with system changes.
+  // The server already applied the correct class, so this is a no-op on load
+  // unless the device setting changed since the cookie was written.
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)")
 

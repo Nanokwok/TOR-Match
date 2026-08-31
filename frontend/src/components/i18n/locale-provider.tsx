@@ -6,20 +6,14 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
   type ReactNode,
 } from "react"
 
-import { createPersistedStore } from "@/lib/persisted-store"
+import { LOCALE_COOKIE, writePreferenceCookie } from "@/lib/preferences"
 import enMessages from "@/i18n/messages/en.json"
 import thMessages from "@/i18n/messages/th.json"
-import {
-  DEFAULT_LOCALE,
-  isLocale,
-  LOCALE_STORAGE_KEY,
-  localeToHtmlLang,
-  type Locale,
-} from "@/lib/i18n"
+import { localeToHtmlLang, type Locale } from "@/lib/i18n"
 
 type Messages = typeof enMessages
 
@@ -35,12 +29,6 @@ type LocaleContextValue = {
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null)
-
-const localeStore = createPersistedStore<Locale>(
-  LOCALE_STORAGE_KEY,
-  DEFAULT_LOCALE,
-  isLocale
-)
 
 function resolveMessage(messages: Messages, key: string): string | undefined {
   const parts = key.split(".")
@@ -64,15 +52,19 @@ function interpolate(
   )
 }
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const locale = useSyncExternalStore(
-    localeStore.subscribe,
-    localeStore.getSnapshot,
-    localeStore.getServerSnapshot
-  )
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode
+  /** Read from the locale cookie by the root layout, so SSR already matches. */
+  initialLocale: Locale
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale)
 
   const setLocale = useCallback((next: Locale) => {
-    localeStore.set(next)
+    setLocaleState(next)
+    writePreferenceCookie(LOCALE_COOKIE, next)
   }, [])
 
   useEffect(() => {
