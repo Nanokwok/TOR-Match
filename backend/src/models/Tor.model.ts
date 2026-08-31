@@ -31,6 +31,8 @@ const financialsSchema = new Schema(
 
 const qualificationRequirementSchema = new Schema(
   {
+    /** Stable key the company profile matches against (CompanyProfileMatch.requirementId). */
+    id: { type: String, required: true },
     requirement: { type: localizedTextSchema, required: true },
     torCriteria: { type: localizedTextSchema, required: true },
     autoCheckable: { type: Boolean, default: false },
