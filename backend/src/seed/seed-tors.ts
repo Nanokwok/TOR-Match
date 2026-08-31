@@ -4,8 +4,14 @@
  *   npm run seed          # upsert (safe to re-run)
  *   npm run seed -- --fresh   # delete every TOR first, then insert
  *
- * Regenerate tors.seed.json from the frontend workspace with:
- *   npx tsx scripts/export-mock-tors.ts
+ * IMPORTANT: tors.seed.json is generated from the frontend mock data and is NOT
+ * checked automatically — nothing will warn you when it goes stale. If you have
+ * touched frontend/src/server/db/mock/tors.ts, regenerate before seeding:
+ *
+ *   cd frontend && npx tsx scripts/export-mock-tors.ts
+ *
+ * Once the frontend reads from this API instead of its mocks, this file becomes
+ * the source of truth on its own and the export step can go away.
  */
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
