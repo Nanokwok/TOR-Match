@@ -72,11 +72,17 @@ export function BrowseMoreFiltersDialog({
   const [previewTotal, setPreviewTotal] = useState<number | null>(null)
   const [isCounting, startCount] = useTransition()
 
-  useEffect(() => {
-    if (!open) return
-    setDraft(cloneDetailFilters(value))
-    setOfficeQuery("")
-  }, [open, value])
+  // Reset the draft whenever the dialog opens or the applied filters change.
+  // Adjusting state during render (rather than in an effect) avoids the extra
+  // render pass React would otherwise have to discard.
+  const [lastSync, setLastSync] = useState({ open, value })
+  if (lastSync.open !== open || lastSync.value !== value) {
+    setLastSync({ open, value })
+    if (open) {
+      setDraft(cloneDetailFilters(value))
+      setOfficeQuery("")
+    }
+  }
 
   useEffect(() => {
     if (!open) return

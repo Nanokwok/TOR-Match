@@ -6,10 +6,11 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react"
 
+import { createPersistedStore } from "@/lib/persisted-store"
 import enMessages from "@/i18n/messages/en.json"
 import thMessages from "@/i18n/messages/th.json"
 import {
@@ -35,15 +36,11 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null)
 
-function readStoredLocale(): Locale {
-  try {
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
-    if (isLocale(stored)) return stored
-  } catch {
-    // Ignore storage access errors
-  }
-  return DEFAULT_LOCALE
-}
+const localeStore = createPersistedStore<Locale>(
+  LOCALE_STORAGE_KEY,
+  DEFAULT_LOCALE,
+  isLocale
+)
 
 function resolveMessage(messages: Messages, key: string): string | undefined {
   const parts = key.split(".")
@@ -68,28 +65,20 @@ function interpolate(
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
-  const [ready, setReady] = useState(false)
+  const locale = useSyncExternalStore(
+    localeStore.subscribe,
+    localeStore.getSnapshot,
+    localeStore.getServerSnapshot
+  )
 
   const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next)
-    try {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, next)
-    } catch {
-      // Ignore storage write errors
-    }
+    localeStore.set(next)
   }, [])
 
   useEffect(() => {
-    setLocaleState(readStoredLocale())
-    setReady(true)
-  }, [])
-
-  useEffect(() => {
-    if (!ready) return
     document.documentElement.lang = localeToHtmlLang(locale)
     document.documentElement.dataset.locale = locale
-  }, [locale, ready])
+  }, [locale])
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => {

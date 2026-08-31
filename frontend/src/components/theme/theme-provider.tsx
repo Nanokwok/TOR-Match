@@ -6,9 +6,11 @@ import {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react"
 
+import { createPersistedStore } from "@/lib/persisted-store"
 import {
   applyThemeClass,
   isForceLightMode,
@@ -28,25 +30,19 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function readStoredTheme(): ThemePreference {
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (isThemePreference(stored)) return stored
-  } catch {
-    // Ignore storage access errors (private mode, etc.)
-  }
-  return "system"
-}
-
-function getResolvedFromDom(): ResolvedTheme {
-  return document.documentElement.classList.contains("dark") ? "dark" : "light"
-}
+const themeStore = createPersistedStore<ThemePreference>(
+  THEME_STORAGE_KEY,
+  "system",
+  isThemePreference
+)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePreference>("system")
-  const [resolvedTheme, setResolvedTheme] =
-    useState<ResolvedTheme>("light")
-  const [ready, setReady] = useState(false)
+  const theme = useSyncExternalStore(
+    themeStore.subscribe,
+    themeStore.getSnapshot,
+    themeStore.getServerSnapshot
+  )
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light")
 
   const applyResolved = useCallback((preference: ThemePreference) => {
     if (isForceLightMode()) {
@@ -64,31 +60,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return resolved
   }, [])
 
-  const setTheme = useCallback(
-    (next: ThemePreference) => {
-      setThemeState(next)
-      try {
-        window.localStorage.setItem(THEME_STORAGE_KEY, next)
-      } catch {
-        // Ignore storage write errors
-      }
-    },
-    []
-  )
+  const setTheme = useCallback((next: ThemePreference) => {
+    themeStore.set(next)
+  }, [])
 
   const resyncTheme = useCallback(() => {
     applyResolved(theme)
   }, [applyResolved, theme])
 
+  // Applies the theme to the DOM and mirrors what was applied into state.
+  // This runs after paint, so it never blocks hydration.
   useEffect(() => {
-    setThemeState(readStoredTheme())
-    setResolvedTheme(getResolvedFromDom())
-    setReady(true)
-  }, [])
-
-  useEffect(() => {
-    if (!ready) return
-
     const media = window.matchMedia("(prefers-color-scheme: dark)")
 
     function sync() {
@@ -98,7 +80,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     sync()
     media.addEventListener("change", sync)
     return () => media.removeEventListener("change", sync)
-  }, [theme, ready, applyResolved])
+  }, [theme, applyResolved])
 
   return (
     <ThemeContext.Provider

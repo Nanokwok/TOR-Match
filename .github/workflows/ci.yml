@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes the in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm workspaces: one lockfile at the root installs both packages.
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: frontend
+
+      - name: Lint
+        run: npm run lint --workspace frontend
+
+      - name: Build
+        run: npm run build --workspace frontend
+        env:
+          # The build only needs the variable to exist; no backend is reachable here.
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+        working-directory: backend
+
+      - name: Lint
+        run: npm run lint --workspace backend
+
+      - name: Build
+        run: npm run build --workspace backend
+
+  seed-in-sync:
+    name: Seed data in sync with mocks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Regenerating must be a no-op. If it is not, the committed seed file has
+      # drifted from the mock data it is generated from.
+      - name: Regenerate seed data
+        run: npx tsx scripts/export-mock-tors.ts
+        working-directory: frontend
+
+      - name: Fail if the seed file changed
+        run: |
+          if ! git diff --quiet -- backend/src/seed/tors.seed.json; then
+            echo "::error::backend/src/seed/tors.seed.json is out of date."
+            echo "Run 'npx tsx scripts/export-mock-tors.ts' in frontend/ and commit the result."
+            git diff --stat -- backend/src/seed/tors.seed.json
+            exit 1
+          fi
+          echo "Seed data matches the mock dataset."
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks needs history to scan commits, not just the current tree.
+          fetch-depth: 0
+
+      - name: Fail if a .env file is tracked
+        run: |
+          tracked=$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$' || true)
+          if [ -n "$tracked" ]; then
+            echo "::error::Environment files must never be committed:"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "No .env files are tracked."
+
+      - name: Scan history for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
