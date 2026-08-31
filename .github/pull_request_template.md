@@ -20,11 +20,6 @@
 - [ ] `npm run lint` passes in both workspaces
 - [ ] No `.env` file is committed (only `.env.example` belongs in git)
 - [ ] Schema changes are mirrored on **both** sides (`backend/src/models` ↔ `frontend/src/types`)
-- [ ] If `frontend/src/server/db/mock/tors.ts` changed: re-ran
-      `cd frontend && npx tsx scripts/export-mock-tors.ts` and committed the
-      regenerated `backend/src/seed/tors.seed.json`
-- [ ] New user-facing text is in **both** `en.json` and `th.json`, or stored as
-      `LocalizedText` when it is data rather than a UI label
 
 ## Screenshots
 
