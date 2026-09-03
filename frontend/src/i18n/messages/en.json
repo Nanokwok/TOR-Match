@@ -262,6 +262,8 @@
     "signupTitle": "Sign Up",
     "signupSubtitle": "Welcome. Let's make your own account!",
     "signupGoogle": "Register with Google",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Your full name",
     "confirmPassword": "Confirm Password",
     "passwordMismatch": "Passwords do not match.",
     "creatingAccount": "Creating account...",

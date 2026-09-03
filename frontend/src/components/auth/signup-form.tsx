@@ -18,6 +18,7 @@ import {
 export function SignupForm() {
   const router = useRouter()
   const { t } = useLocale()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -34,7 +35,7 @@ export function SignupForm() {
     }
 
     startTransition(async () => {
-      const result = await registerWithEmailAction({ email, password })
+      const result = await registerWithEmailAction({ name, email, password })
       if (!result.ok) {
         setError(result.error)
         return
@@ -80,6 +81,20 @@ export function SignupForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-name">{t("auth.fullName")}</Label>
+              <Input
+                id="signup-name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t("auth.fullNamePlaceholder")}
+                className="h-11 border-neutral-300 bg-white"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="signup-email">{t("common.email")}</Label>
               <Input

@@ -262,6 +262,8 @@
     "signupTitle": "สมัครสมาชิก",
     "signupSubtitle": "ยินดีต้อนรับ มาสร้างบัญชีของคุณกัน!",
     "signupGoogle": "สมัครด้วย Google",
+    "fullName": "ชื่อ-นามสกุล",
+    "fullNamePlaceholder": "ชื่อ-นามสกุลของคุณ",
     "confirmPassword": "ยืนยันรหัสผ่าน",
     "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
     "creatingAccount": "กำลังสร้างบัญชี...",
