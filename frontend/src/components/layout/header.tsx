@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
+import { logoutAction } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
@@ -17,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { browseActions } from "@/lib/browse-actions";
 import { cn } from "@/lib/utils";
 
 export type HeaderNavItem = {
@@ -128,8 +128,7 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  browseActions.logout();
-                  router.push("/login");
+                  void logoutAction().then(() => router.push("/login"));
                 }}
               >
                 {t("header.logout")}

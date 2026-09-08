@@ -24,9 +24,6 @@ export const browseActions = {
   openSettings() {
     console.log("Action clicked: Setting");
   },
-  logout() {
-    console.log("Action clicked: Logout");
-  },
   openMoreFilters() {
     console.log("Action clicked: More Filters");
   },
