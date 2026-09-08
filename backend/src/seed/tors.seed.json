@@ -1,0 +1,2388 @@
+[
+  {
+    "announcementNo": "BMA-SED-69-08-0142",
+    "title": {
+      "en": "BMA Procurement & Budget Tracking Information System Development (BMA Procurement Tracker)",
+      "th": "พัฒนาระบบติดตามการจัดซื้อจัดจ้างและงบประมาณ กทม. (BMA Procurement Tracker)"
+    },
+    "department": {
+      "en": "Strategy and Evaluation Department",
+      "th": "สำนักการวางแผนและประเมินผล"
+    },
+    "budgetBaht": 4500000,
+    "projectScale": "MEDIUM",
+    "durationDays": 180,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-08-20T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Develop a web application for BMA procurement & budget tracking, including an OCR system for PDF invoices, a real-time analytics dashboard, and a data pipeline for automatic budget reconciliation.",
+      "th": "พัฒนาเว็บแอปพลิเคชันติดตามการจัดซื้อจัดจ้างและงบประมาณ กทม. รวมระบบ OCR สำหรับใบแจ้งหนี้ PDF แดชบอร์ดวิเคราะห์แบบเรียลไทม์ และไปป์ไลน์กระทบยอดงบประมาณอัตโนมัติ"
+    },
+    "deliverables": {
+      "en": [
+        "PDF Parsing & OCR System",
+        "Real-time Analytics Dashboard",
+        "Automated Budget Reconciliation Pipeline",
+        "Role-based Access Control Module",
+        "Admin & Reporting Portal"
+      ],
+      "th": [
+        "ระบบแปลง PDF และ OCR",
+        "แดชบอร์ดวิเคราะห์แบบเรียลไทม์",
+        "ไปป์ไลน์กระทบยอดงบประมาณอัตโนมัติ",
+        "โมดูลควบคุมสิทธิ์ตามบทบาท",
+        "พอร์ทัลผู้ดูแลและรายงาน"
+      ]
+    },
+    "techTags": [
+      "React",
+      "OCR",
+      "Dashboard",
+      "Data Pipeline",
+      "API"
+    ],
+    "listTags": [
+      "e-bidding",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 4500000,
+      "medianPriceBaht": 4450000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 675000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 1575000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 1350000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 900000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 450000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 2,000,000 THB",
+          "th": "≥ 2,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 1,500,000 THB",
+          "th": "สัญญา Web App ≥ 1,500,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      },
+      {
+        "id": "manual-experience",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Government System Experience",
+          "th": "ประสบการณ์ระบบภาครัฐ"
+        },
+        "torCriteria": {
+          "en": "Must have prior experience delivering procurement or budget systems for government agencies",
+          "th": "ต้องมีประสบการณ์ส่งมอบระบบจัดซื้อจัดจ้างหรือระบบงบประมาณให้หน่วยงานภาครัฐ"
+        }
+      },
+      {
+        "id": "manual-team",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Dedicated Project Team",
+          "th": "ทีมโครงการเฉพาะ"
+        },
+        "torCriteria": {
+          "en": "Must assign a full-time project manager and at least 2 senior developers for the contract duration",
+          "th": "ต้องมีผู้จัดการโครงการเต็มเวลาและนักพัฒนาระดับอาวุโสอย่างน้อย 2 คนตลอดสัญญา"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Phra Nakhon District",
+      "th": "เขตพระนคร"
+    },
+    "announcementDate": "2026-07-30T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-ITD-69-07-0098",
+    "title": {
+      "en": "Smart City Traffic Analytics Platform for Bangkok Metropolitan Area",
+      "th": "แพลตฟอร์มวิเคราะห์การจราจร Smart City สำหรับกรุงเทพมหานคร"
+    },
+    "department": {
+      "en": "Traffic and Transportation Department",
+      "th": "สำนักการจราจรและขนส่ง"
+    },
+    "budgetBaht": 12800000,
+    "projectScale": "LARGE",
+    "durationDays": 365,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-09-05T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Build a city-wide traffic analytics platform that ingests IoT sensor data, predicts congestion, and provides operational dashboards for district offices.",
+      "th": "สร้างแพลตฟอร์มวิเคราะห์การจราจรทั่วเมือง รับข้อมูลจากเซนเซอร์ IoT คาดการณ์ความแออัด และให้แดชบอร์ดปฏิบัติการแก่สำนักงานเขต"
+    },
+    "deliverables": {
+      "en": [
+        "IoT Data Ingestion Layer",
+        "Congestion Prediction Models",
+        "District Operations Dashboard",
+        "Alert & Notification Service",
+        "Public Open Data API"
+      ],
+      "th": [
+        "ชั้นรับข้อมูล IoT",
+        "โมเดลคาดการณ์ความแออัด",
+        "แดชบอร์ดปฏิบัติการระดับเขต",
+        "บริการแจ้งเตือน",
+        "Open Data API สาธารณะ"
+      ]
+    },
+    "techTags": [
+      "Python",
+      "IoT",
+      "ML",
+      "Dashboard",
+      "API"
+    ],
+    "listTags": [
+      "e-bidding",
+      "LARGE"
+    ],
+    "financials": {
+      "totalBudgetBaht": 12800000,
+      "medianPriceBaht": 12100000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 1920000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 4480000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 3840000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 2560000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 1280000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 5,000,000 THB",
+          "th": "≥ 5,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 3,000,000 THB",
+          "th": "สัญญา Web App ≥ 3,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Chatuchak District",
+      "th": "เขตจตุจักร"
+    },
+    "announcementDate": "2026-08-14T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-PHD-69-08-0211",
+    "title": {
+      "en": "Digital Health Records Integration System for BMA Hospitals",
+      "th": "ระบบบูรณาการเวชระเบียนดิจิทัลสำหรับโรงพยาบาล กทม."
+    },
+    "department": {
+      "en": "Public Health Department",
+      "th": "สำนักการแพทย์"
+    },
+    "budgetBaht": 8200000,
+    "projectScale": "LARGE",
+    "durationDays": 270,
+    "method": "selective",
+    "status": "closing-soon",
+    "deadline": "2026-08-15T12:00:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Integrate fragmented hospital record systems into a unified digital health platform with HL7/FHIR interoperability and secure patient consent workflows.",
+      "th": "บูรณาการระบบเวชระเบียนที่กระจัดกระจายให้เป็นแพลตฟอร์มสุขภาพดิจิทal เดียว รองรับ HL7/FHIR และการยินยอมผู้ป่วยอย่างปลอดภัย"
+    },
+    "deliverables": {
+      "en": [
+        "FHIR Integration Gateway",
+        "Unified Patient Index",
+        "Consent Management Module",
+        "Clinical Viewer UI",
+        "Audit & Compliance Reporting"
+      ],
+      "th": [
+        "เกตเวย์เชื่อมต่อ FHIR",
+        "ดัชนีผู้ป่วยรวม",
+        "โมดูลจัดการความยินยอม",
+        "UI ดูข้อมูลทางคลินิก",
+        "รายงานตรวจสอบและกำกับดูแล"
+      ]
+    },
+    "techTags": [
+      "FHIR",
+      "HL7",
+      "Java",
+      "React",
+      "Security"
+    ],
+    "listTags": [
+      "selective",
+      "LARGE"
+    ],
+    "financials": {
+      "totalBudgetBaht": 8200000,
+      "medianPriceBaht": 7950000,
+      "method": "selective",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 1230000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 2870000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 2460000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1640000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 820000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 4,000,000 THB",
+          "th": "≥ 4,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 2,500,000 THB",
+          "th": "สัญญา Web App ≥ 2,500,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Traffic & Transportation Dept",
+      "th": "กองการจราจรและขนส่ง"
+    },
+    "announcementDate": "2026-07-23T05:00:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-EDD-69-06-0044",
+    "title": {
+      "en": "E-Learning Content Management System for BMA Schools",
+      "th": "ระบบจัดการเนื้อหา E-Learning สำหรับโรงเรียน กทม."
+    },
+    "department": {
+      "en": "Education Department",
+      "th": "สำนักการศึกษา"
+    },
+    "budgetBaht": 2100000,
+    "projectScale": "SMALL",
+    "durationDays": 120,
+    "method": "price-agreement",
+    "status": "open",
+    "deadline": "2026-08-28T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Deliver a lightweight CMS for teachers to publish, version, and distribute digital learning materials across BMA schools.",
+      "th": "ส่งมอบ CMS เบาๆ ให้ครูสร้าง จัดการ และเผยแพร่สื่อการเรียนรู้ดิจิทal ไปยังโรงเรียน กทม."
+    },
+    "deliverables": {
+      "en": [
+        "Content Authoring Workspace",
+        "Media Asset Library",
+        "School Distribution Portal",
+        "Usage Analytics Reports"
+      ],
+      "th": [
+        "พื้นที่สร้างเนื้อหา",
+        "คลังสื่อดิจิทal",
+        "พอร์ทัลเผยแพร่สู่โรงเรียน",
+        "รายงานการใช้งาน"
+      ]
+    },
+    "techTags": [
+      "Next.js",
+      "CMS",
+      "S3",
+      "Analytics"
+    ],
+    "listTags": [
+      "e-market",
+      "SMALL"
+    ],
+    "financials": {
+      "totalBudgetBaht": 2100000,
+      "medianPriceBaht": 2050000,
+      "method": "price-agreement",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 315000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 735000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 630000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 420000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 1,000,000 THB",
+          "th": "≥ 1,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 800,000 THB",
+          "th": "สัญญา Web App ≥ 800,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Bang Kapi District",
+      "th": "เขตบางกะปิ"
+    },
+    "announcementDate": "2026-08-04T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-ENV-69-08-0177",
+    "title": {
+      "en": "Environmental Sensor Dashboard & Alert System",
+      "th": "แดชบอร์ดเซนเซอร์สิ่งแวดล้อมและระบบแจ้งเตือน"
+    },
+    "department": {
+      "en": "Environment Department",
+      "th": "สำนักสิ่งแวดล้อม"
+    },
+    "budgetBaht": 3650000,
+    "projectScale": "MEDIUM",
+    "durationDays": 150,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-09-12T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Create a real-time dashboard for air and water quality sensors with threshold-based LINE and email alerts for district officers.",
+      "th": "สร้างแดชบอร์ดคุณภาพอากาศและน้ำแบบเรียลไทม์ พร้อมแจ้งเตือนผ่าน LINE และอีเมลเมื่อเกินเกณฑ์"
+    },
+    "deliverables": {
+      "en": [
+        "Sensor Ingestion API",
+        "Realtime Dashboard",
+        "Threshold Alert Engine",
+        "LINE Notify Integration"
+      ],
+      "th": [
+        "API รับข้อมูลเซนเซอร์",
+        "แดชบอร์ดเรียลไทม์",
+        "ระบบแจ้งเตือนตามเกณฑ์",
+        "เชื่อมต่อ LINE Notify"
+      ]
+    },
+    "techTags": [
+      "React",
+      "WebSocket",
+      "LINE",
+      "API",
+      "Maps"
+    ],
+    "listTags": [
+      "e-bidding",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 3650000,
+      "medianPriceBaht": 3500000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 547500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 1277500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 1095000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 730000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 365000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 1,500,000 THB",
+          "th": "≥ 1,500,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 1,000,000 THB",
+          "th": "สัญญา Web App ≥ 1,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Pathum Wan District",
+      "th": "เขตปทุมวัน"
+    },
+    "announcementDate": "2026-08-18T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-FIN-69-05-0031",
+    "title": {
+      "en": "Municipal Tax Payment Mobile Application Redesign",
+      "th": "ออกแบบใหม่แอปมือถือชำระภาษีท้องถิ่น"
+    },
+    "department": {
+      "en": "Finance Department",
+      "th": "สำนักการคลัง"
+    },
+    "budgetBaht": 5900000,
+    "projectScale": "MEDIUM",
+    "durationDays": 210,
+    "method": "e-bidding",
+    "status": "closed",
+    "deadline": "2026-07-01T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Redesign the municipal tax payment mobile app with improved UX, multi-bank payment rails, and receipt OCR verification.",
+      "th": "ออกแบบและพัฒนาแอปมือถือชำระภาษีท้องถิ่นใหม่ รองรับ e-Payment และใบเสร็จดิจิทal"
+    },
+    "deliverables": {
+      "en": [
+        "Mobile App Redesign (iOS/Android)",
+        "Payment Gateway Integration",
+        "Receipt OCR Verification",
+        "Admin Backoffice"
+      ],
+      "th": [
+        "UI/UX แอปมือถือ",
+        "เชื่อมต่อช่องทางชำระเงิน",
+        "ใบเสร็จดิจิทal",
+        "ระบบแจ้งเตือน"
+      ]
+    },
+    "techTags": [
+      "Flutter",
+      "OCR",
+      "Payments",
+      "API"
+    ],
+    "listTags": [
+      "e-bidding",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 5900000,
+      "medianPriceBaht": 5750000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 885000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 2065000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 1770000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1180000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 590000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 2,500,000 THB",
+          "th": "≥ 2,500,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 2,000,000 THB",
+          "th": "สัญญา Web App ≥ 2,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Huai Khwang District",
+      "th": "เขตห้วยขวาง"
+    },
+    "announcementDate": "2026-06-05T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-DRD-69-09-0105",
+    "title": {
+      "en": "Smart Drainage & Flood Early Warning System",
+      "th": "ระบบระบายน้ำอัจฉริยะและเตือนภัยน้ำท่วมล่วงหน้า"
+    },
+    "department": {
+      "en": "Drainage and Sewerage Department",
+      "th": "สำนักการระบายน้ำ"
+    },
+    "budgetBaht": 9400000,
+    "projectScale": "LARGE",
+    "durationDays": 300,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-09-30T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Deploy a flood early-warning platform combining canal sensor telemetry, rainfall forecasts, and district response playbooks.",
+      "th": "พัฒนาระบบติดตามระดับน้ำและพยากรณ์น้ำท่วม แจ้งเตือนประชาชนและหน่วยงานล่วงหน้า"
+    },
+    "deliverables": {
+      "en": [
+        "Canal Sensor Network Integration",
+        "Flood Risk Prediction Engine",
+        "District Command Dashboard",
+        "Citizen Alert Channels"
+      ],
+      "th": [
+        "ระบบติดตามระดับน้ำ",
+        "โมเดลพยากรณ์น้ำท่วม",
+        "แดชบอร์ดสถานการณ์",
+        "ระบบแจ้งเตือนหลายช่องทาง"
+      ]
+    },
+    "techTags": [
+      "IoT",
+      "Python",
+      "Maps",
+      "Alerts",
+      "API"
+    ],
+    "listTags": [
+      "e-bidding",
+      "LARGE"
+    ],
+    "financials": {
+      "totalBudgetBaht": 9400000,
+      "medianPriceBaht": 9100000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 1410000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 3290000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 2820000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1880000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 940000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 3,500,000 THB",
+          "th": "≥ 3,500,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 2,200,000 THB",
+          "th": "สัญญา Web App ≥ 2,200,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Lat Phrao District",
+      "th": "เขตลาดพร้าว"
+    },
+    "announcementDate": "2026-09-03T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-SSD-69-08-0330",
+    "title": {
+      "en": "Social Welfare Case Management Web Application",
+      "th": "เว็บแอปจัดการเคสสวัสดิการสังคม"
+    },
+    "department": {
+      "en": "Social Development Department",
+      "th": "สำนักการพัฒนาสังคม"
+    },
+    "budgetBaht": 3200000,
+    "projectScale": "MEDIUM",
+    "durationDays": 180,
+    "method": "price-agreement",
+    "status": "open",
+    "deadline": "2026-10-08T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Build a case-management web app for social welfare officers to track beneficiary intake, visits, and benefit disbursement.",
+      "th": "พัฒนาระบบจัดการเคสสวัสดิการสังคม ติดตามสิทธิ เอกสาร และการให้บริการ"
+    },
+    "deliverables": {
+      "en": [
+        "Case Intake Workflow",
+        "Field Visit Mobile Forms",
+        "Benefit Disbursement Tracker",
+        "Supervisor Reporting Suite"
+      ],
+      "th": [
+        "ระบบลงทะเบียนเคส",
+        "ติดตามเอกสารและสิทธิ",
+        "แดชบอร์ติดตาม",
+        "รายงานสรุป"
+      ]
+    },
+    "techTags": [
+      "Next.js",
+      "Postgres",
+      "Workflow",
+      "Reports"
+    ],
+    "listTags": [
+      "e-market",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 3200000,
+      "medianPriceBaht": 3050000,
+      "method": "price-agreement",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 480000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 1120000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 960000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 640000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 320000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 1,200,000 THB",
+          "th": "≥ 1,200,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 900,000 THB",
+          "th": "สัญญา Web App ≥ 900,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Din Daeng District",
+      "th": "เขตดินแดง"
+    },
+    "announcementDate": "2026-09-10T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-CUL-69-07-0188",
+    "title": {
+      "en": "Cultural Heritage Digital Archive & Virtual Tour Platform",
+      "th": "คลังมรดกทางวัฒนธรรมดิจิทal และทัวร์เสมือนจริง"
+    },
+    "department": {
+      "en": "Culture, Sports and Tourism Department",
+      "th": "สำนักการวัฒนธรรม กีฬา และการท่องเที่ยว"
+    },
+    "budgetBaht": 6750000,
+    "projectScale": "MEDIUM",
+    "durationDays": 240,
+    "method": "selective",
+    "status": "open",
+    "deadline": "2026-09-18T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Digitize heritage assets into a searchable archive with 3D/virtual tour experiences for public museums and schools.",
+      "th": "สร้างคลังข้อมูลมรดกทางวัฒนธรรมดิจิทal พร้อมทัวร์เสมือนจริงสำหรับประชาชน"
+    },
+    "deliverables": {
+      "en": [
+        "Digital Asset Repository",
+        "3D / Virtual Tour Viewer",
+        "Curator CMS",
+        "Public Discovery Portal"
+      ],
+      "th": [
+        "คลังข้อมูลมรดก",
+        "ทัวร์เสมือนจริง",
+        "พอร์ทal สาธารณะ",
+        "ระบบจัดการเนื้อหา"
+      ]
+    },
+    "techTags": [
+      "Three.js",
+      "CMS",
+      "CDN",
+      "Search"
+    ],
+    "listTags": [
+      "selective",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 6750000,
+      "medianPriceBaht": 6400000,
+      "method": "selective",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 1012500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 2362500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 2025000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1350000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 675000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 3,000,000 THB",
+          "th": "≥ 3,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 2,000,000 THB",
+          "th": "สัญญา Web App ≥ 2,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Ratchathewi District",
+      "th": "เขตราชเทวี"
+    },
+    "announcementDate": "2026-08-20T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-LAW-69-08-0275",
+    "title": {
+      "en": "Legal Document Automation & e-Signature Portal",
+      "th": "ระบบอัตโนมัติเอกสารทางกฎหมายและพอร์ทal ลายเซ็นอิเล็กทรอนิกส์"
+    },
+    "department": {
+      "en": "Law and Litigation Office",
+      "th": "สำนักกฎหมายและคดี"
+    },
+    "budgetBaht": 2850000,
+    "projectScale": "SMALL",
+    "durationDays": 150,
+    "method": "e-bidding",
+    "status": "closing-soon",
+    "deadline": "2026-08-22T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Automate drafting of common legal templates with approval workflows and Thai e-signature integration.",
+      "th": "พัฒนาระบบจัดการเอกสารทางกฎหมายและลงนามอิเล็กทรอนิกส์อย่างปลอดภัย"
+    },
+    "deliverables": {
+      "en": [
+        "Template Authoring Engine",
+        "Multi-step Approval Workflow",
+        "e-Signature Integration",
+        "Document Audit Trail"
+      ],
+      "th": [
+        "ระบบจัดการเอกสาร",
+        "ลายเซ็นอิเล็กทรอนิกส์",
+        "เวิร์กโฟลว์อนุมัติ",
+        "ระบบตรวจสอบย้อนกลับ"
+      ]
+    },
+    "techTags": [
+      "React",
+      "PDF",
+      "Workflow",
+      "e-Signature"
+    ],
+    "listTags": [
+      "e-bidding",
+      "SMALL"
+    ],
+    "financials": {
+      "totalBudgetBaht": 2850000,
+      "medianPriceBaht": 2700000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 427500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 997500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 855000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 570000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 285000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 1,200,000 THB",
+          "th": "≥ 1,200,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 1,000,000 THB",
+          "th": "สัญญา Web App ≥ 1,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Khlong Toei District",
+      "th": "เขตคลองเตย"
+    },
+    "announcementDate": "2026-07-23T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-HRD-69-09-0042",
+    "title": {
+      "en": "HR Self-Service Portal & Leave Management System",
+      "th": "พอร์ทal HR Self-Service และระบบจัดการลา"
+    },
+    "department": {
+      "en": "Human Resource Development Department",
+      "th": "สำนักการพัฒนาทรัพยากรบุคคล"
+    },
+    "budgetBaht": 1950000,
+    "projectScale": "SMALL",
+    "durationDays": 120,
+    "method": "price-agreement",
+    "status": "open",
+    "deadline": "2026-10-15T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Provide employees with self-service leave requests, attendance views, and HR policy knowledge base.",
+      "th": "พัฒนาพอร์ทal บริการตนเองสำหรับพนักงาน กทม. และระบบจัดการลา"
+    },
+    "deliverables": {
+      "en": [
+        "Employee Self-Service Portal",
+        "Leave & Attendance Module",
+        "Manager Approval Console",
+        "Policy Knowledge Base"
+      ],
+      "th": [
+        "พอร์ทal บริการตนเอง",
+        "ระบบจัดการลา",
+        "แดชบอร์ HR",
+        "รายงานบุคลากร"
+      ]
+    },
+    "techTags": [
+      "Next.js",
+      "Auth",
+      "Notifications",
+      "API"
+    ],
+    "listTags": [
+      "e-market",
+      "SMALL"
+    ],
+    "financials": {
+      "totalBudgetBaht": 1950000,
+      "medianPriceBaht": 1880000,
+      "method": "price-agreement",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 292500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 682500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 585000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 390000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 800,000 THB",
+          "th": "≥ 800,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 600,000 THB",
+          "th": "สัญญา Web App ≥ 600,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Sathon District",
+      "th": "เขตสาทร"
+    },
+    "announcementDate": "2026-09-14T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-PWD-69-06-0199",
+    "title": {
+      "en": "Public Works Asset Maintenance Mobile Platform",
+      "th": "แพลตฟอร์มมือถือบำรุงรักษาทรัพย์สินโยธา"
+    },
+    "department": {
+      "en": "Public Works Department",
+      "th": "สำนักการโยธา"
+    },
+    "budgetBaht": 7100000,
+    "projectScale": "LARGE",
+    "durationDays": 270,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-09-25T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Enable field crews to log asset defects, schedule maintenance, and sync offline work orders across districts.",
+      "th": "พัฒนาแอปมือถือสำหรับบันทึกและติดตามการบำรุงรักษาทรัพย์สินโยธา"
+    },
+    "deliverables": {
+      "en": [
+        "Offline-capable Mobile App",
+        "Asset Registry Sync",
+        "Work Order Scheduling",
+        "Spare Parts Inventory Link"
+      ],
+      "th": [
+        "แอปมือถือสำหรับภาคสนาม",
+        "ระบบติดตามงานซ่อม",
+        "แดชบอร์ติดตาม",
+        "รายงานสรุป"
+      ]
+    },
+    "techTags": [
+      "Flutter",
+      "Offline Sync",
+      "GIS",
+      "API"
+    ],
+    "listTags": [
+      "e-bidding",
+      "LARGE"
+    ],
+    "financials": {
+      "totalBudgetBaht": 7100000,
+      "medianPriceBaht": 6850000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 1065000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 2485000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 2130000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1420000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 710000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 3,500,000 THB",
+          "th": "≥ 3,500,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 2,500,000 THB",
+          "th": "สัญญา Web App ≥ 2,500,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Bang Rak District",
+      "th": "เขตบางรัก"
+    },
+    "announcementDate": "2026-08-24T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-ITD-69-09-0411",
+    "title": {
+      "en": "BMA Citizen Chatbot & Service Desk Automation",
+      "th": "แชทบอทประชาชนและระบบ Service Desk อัตโนมัติ กทม."
+    },
+    "department": {
+      "en": "Information Technology Department",
+      "th": "สำนักเทคโนโลยีสารสนเทศ"
+    },
+    "budgetBaht": 4050000,
+    "projectScale": "MEDIUM",
+    "durationDays": 180,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-10-20T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Launch a Thai/English citizen chatbot that triages service requests and creates tickets in the existing service desk.",
+      "th": "พัฒนาแชทบอทตอบคำถามประชาชนและระบบ Service Desk อัตโนมัติ"
+    },
+    "deliverables": {
+      "en": [
+        "Multilingual Chatbot",
+        "Intent Classification Models",
+        "Service Desk Integration",
+        "Agent Handoff Console"
+      ],
+      "th": [
+        "แชทบอทประชาชน",
+        "ระบบ Service Desk",
+        "ฐานความรู้",
+        "แดชบอร์ติดตาม"
+      ]
+    },
+    "techTags": [
+      "NLP",
+      "Python",
+      "React",
+      "API",
+      "LINE"
+    ],
+    "listTags": [
+      "e-bidding",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 4050000,
+      "medianPriceBaht": 3900000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 607500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 1417500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 1215000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 810000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 405000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 1,800,000 THB",
+          "th": "≥ 1,800,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 1,200,000 THB",
+          "th": "สัญญา Web App ≥ 1,200,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Watthana District",
+      "th": "เขตวัฒนา"
+    },
+    "announcementDate": "2026-09-17T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-SEC-69-08-0087",
+    "title": {
+      "en": "CCTV Video Analytics & Incident Detection System",
+      "th": "ระบบวิเคราะห์วิดีโอ CCTV และตรวจจับเหตุการณ์"
+    },
+    "department": {
+      "en": "City Law Enforcement Department",
+      "th": "สำนักการบังคับใช้กฎหมาย"
+    },
+    "budgetBaht": 15600000,
+    "projectScale": "LARGE",
+    "durationDays": 365,
+    "method": "specific",
+    "status": "awarded",
+    "deadline": "2026-08-05T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Implement AI video analytics across selected CCTV corridors for crowd, vehicle, and incident detection with operator workflows.",
+      "th": "พัฒนาระบบวิเคราะห์ภาพจาก CCTV เพื่อตรวจจับเหตุการณ์และแจ้งเตือน"
+    },
+    "deliverables": {
+      "en": [
+        "Video Analytics Pipeline",
+        "Incident Operator Console",
+        "Model Training Toolkit",
+        "Privacy & Retention Controls"
+      ],
+      "th": [
+        "ระบบวิเคราะห์วิดีโอ",
+        "ตรวจจับเหตุการณ์",
+        "แดชบอร์ติดตาม",
+        "ระบบแจ้งเตือน"
+      ]
+    },
+    "techTags": [
+      "Computer Vision",
+      "GPU",
+      "Python",
+      "Dashboard"
+    ],
+    "listTags": [
+      "specific",
+      "LARGE"
+    ],
+    "financials": {
+      "totalBudgetBaht": 15600000,
+      "medianPriceBaht": 15000000,
+      "method": "specific",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 2340000
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 5460000
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 4680000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 3120000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 1560000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 8,000,000 THB",
+          "th": "≥ 8,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 5,000,000 THB",
+          "th": "สัญญา Web App ≥ 5,000,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Bang Sue District",
+      "th": "เขตบางซื่อ"
+    },
+    "announcementDate": "2026-07-02T09:30:00.000Z"
+  },
+  {
+    "announcementNo": "BMA-PLN-69-09-0220",
+    "title": {
+      "en": "Urban Planning GIS Collaboration Workspace",
+      "th": "พื้นที่ทำงานร่วม GIS สำหรับการวางผังเมือง"
+    },
+    "department": {
+      "en": "City Planning Department",
+      "th": "สำนักการวางผังและพัฒนาเมือง"
+    },
+    "budgetBaht": 5250000,
+    "projectScale": "MEDIUM",
+    "durationDays": 210,
+    "method": "e-bidding",
+    "status": "open",
+    "deadline": "2026-11-02T16:30:00+07:00",
+    "sourceUrl": "https://www.gprocurement.go.th",
+    "summary": {
+      "en": "Deliver a collaborative GIS workspace for planners to annotate zoning layers, share reviews, and publish public maps.",
+      "th": "สร้างพื้นที่ทำงานร่วม GIS สำหรับทีมวางผังเมือง กทม."
+    },
+    "deliverables": {
+      "en": [
+        "Web GIS Editor",
+        "Layer Version Control",
+        "Review Commenting Tools",
+        "Public Map Publishing"
+      ],
+      "th": [
+        "พื้นที่ทำงาน GIS ร่วม",
+        "เครื่องมือวิเคราะห์",
+        "ระบบจัดการเลเยอร์",
+        "พอร์ทal รายงาน"
+      ]
+    },
+    "techTags": [
+      "GIS",
+      "Mapbox",
+      "React",
+      "Collaboration"
+    ],
+    "listTags": [
+      "e-bidding",
+      "MEDIUM"
+    ],
+    "financials": {
+      "totalBudgetBaht": 5250000,
+      "medianPriceBaht": 5050000,
+      "method": "e-bidding",
+      "milestones": [
+        {
+          "day": 30,
+          "milestoneNumber": 1,
+          "percent": 15,
+          "deliverable": {
+            "en": "Project Charter & System Architecture Specification delivery",
+            "th": "ส่งมอบ Project Charter และข้อกำหนดสถาปัตยกรรมระบบ"
+          },
+          "amountBaht": 787500
+        },
+        {
+          "day": 90,
+          "milestoneNumber": 2,
+          "percent": 35,
+          "deliverable": {
+            "en": "OCR Extraction System, Database Schema, and Frontend UI/UX delivery",
+            "th": "ส่งมอบระบบ OCR สคีมาฐานข้อมูล และ UI/UX ส่วนหน้า"
+          },
+          "amountBaht": 1837500
+        },
+        {
+          "day": 120,
+          "milestoneNumber": 3,
+          "percent": 30,
+          "deliverable": {
+            "en": "API Development and Integration Testing",
+            "th": "พัฒนา API และทดสอบการเชื่อมต่อ"
+          },
+          "amountBaht": 1575000
+        },
+        {
+          "day": 150,
+          "milestoneNumber": 4,
+          "percent": 20,
+          "deliverable": {
+            "en": "Final System Testing and User Acceptance Testing (UAT)",
+            "th": "ทดสอบระบบขั้นสุดท้ายและ UAT"
+          },
+          "amountBaht": 1050000
+        },
+        {
+          "day": 180,
+          "milestoneNumber": 5,
+          "percent": 10,
+          "deliverable": {
+            "en": "Project Handover and Documentation Completion",
+            "th": "ส่งมอบโครงการและเอกสารครบถ้วน"
+          },
+          "amountBaht": 525000
+        }
+      ]
+    },
+    "qualificationRequirements": [
+      {
+        "id": "registered-capital",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Registered Capital",
+          "th": "ทุนจดทะเบียน"
+        },
+        "torCriteria": {
+          "en": "≥ 2,000,000 THB",
+          "th": "≥ 2,000,000 บาท"
+        }
+      },
+      {
+        "id": "past-performance",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Past Performance",
+          "th": "ผลงานที่ผ่านมา"
+        },
+        "torCriteria": {
+          "en": "Web App Contract ≥ 1,500,000 THB",
+          "th": "สัญญา Web App ≥ 1,500,000 บาท"
+        }
+      },
+      {
+        "id": "certifications",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Certifications",
+          "th": "ใบรับรอง"
+        },
+        "torCriteria": {
+          "en": "ISO/IEC 29110 or CMMI Level 2+",
+          "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        }
+      },
+      {
+        "id": "deal-breaker",
+        "autoCheckable": true,
+        "requirement": {
+          "en": "Deal-Breaker Clauses",
+          "th": "ข้อกำหนดตัดสิทธิ์"
+        },
+        "torCriteria": {
+          "en": "Must be registered e-GP Vendor",
+          "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        }
+      }
+    ],
+    "localOffice": {
+      "en": "Public Works District Office",
+      "th": "สำนักงานเขตโยธา"
+    },
+    "announcementDate": "2026-09-28T09:30:00.000Z"
+  }
+]
