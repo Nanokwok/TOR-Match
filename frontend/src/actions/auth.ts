@@ -94,3 +94,17 @@ export async function registerWithEmailAction({
 export async function registerWithGoogleAction(): Promise<AuthResult> {
   return { ok: false, error: "Google signup is not available yet." }
 }
+
+export async function logoutAction(): Promise<void> {
+  try {
+    await apiFetch("/auth/logout", { method: "POST" })
+  } catch (error) {
+    // Best-effort: the local cookie is cleared below regardless, so a
+    // failed backend call (e.g. already-expired token) shouldn't block
+    // signing the user out on this device.
+    console.error("logoutAction: backend logout call failed", error)
+  }
+
+  const cookieStore = await cookies()
+  cookieStore.delete(AUTH_COOKIE_NAME)
+}
