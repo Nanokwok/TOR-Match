@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Settings } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import type { TorQualificationCheck } from "@/types/tor"
 import { cn } from "@/lib/utils"
 
@@ -27,23 +29,59 @@ function SectionHeaderRow({ label }: { label: string }) {
   )
 }
 
+function SelfAssessmentCell({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  const { t } = useLocale()
+
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+        className="mt-0.5"
+        aria-label={t("browse.qualificationPanel.weComply")}
+      />
+      <span
+        className={cn(
+          "text-sm leading-snug",
+          checked
+            ? "font-medium text-emerald-600 dark:text-emerald-400"
+            : "text-muted-foreground"
+        )}
+      >
+        {checked ? `✓ ${t("browse.qualificationPanel.weComply")}` : t("browse.qualificationPanel.weComply")}
+      </span>
+    </label>
+  )
+}
+
 function ProfileCell({
   row,
   profileSetup,
   showSetupPrompt,
+  selfAssessed,
+  onSelfAssessChange,
 }: {
   row: QualificationRow
   profileSetup: boolean
   showSetupPrompt?: boolean
+  selfAssessed: boolean
+  onSelfAssessChange: (checked: boolean) => void
 }) {
   const router = useRouter()
   const { t } = useLocale()
 
   if (!row.autoCheckable) {
     return (
-      <span className="text-sm text-muted-foreground italic">
-        {t("browse.qualificationPanel.selfAssessment")}
-      </span>
+      <SelfAssessmentCell
+        checked={selfAssessed}
+        onCheckedChange={onSelfAssessChange}
+      />
     )
   }
 
@@ -89,13 +127,17 @@ function RequirementRows({
   rows,
   profileSetup,
   showSetupPrompt = false,
+  selfAssessedById,
+  onSelfAssessChange,
 }: {
   rows: QualificationRow[]
   profileSetup: boolean
   showSetupPrompt?: boolean
+  selfAssessedById: Record<string, boolean>
+  onSelfAssessChange: (requirementId: string, checked: boolean) => void
 }) {
   return rows.map((row, index) => (
-    <tr key={row.requirement} className="border-t border-border bg-card">
+    <tr key={row.id} className="border-t border-border bg-card">
       <td className="px-4 py-3 font-medium text-foreground">
         {row.requirement}
       </td>
@@ -105,6 +147,8 @@ function RequirementRows({
           row={row}
           profileSetup={profileSetup}
           showSetupPrompt={showSetupPrompt && index === 0}
+          selfAssessed={selfAssessedById[row.id] === true}
+          onSelfAssessChange={(checked) => onSelfAssessChange(row.id, checked)}
         />
       </td>
     </tr>
@@ -115,6 +159,26 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
   const { t } = useLocale()
   const autoRows = check.rows.filter((row) => row.autoCheckable)
   const manualRows = check.rows.filter((row) => !row.autoCheckable)
+
+  // Local-only for now — persist via API when self-assessment is wired to the backend.
+  const [selfAssessedById, setSelfAssessedById] = useState<Record<string, boolean>>(
+    () => {
+      const initial: Record<string, boolean> = {}
+      for (const row of check.rows) {
+        if (!row.autoCheckable && row.passed === true) {
+          initial[row.id] = true
+        }
+      }
+      return initial
+    }
+  )
+
+  function handleSelfAssessChange(requirementId: string, checked: boolean) {
+    setSelfAssessedById((previous) => ({
+      ...previous,
+      [requirementId]: checked,
+    }))
+  }
 
   return (
     <div className="overflow-hidden rounded-lg border border-border">
@@ -142,6 +206,8 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
                 rows={autoRows}
                 profileSetup={check.profileSetup}
                 showSetupPrompt={!check.profileSetup}
+                selfAssessedById={selfAssessedById}
+                onSelfAssessChange={handleSelfAssessChange}
               />
             </>
           ) : null}
@@ -154,6 +220,8 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
               <RequirementRows
                 rows={manualRows}
                 profileSetup={check.profileSetup}
+                selfAssessedById={selfAssessedById}
+                onSelfAssessChange={handleSelfAssessChange}
               />
             </>
           ) : null}

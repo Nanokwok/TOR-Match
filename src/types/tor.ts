@@ -95,6 +95,7 @@ export type CompanyProfile = {
 export type TorQualificationCheck = {
   profileSetup: boolean
   rows: {
+    id: string
     requirement: string
     torCriteria: string
     companyValue: string | null

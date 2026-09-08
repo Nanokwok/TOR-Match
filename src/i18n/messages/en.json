@@ -145,6 +145,7 @@
       "autoVerified": "Automatically verified",
       "manualReview": "Manual review required",
       "selfAssessment": "Self-assessment required",
+      "weComply": "We meet this requirement",
       "setupPrompt": "Set up your company profile to automatically verify eligibility",
       "companySetup": "Company Setup →"
     },
