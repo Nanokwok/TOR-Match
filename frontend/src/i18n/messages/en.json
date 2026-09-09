@@ -259,6 +259,17 @@
       "noResults": "No TORs found",
       "onBoard": "On board"
     },
+    "empty": {
+      "boardTitle": "Your workspace is empty",
+      "boardDescription": "Bookmark TORs you care about, then move them through To Do, In Progress, and Done as your team bids.",
+      "boardHint": "Tip: bookmark from Browse, or add the first one here.",
+      "addFirstTor": "Add your first TOR",
+      "browseTors": "Browse TORs",
+      "filtersTitle": "No TORs match these filters",
+      "filtersDescription": "Try a different search, assignee, or priority — or clear filters to see the full board.",
+      "clearFilters": "Clear filters",
+      "columnHint": "Drop a TOR here, or click + to add one"
+    },
     "checklistDefaults": {
       "capital": "Check Registered Capital Criteria (5M > 2M THB)",
       "iso": "Verify ISO/IEC 29110 Certificate Expiry",
