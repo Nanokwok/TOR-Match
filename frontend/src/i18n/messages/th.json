@@ -131,6 +131,22 @@
     "selectTor": "เลือก TOR เพื่อดูรายละเอียด",
     "removeBookmark": "ลบการบันทึก",
     "bookmarkTor": "บันทึก TOR",
+    "deepLink": {
+      "openedFromLink": "เปิดจากลิงก์",
+      "notFound": "ไม่พบ TOR นี้ กำลังแสดงรายการ Browse ตามปกติ",
+      "ineligibleHint": "ไม่มีสิทธิ์ — แสดงเพราะคุณเปิดจากลิงก์",
+      "showAllEligible": "ปิดตัวกรองเฉพาะที่มีสิทธิ์",
+      "hiddenFromResults": "TOR ที่เลือกถูกซ่อนด้วยตัวกรองปัจจุบัน",
+      "showSelectedInList": "แสดง TOR ที่เลือก"
+    },
+    "share": {
+      "title": "แชร์ TOR",
+      "copyLink": "หรือคัดลอกลิงก์",
+      "copy": "คัดลอก",
+      "copiedUrl": "คัดลอกลิงก์แล้ว: {url}",
+      "qrAlt": "คิวอาร์โค้ดสำหรับลิงก์ TOR นี้",
+      "qrHint": "สแกนด้วยมือถือเพื่อเปิด TOR นี้บนมือถือ"
+    },
     "submissionDeadline": "กำหนดยื่นข้อเสนอ",
     "projectScale": "ขนาดโครงการ",
     "duration": "ระยะเวลา",

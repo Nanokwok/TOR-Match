@@ -1,65 +1,84 @@
-"use client";
+"use client"
 
-import { Bookmark } from "lucide-react";
+import { useEffect, useRef } from "react"
+import { Bookmark, Link2 } from "lucide-react"
 
-import { useLocale } from "@/components/i18n/locale-provider";
-import { formatBaht } from "@/lib/format";
-import { listTagLabel } from "@/lib/browse-labels";
-import { pickLocalized } from "@/lib/localized-content";
-import { cn } from "@/lib/utils";
-import type { Tor } from "@/types/tor";
+import { useLocale } from "@/components/i18n/locale-provider"
+import { formatBaht } from "@/lib/format"
+import { listTagLabel } from "@/lib/browse-labels"
+import { pickLocalized } from "@/lib/localized-content"
+import { cn } from "@/lib/utils"
+import type { Tor } from "@/types/tor"
 
 type TorListProps = {
-  items: Tor[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onToggleBookmark: (torId: string) => void;
-};
+  items: Tor[]
+  selectedId: string | null
+  linkedTorId?: string | null
+  onSelect: (id: string) => void
+  onToggleBookmark: (torId: string) => void
+}
 
 export function TorList({
   items,
   selectedId,
+  linkedTorId = null,
   onSelect,
   onToggleBookmark,
 }: TorListProps) {
-  const { locale, t } = useLocale();
+  const { locale, t } = useLocale()
+  const selectedRef = useRef<HTMLDivElement | null>(null)
+  const didScrollRef = useRef(false)
+
+  useEffect(() => {
+    if (didScrollRef.current || !selectedId || !selectedRef.current) return
+    selectedRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    didScrollRef.current = true
+  }, [selectedId, items])
 
   if (items.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
         {t("browse.noMatch")}
       </div>
-    );
+    )
   }
 
   return (
     <div className="flex flex-col gap-2 p-3">
       {items.map((tor) => {
-        const selected = tor.id === selectedId;
-        const title = pickLocalized(tor.title, locale);
-        const department = pickLocalized(tor.department, locale);
+        const selected = tor.id === selectedId
+        const fromLink = linkedTorId === tor.id
+        const title = pickLocalized(tor.title, locale)
+        const department = pickLocalized(tor.department, locale)
 
         return (
           <div
             key={tor.id}
+            ref={selected ? selectedRef : undefined}
             role="button"
             tabIndex={0}
             onClick={() => onSelect(tor.id)}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onSelect(tor.id);
+                event.preventDefault()
+                onSelect(tor.id)
               }
             }}
             className={cn(
               "w-full cursor-pointer rounded-lg border bg-card p-3 text-left transition-colors",
               selected
                 ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                : "border-border hover:bg-muted/40",
+                : "border-border hover:bg-muted/40"
             )}
           >
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
+                {fromLink ? (
+                  <span className="mb-1.5 inline-flex items-center gap-1 rounded-md bg-[#0088C9]/10 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-[#0088C9] uppercase">
+                    <Link2 className="size-3" aria-hidden />
+                    {t("browse.deepLink.openedFromLink")}
+                  </span>
+                ) : null}
                 <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
                   {title}
                 </h3>
@@ -77,8 +96,8 @@ export function TorList({
                 }
                 aria-pressed={tor.bookmarked}
                 onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleBookmark(tor.id);
+                  event.stopPropagation()
+                  onToggleBookmark(tor.id)
                 }}
               >
                 <Bookmark
@@ -86,7 +105,7 @@ export function TorList({
                     "size-4",
                     tor.bookmarked
                       ? "fill-primary text-primary"
-                      : "text-muted-foreground",
+                      : "text-muted-foreground"
                   )}
                 />
               </button>
@@ -108,8 +127,8 @@ export function TorList({
               </span>
             </div>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
