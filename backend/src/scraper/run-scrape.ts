@@ -9,8 +9,9 @@
  * Nothing here writes to the published `tors` collection — drafts land in
  * `tordrafts` and a human publishes them from /admin/tor-review.
  *
- * Requires ANTHROPIC_API_KEY (unless --dry-run) and a one-time
- * `npx playwright install chromium`.
+ * Unless --dry-run, extraction runs through Vertex AI and needs
+ * VERTEX_PROJECT_ID plus GCP credentials (`gcloud auth application-default
+ * login`). Also a one-time `npx playwright install chromium`.
  */
 import type { BrowserContext, Page } from "playwright"
 

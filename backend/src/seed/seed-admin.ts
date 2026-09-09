@@ -20,7 +20,12 @@ async function main() {
   const name = process.env.ADMIN_NAME?.trim() || "TOR Match Admin"
 
   if (!email || !password) {
-    throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD must be set to seed an admin")
+    throw new Error(
+      "ADMIN_EMAIL and ADMIN_PASSWORD must be set to seed an admin.\n" +
+        "Add them to backend/.env (see backend/.env.example):\n" +
+        "  ADMIN_EMAIL=you@example.com\n" +
+        "  ADMIN_PASSWORD=<at least 8 characters>"
+    )
   }
   if (password.length < 8) {
     throw new Error("ADMIN_PASSWORD must be at least 8 characters")

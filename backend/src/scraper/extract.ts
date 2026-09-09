@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 
-import Anthropic from "@anthropic-ai/sdk"
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod"
+import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
 // The SDK's zod helper is built against zod v4, which the installed zod 3.25
 // ships alongside v3 under this subpath. The rest of the backend validates
 // with the v3 API (`import { z } from "zod"`); only this schema needs v4.
@@ -23,7 +23,6 @@ import type { BmaProjectDetail } from "@/scraper/bma-client"
  * OCR pass.
  */
 
-const MODEL = "claude-opus-5"
 /** The API caps a request at 32MB and base64 inflates by ~4/3. */
 const MAX_PDF_BYTES = 20 * 1024 * 1024
 
@@ -89,13 +88,28 @@ Rules:
 - Payment milestone amounts should reconcile with percent x total budget.
 - Set aiConfidence honestly. A scanned document you struggled to read, or one missing the qualification section, deserves a low score — it routes the draft to a human.`
 
-let client: Anthropic | null = null
+let client: AnthropicVertex | null = null
 
-function getClient(): Anthropic {
-  if (!env.anthropicApiKey) {
-    throw new Error("ANTHROPIC_API_KEY must be set to run extraction")
+/**
+ * Claude via Google Vertex AI.
+ *
+ * There is no API key: the SDK authenticates with GCP Application Default
+ * Credentials, so a developer runs `gcloud auth application-default login`
+ * once (or sets GOOGLE_APPLICATION_CREDENTIALS to a service-account file).
+ * The model must also be enabled for the project in Vertex Model Garden.
+ */
+function getClient(): AnthropicVertex {
+  if (!env.vertexProjectId) {
+    throw new Error(
+      "VERTEX_PROJECT_ID (or GOOGLE_CLOUD_PROJECT) must be set to run extraction.\n" +
+        "Add it to backend/.env, and authenticate with:\n" +
+        "  gcloud auth application-default login"
+    )
   }
-  client ??= new Anthropic({ apiKey: env.anthropicApiKey })
+  client ??= new AnthropicVertex({
+    projectId: env.vertexProjectId,
+    region: env.vertexRegion,
+  })
   return client
 }
 
@@ -137,7 +151,7 @@ export async function extractTorFromPdf(
   ].join("\n")
 
   const response = await getClient().messages.parse({
-    model: MODEL,
+    model: env.extractionModel,
     max_tokens: 16000,
     system: SYSTEM_PROMPT,
     output_config: { format: zodOutputFormat(extractionSchema) },

@@ -112,6 +112,37 @@ function parseLabeledFields(text: string): Record<string, string> {
   return fields
 }
 
+/**
+ * Clears the modals the site opens over the results.
+ *
+ * Two separate things appear, and only the first actually blocks us:
+ *
+ *  - a `role=dialog` "พบข้อมูล N รายการ" result summary, whose backdrop is
+ *    `fixed inset-0 z-50` and swallows every click — pagination times out
+ *    until it is closed. It returns on each new search, so this runs per page.
+ *  - the cookie consent banner. It does not block anything, but we decline it
+ *    anyway: a scraper has no business consenting to tracking on anyone's
+ *    behalf, and the listing renders the same either way.
+ *
+ * Every dismissal is attempted — an early return here previously left the
+ * blocking dialog open.
+ */
+async function dismissOverlays(page: Page): Promise<void> {
+  const labels = ["ปิดหน้าต่างนี้", "ไม่ยินยอม"]
+
+  for (const label of labels) {
+    const button = page.getByRole("button", { name: label, exact: true }).first()
+    try {
+      if (await button.isVisible({ timeout: 2000 })) {
+        await button.click({ timeout: 5000 })
+        await page.waitForTimeout(300)
+      }
+    } catch {
+      // Not shown, or already dismissed — nothing to do.
+    }
+  }
+}
+
 export async function launchBrowser(): Promise<{ browser: Browser; context: BrowserContext }> {
   const browser = await chromium.launch()
   const context = await browser.newContext({
@@ -138,6 +169,7 @@ export async function discoverListings(
     waitUntil: "networkidle",
     timeout: NAV_TIMEOUT_MS,
   })
+  await dismissOverlays(page)
 
   for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
     await page.waitForSelector('a[href^="/project-detail/"]', { timeout: NAV_TIMEOUT_MS })
@@ -178,6 +210,11 @@ export async function discoverListings(
       const lines = row.text.split("\n").map((line) => line.trim()).filter(Boolean)
       const budgetIndex = lines.findIndex((line) => line.startsWith("งบประมาณ"))
 
+      // Belt and braces: announcementNo is the natural key downstream, so a
+      // repeated page can never turn into duplicate detail fetches or
+      // duplicate extraction spend.
+      if (listings.some((existing) => existing.projectNo === projectNo)) continue
+
       listings.push({
         detailUrl: new URL(row.href, env.bmaBaseUrl).toString(),
         projectNo,
@@ -192,9 +229,34 @@ export async function discoverListings(
     const nextButton = page.getByText("หน้าต่อไป", { exact: false }).first()
     if ((await nextButton.count()) === 0) break
 
+    // Re-checked every page: the dialog can return on a fresh render, and one
+    // reappearance is enough to stall the whole run.
+    await dismissOverlays(page)
+
+    // This is a client-side re-render, and "networkidle" fires before the new
+    // rows are in the DOM — reading straight after the click returns the page
+    // we already have. Wait for the first result to actually change instead.
+    const firstHrefBefore = await page
+      .locator('a[href^="/project-detail/"]')
+      .first()
+      .getAttribute("href")
+
     await polite()
     await nextButton.click()
-    await page.waitForLoadState("networkidle", { timeout: NAV_TIMEOUT_MS })
+
+    try {
+      await page.waitForFunction(
+        (previous) => {
+          const first = document.querySelector('a[href^="/project-detail/"]')
+          return first !== null && first.getAttribute("href") !== previous
+        },
+        firstHrefBefore,
+        { timeout: NAV_TIMEOUT_MS }
+      )
+    } catch {
+      console.warn("[scrape] results did not change after paging; stopping early")
+      break
+    }
   }
 
   return listings

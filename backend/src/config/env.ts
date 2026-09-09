@@ -42,10 +42,18 @@ export const env = {
 
   /**
    * Deliberately not `required()`: only the scraper needs these, and making
-   * the API server (and CI) fail to boot without an API key would punish
-   * everyone who never runs it. The scraper checks them at its own start.
+   * the API server (and CI) fail to boot without them would punish everyone
+   * who never runs it. The scraper checks them at its own start.
+   *
+   * Claude is reached through Google Vertex AI, so there is no Anthropic API
+   * key — auth is GCP Application Default Credentials
+   * (`gcloud auth application-default login`, or a service account).
    */
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  vertexProjectId: process.env.VERTEX_PROJECT_ID ?? process.env.GOOGLE_CLOUD_PROJECT ?? "",
+  /** "global" is the recommended endpoint; a specific region also works. */
+  vertexRegion: process.env.VERTEX_REGION ?? "global",
+  /** Overridable: which Claude models a Vertex project can call varies by project and region. */
+  extractionModel: process.env.EXTRACTION_MODEL ?? "claude-opus-5",
   bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
   /**
    * Sent on every scraper request. egp2.bangkok.go.th's robots.txt allows
