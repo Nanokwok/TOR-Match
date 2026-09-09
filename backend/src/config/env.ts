@@ -39,6 +39,22 @@ export const env = {
   jwtSecret: requiredSecret("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
+
+  /**
+   * Deliberately not `required()`: only the scraper needs these, and making
+   * the API server (and CI) fail to boot without an API key would punish
+   * everyone who never runs it. The scraper checks them at its own start.
+   */
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
+  /**
+   * Sent on every scraper request. egp2.bangkok.go.th's robots.txt allows
+   * crawling its public pages, and identifying ourselves with a reachable
+   * contact is the other half of that bargain — keep a real address here.
+   */
+  scraperUserAgent:
+    process.env.SCRAPER_USER_AGENT ??
+    "TORMatchBot/0.1 (+https://github.com/Nanokwok/TOR-Match)",
 }
 
 export const isProduction = env.nodeEnv === "production"

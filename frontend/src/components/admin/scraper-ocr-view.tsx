@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
 
-import type { OcrJob, OcrJobStage, OcrJobStatus } from "@/server/db/mock/admin-scraper"
+import type { OcrJob, OcrJobStage, OcrJobStatus } from "@/types/scraper"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
