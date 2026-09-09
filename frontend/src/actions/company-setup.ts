@@ -1,5 +1,7 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import type { CompanySetupProfile } from "@/types/company-setup"
 
 let savedProfile: CompanySetupProfile | null = null
@@ -16,5 +18,9 @@ export async function saveCompanySetupProfileAction(
     companyNameEnglish: profile.companyNameEnglish,
     taxId: profile.taxId,
   })
+
+  // Header lives in the main layout — refresh any route under it.
+  revalidatePath("/", "layout")
+
   return { ok: true as const, profile }
 }

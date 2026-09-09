@@ -16,7 +16,7 @@ export function Footer({
 
   return (
     <footer className={cn("w-full bg-[#0a0a0a]", className)}>
-      <div className="px-6 py-5 md:px-8">
+      <div className="px-4 py-4 md:px-8 md:py-5">
         <p className="text-sm text-neutral-400">
           {t("footer.copyright", { year })}
         </p>
