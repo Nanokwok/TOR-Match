@@ -1,3 +1,4 @@
+import { getCompanySetupProfileAction } from "@/actions/company-setup"
 import { BrowseView } from "@/components/browse/browse-view"
 import {
   listTorDepartments,
@@ -6,10 +7,11 @@ import {
 } from "@/server/services/tor.service"
 
 export default async function BrowsePage() {
-  const [{ items }, departments, localOffices] = await Promise.all([
+  const [{ items }, departments, localOffices, companyProfile] = await Promise.all([
     listTors({ eligibleOnly: true }),
     listTorDepartments(),
     listTorLocalOffices(),
+    getCompanySetupProfileAction(),
   ])
 
   return (
@@ -18,6 +20,7 @@ export default async function BrowsePage() {
         initialItems={items}
         departments={departments}
         localOffices={localOffices}
+        companyProfile={companyProfile}
       />
     </div>
   )
