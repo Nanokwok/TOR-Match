@@ -55,6 +55,7 @@ export async function loginWithEmailAction({
     const data = await apiFetch<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email: email.trim(), password }),
+      auth: false,
     })
     await setAuthCookie(data.token, rememberMe)
     return { ok: true }
@@ -83,6 +84,7 @@ export async function registerWithEmailAction({
     const data = await apiFetch<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+      auth: false,
     })
     await setAuthCookie(data.token)
     return { ok: true }
