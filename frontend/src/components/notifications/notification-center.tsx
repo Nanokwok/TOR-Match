@@ -4,6 +4,11 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Bell, Inbox, Settings } from "lucide-react"
 
+import {
+  deleteNotificationAction,
+  markAllNotificationsReadAction,
+  markNotificationReadAction,
+} from "@/actions/notifications"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { NotificationCard } from "@/components/notifications/notification-card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +20,6 @@ import {
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MOCK_NOTIFICATIONS } from "@/server/db/mock/notifications"
 import { cn } from "@/lib/utils"
 import type { AppNotification } from "@/types/notification"
 
@@ -46,14 +50,18 @@ function filterNotifications(
 
 type NotificationCenterProps = {
   className?: string
+  initialNotifications?: AppNotification[]
 }
 
-export function NotificationCenter({ className }: NotificationCenterProps) {
+export function NotificationCenter({
+  className,
+  initialNotifications = [],
+}: NotificationCenterProps) {
   const { t } = useLocale()
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<NotificationTab>("all")
   const [notifications, setNotifications] =
-    useState<AppNotification[]>(MOCK_NOTIFICATIONS)
+    useState<AppNotification[]>(initialNotifications)
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
@@ -71,12 +79,22 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         item.id === id ? { ...item, isRead: true } : item
       )
     )
+    // Persist later via server action; UI updates immediately for UX.
+    markNotificationReadAction(id)
   }
 
   function markAllAsRead() {
     setNotifications((previous) =>
       previous.map((item) => ({ ...item, isRead: true }))
     )
+    // Persist later via server action; UI updates immediately for UX.
+    markAllNotificationsReadAction()
+  }
+
+  function deleteNotification(id: string) {
+    setNotifications((previous) => previous.filter((item) => item.id !== id))
+    // Persist later via server action; UI updates immediately for UX.
+    deleteNotificationAction(id)
   }
 
   const activeTabLabel =
@@ -184,6 +202,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
                       markAsRead(id)
                       setOpen(false)
                     }}
+                    onDelete={deleteNotification}
                   />
                 ))}
               </div>

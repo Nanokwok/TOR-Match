@@ -1,17 +1,9 @@
 /**
- * Seeds MongoDB with the TOR dataset exported from the frontend mocks.
- *
- *   npm run seed          # upsert (safe to re-run)
- *   npm run seed -- --fresh   # delete every TOR first, then insert
- *
- * IMPORTANT: tors.seed.json is generated from the frontend mock data and is NOT
- * checked automatically — nothing will warn you when it goes stale. If you have
- * touched frontend/src/server/db/mock/tors.ts, regenerate before seeding:
- *
- *   cd frontend && npx tsx scripts/export-mock-tors.ts
- *
- * Once the frontend reads from this API instead of its mocks, this file becomes
- * the source of truth on its own and the export step can go away.
+ * Backend-owned TOR fixtures with structured matching criteria.
+ * npm run seed -- --check         inspect counts without writing
+ * npm run seed -- --criteria-only update requirements on existing fixture TORs only
+ * npm run seed                   upsert fixture documents by announcementNo
+ * npm run seed -- --fresh         explicitly delete all TORs before upserting
  */
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
@@ -35,7 +27,31 @@ async function main() {
   const fresh = process.argv.includes("--fresh")
   const documents = loadSeed()
 
+  for (const document of documents) await new Tor(document).validate()
   await connectDB()
+
+  if (process.argv.includes("--check")) {
+    const existing = await Tor.find().select("announcementNo qualificationRequirements").lean()
+    console.log(JSON.stringify({
+      total: existing.length,
+      fixtureTors: existing.filter((tor) => documents.some((seed) => seed.announcementNo === tor.announcementNo)).length,
+      withoutCriteria: existing.filter((tor) => !tor.qualificationRequirements.length || tor.qualificationRequirements.some((row) => !row.criteria)).length,
+    }))
+    await disconnectDB()
+    return
+  }
+  if (process.argv.includes("--criteria-only")) {
+    const result = await Tor.bulkWrite(documents.map((document) => ({
+      updateOne: {
+        filter: { announcementNo: document.announcementNo },
+        update: { $set: { qualificationRequirements: document.qualificationRequirements } },
+        upsert: false,
+      },
+    })))
+    console.log(`[seed] updated criteria for ${result.modifiedCount} existing fixture TOR(s); preserved IDs and other fields`)
+    await disconnectDB()
+    return
+  }
 
   if (fresh) {
     const { deletedCount } = await Tor.deleteMany({})

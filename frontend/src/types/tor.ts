@@ -61,6 +61,7 @@ export type Tor = {
   method: TorProcurementMethod
   status: TorProcurementStatus
   eligible: boolean
+  qualification?: TorQualificationCheck
   bookmarked: boolean
   deadline: string
   announcementDate: string
@@ -73,25 +74,22 @@ export type Tor = {
   qualificationRequirements: TorQualificationRequirement[]
 }
 
-export type CompanyProfileMatch = {
-  requirementId: string
-  displayValue: string
-  passed: boolean
-}
-
-export type CompanyProfile = {
-  id: string
-  name: string
-  matches: CompanyProfileMatch[]
-}
+export type QualificationStatus = "passed" | "failed" | "insufficient-data" | "manual-review"
 
 export type TorQualificationCheck = {
   profileSetup: boolean
+  eligible: boolean
+  status: QualificationStatus
+  requiresManualReview: boolean
+  evaluatedAt: string
   rows: {
+    requirementId: string
     requirement: LocalizedText
     torCriteria: LocalizedText
     companyValue: string | null
     passed: boolean | null
+    status: QualificationStatus
+    reason: LocalizedText
     autoCheckable: boolean
   }[]
 }

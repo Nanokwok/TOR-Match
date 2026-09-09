@@ -13,7 +13,7 @@
     "bookmarked": "Bookmarked",
     "copied": "Copied",
     "summary": "Summary",
-    "eligible": "Eligible",
+    "eligible": "Automated criteria met",
     "notEligible": "Not Eligible",
     "high": "High",
     "medium": "Medium",
@@ -83,7 +83,7 @@
   },
   "browse": {
     "searchPlaceholder": "Search your keyword...",
-    "eligibleOnly": "Eligible Only",
+    "eligibleOnly": "Automated criteria met only",
     "budgetRange": "Budget Range",
     "procurementStatus": "Procurement Status",
     "department": "Department",
@@ -107,7 +107,9 @@
       "manualReview": "Manual review required",
       "selfAssessment": "Self-assessment required",
       "setupPrompt": "Set up your company profile to automatically verify eligibility",
-      "companySetup": "Company Setup →"
+      "companySetup": "Company Setup →",
+      "scopeNote": "These results compare your saved profile with TOR criteria and do not constitute final bidding approval.",
+      "pendingReview": "Some requirements still need document review."
     },
     "financials": "Financials",
     "keyDeliverables": "Key Deliverables",
@@ -179,6 +181,13 @@
       "counting": "Counting...",
       "from": "From",
       "to": "To"
+    },
+    "qualificationUnavailable": "Qualification results are unavailable.",
+    "qualificationStatus": {
+      "passed": "Passed",
+      "failed": "Failed",
+      "insufficient-data": "Insufficient data",
+      "manual-review": "Manual review required"
     }
   },
   "workspace": {

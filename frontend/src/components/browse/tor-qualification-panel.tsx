@@ -38,12 +38,12 @@ function ProfileCell({
   showSetupPrompt?: boolean
 }) {
   const router = useRouter()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   if (!row.autoCheckable) {
     return (
       <span className="text-sm text-muted-foreground italic">
-        {t("browse.qualificationPanel.selfAssessment")}
+        {t(`browse.qualificationStatus.${row.status}`)}<br />{pickLocalized(row.reason, locale)}
       </span>
     )
   }
@@ -70,19 +70,14 @@ function ProfileCell({
     )
   }
 
-  if (!row.companyValue) {
-    return <span className="text-sm text-muted-foreground">—</span>
-  }
-
   return (
-    <span
-      className={cn(
-        "font-medium",
-        row.passed ? "text-emerald-600" : "text-red-600"
-      )}
-    >
-      {row.passed ? "✓" : "✗"} {row.companyValue}
-    </span>
+    <div className="space-y-1">
+      <p className={cn("font-medium", row.status === "passed" ? "text-emerald-600" : row.status === "failed" ? "text-red-600" : "text-amber-600")}>
+        {t(`browse.qualificationStatus.${row.status}`)}
+      </p>
+      {row.companyValue ? <p>{row.companyValue}</p> : null}
+      <p className="text-xs text-muted-foreground">{pickLocalized(row.reason, locale)}</p>
+    </div>
   )
 }
 
@@ -126,6 +121,10 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-border">
+      <p className="border-b border-border bg-muted/50 p-4 text-sm">
+        {t("browse.qualificationPanel.scopeNote")}
+        {check.requiresManualReview ? ` ${t("browse.qualificationPanel.pendingReview")}` : ""}
+      </p>
       <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="bg-primary text-primary-foreground">

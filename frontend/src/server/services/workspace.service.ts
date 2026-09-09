@@ -4,7 +4,7 @@ import {
   getMockWorkspaceCards,
   setMockWorkspaceCards,
 } from "@/server/db/mock/workspace"
-import { getMockTors } from "@/server/db/mock/tors"
+import { getTorById, listTors } from "@/server/services/tor.service"
 import {
   cardsToColumnItems,
   cardsToLookup,
@@ -126,20 +126,8 @@ export async function moveWorkspaceCard(
 }
 
 export async function searchTorsForWorkspace(keyword = "") {
-  const q = keyword.trim().toLowerCase()
-  const tors = getMockTors()
-
-  if (!q) return tors.slice(0, 12)
-
-  return tors
-    .filter((tor) => {
-      return (
-        tor.id.toLowerCase().includes(q) ||
-        tor.announcementNo.toLowerCase().includes(q) ||
-        localizedIncludes(tor.title, q)
-      )
-    })
-    .slice(0, 20)
+  const { items } = await listTors({ keyword })
+  return items.slice(0, keyword.trim() ? 20 : 12)
 }
 
 export async function addTorToWorkspace(
@@ -149,11 +137,11 @@ export async function addTorToWorkspace(
   | { ok: true; card: WorkspaceCard; cards: WorkspaceCard[] }
   | { ok: false; error: string }
 > {
-  const tor = getMockTors().find(
-    (item) =>
-      item.id === torId ||
-      item.announcementNo.toLowerCase() === torId.trim().toLowerCase()
-  )
+  const tor = /^[a-f\d]{24}$/i.test(torId)
+    ? await getTorById(torId)
+    : (await listTors({ keyword: torId.trim() })).items.find(
+        (item) => item.announcementNo.toLowerCase() === torId.trim().toLowerCase()
+      )
 
   if (!tor) {
     return { ok: false, error: "TOR not found" }

@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import type { AppNotification } from "@/types/notification";
 
 export type HeaderNavItem = {
   labelKey: string;
@@ -29,6 +30,7 @@ type HeaderProps = {
   className?: string;
   companyName?: string;
   navItems?: HeaderNavItem[];
+  initialNotifications?: AppNotification[];
 };
 
 const defaultNavItems: HeaderNavItem[] = [
@@ -44,6 +46,7 @@ export function Header({
   className,
   companyName,
   navItems = defaultNavItems,
+  initialNotifications = [],
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -84,7 +87,7 @@ export function Header({
         </nav>
 
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
-          <NotificationCenter />
+          <NotificationCenter initialNotifications={initialNotifications} />
 
           <AnimatedThemeToggler
             theme={resolvedTheme}

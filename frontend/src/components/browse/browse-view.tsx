@@ -12,13 +12,12 @@ import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
 import { browseActions } from "@/lib/browse-actions"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
-import type { CompanySetupProfile } from "@/types/company-setup"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
 const initialFilters: BrowseFiltersState = {
   keyword: "",
-  eligibleOnly: true,
+  eligibleOnly: false,
   budgetRange: "all",
   status: "all",
   department: "all",
@@ -29,14 +28,12 @@ type BrowseViewProps = {
   initialItems: Tor[]
   departments: LocalizedText[]
   localOffices: string[]
-  companyProfile: CompanySetupProfile | null
 }
 
 export function BrowseView({
   initialItems,
   departments,
   localOffices,
-  companyProfile,
 }: BrowseViewProps) {
   const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
   const [items, setItems] = useState(initialItems)
@@ -113,7 +110,6 @@ export function BrowseView({
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
           <TorDetail
             tor={selectedTor}
-            companyProfile={companyProfile}
             onToggleBookmark={handleToggleBookmark}
           />
         </section>

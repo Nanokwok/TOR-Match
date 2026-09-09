@@ -13,7 +13,7 @@
     "bookmarked": "บันทึกแล้ว",
     "copied": "คัดลอกแล้ว",
     "summary": "สรุป",
-    "eligible": "มีสิทธิ์",
+    "eligible": "ผ่านเกณฑ์อัตโนมัติ",
     "notEligible": "ไม่มีสิทธิ์",
     "high": "สูง",
     "medium": "ปานกลาง",
@@ -83,7 +83,7 @@
   },
   "browse": {
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
-    "eligibleOnly": "เฉพาะที่มีสิทธิ์",
+    "eligibleOnly": "เฉพาะที่ผ่านเกณฑ์อัตโนมัติ",
     "budgetRange": "ช่วงงบประมาณ",
     "procurementStatus": "สถานะการจัดซื้อจัดจ้าง",
     "department": "หน่วยงาน",
@@ -107,7 +107,9 @@
       "manualReview": "ต้องตรวจสอบด้วยตนเอง",
       "selfAssessment": "ต้องประเมินด้วยตนเอง",
       "setupPrompt": "ตั้งค่าโปรไฟล์บริษัทเพื่อตรวจสอบคุณสมบัติอัตโนมัติ",
-      "companySetup": "ตั้งค่าบริษัท →"
+      "companySetup": "ตั้งค่าบริษัท →",
+      "scopeNote": "ผลนี้เปรียบเทียบข้อมูลที่บริษัทบันทึกกับเกณฑ์ TOR ยังไม่ใช่การรับรองสิทธิ์ยื่นเสนอราคา",
+      "pendingReview": "ยังมีข้อกำหนดที่ต้องตรวจเอกสารเพิ่มเติม"
     },
     "financials": "การเงิน",
     "keyDeliverables": "ขอบเขตงานหลัก",
@@ -179,6 +181,13 @@
       "counting": "กำลังนับ...",
       "from": "จาก",
       "to": "ถึง"
+    },
+    "qualificationUnavailable": "ไม่สามารถแสดงผลตรวจคุณสมบัติได้",
+    "qualificationStatus": {
+      "passed": "ผ่าน",
+      "failed": "ไม่ผ่าน",
+      "insufficient-data": "ข้อมูลไม่พอ",
+      "manual-review": "ต้องตรวจด้วยคน"
     }
   },
   "workspace": {
