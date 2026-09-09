@@ -21,13 +21,17 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       getCompanySetupProfileAction(),
     ])
 
-  const { items, selectedId } = await resolveBrowseDeepLink(params.tor, listed)
+  const { items, selectedId, deepLink } = await resolveBrowseDeepLink(
+    params.tor,
+    listed
+  )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <BrowseView
         initialItems={items}
         initialSelectedId={selectedId}
+        initialDeepLink={deepLink}
         departments={departments}
         localOffices={localOffices}
         companyProfile={companyProfile}

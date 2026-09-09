@@ -131,6 +131,22 @@
     "selectTor": "Select a TOR to view details.",
     "removeBookmark": "Remove bookmark",
     "bookmarkTor": "Bookmark TOR",
+    "deepLink": {
+      "openedFromLink": "Opened from link",
+      "notFound": "That TOR wasn’t found. Showing your usual browse list instead.",
+      "ineligibleHint": "Not eligible — shown because you opened a link.",
+      "showAllEligible": "Turn off Eligible only",
+      "hiddenFromResults": "Selected TOR is hidden by your current filters.",
+      "showSelectedInList": "Show selected TOR"
+    },
+    "share": {
+      "title": "Share TOR",
+      "copyLink": "Or copy link",
+      "copy": "Copy",
+      "copiedUrl": "Link copied: {url}",
+      "qrAlt": "QR code for this TOR link",
+      "qrHint": "Scan with a phone to open this TOR on mobile."
+    },
     "submissionDeadline": "Submission Deadline",
     "projectScale": "Project Scale",
     "duration": "Duration",
