@@ -43,6 +43,7 @@ jobs:
         env:
           # The build only needs the variable to exist; no backend is reachable here.
           NEXT_PUBLIC_API_URL: http://localhost:8000/api
+          AUTH_COOKIE_NAME: tm_token
 
   backend:
     name: Backend

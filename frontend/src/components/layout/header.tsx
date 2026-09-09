@@ -18,6 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  getCompanyDisplayName,
+  type CompanyDisplaySource,
+} from "@/lib/company-setup";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/types/notification";
 
@@ -28,7 +32,11 @@ export type HeaderNavItem = {
 
 type HeaderProps = {
   className?: string;
-  companyName?: string;
+  /**
+   * Signed-in company identity from the saved profile.
+   * Omit for guests — the header will not invent a placeholder name.
+   */
+  account?: CompanyDisplaySource | null;
   navItems?: HeaderNavItem[];
   initialNotifications?: AppNotification[];
 };
@@ -44,14 +52,15 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   className,
-  companyName,
+  account,
   navItems = defaultNavItems,
   initialNotifications = [],
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const displayName = getCompanyDisplayName(account, locale);
 
   return (
     <header
@@ -99,9 +108,11 @@ export function Header({
 
           <LanguageSwitcher variant="dark" />
 
-          <span className="hidden text-sm text-white/90 lg:inline">
-            {companyName ?? t("header.companyName")}
-          </span>
+          {displayName ? (
+            <span className="hidden max-w-48 truncate text-sm text-white/90 lg:inline">
+              {displayName}
+            </span>
+          ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger
