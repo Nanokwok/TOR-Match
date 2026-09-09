@@ -73,7 +73,7 @@ export async function registerWithEmailAction({
   email,
   password,
 }: EmailRegisterInput): Promise<AuthResult> {
-  if (!name.trim() || !email.trim() || !password.trim()) {
+  if (!name?.trim() || !email?.trim() || !password?.trim()) {
     return { ok: false, error: "Name, email and password are required." }
   }
   if (password.length < 8) {
