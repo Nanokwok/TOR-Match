@@ -24,7 +24,7 @@ const PROTECTED_PREFIXES = [
   "/workspace",
 ]
 
-const AUTH_PAGES = ["/login", "/signup"]
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password"]
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
@@ -106,5 +106,6 @@ export const config = {
     "/workspace/:path*",
     "/login",
     "/signup",
+    "/forgot-password",
   ],
 }

@@ -134,6 +134,36 @@ export function isCompanyProfileComplete(
   return true
 }
 
+export type CompanyDisplaySource = {
+  companyNameThai?: string | null
+  companyNameEnglish?: string | null
+  /**
+   * Prefer the signed-in user's email once auth exists.
+   * Until then, company contact email is a valid interim fallback.
+   */
+  email?: string | null
+}
+
+/**
+ * Label shown in the header (and similar chrome).
+ * Locale-preferred company name → alternate locale → email → nothing.
+ * Returns null when there is no real identity to show (e.g. guests).
+ */
+export function getCompanyDisplayName(
+  source: CompanyDisplaySource | null | undefined,
+  locale: "en" | "th"
+): string | null {
+  if (!source) return null
+
+  const thai = source.companyNameThai?.trim() || ""
+  const english = source.companyNameEnglish?.trim() || ""
+  const preferred = locale === "th" ? thai : english
+  const alternate = locale === "th" ? english : thai
+  const email = source.email?.trim() || ""
+
+  return preferred || alternate || email || null
+}
+
 export function getCompanySizeLabel(value: CompanySetupProfile["companySize"]) {
   return (
     COMPANY_SIZE_OPTIONS.find((option) => option.value === value)?.label ??
