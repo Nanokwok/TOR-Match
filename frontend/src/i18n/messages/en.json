@@ -453,6 +453,7 @@
       "phone": "02-123-4567",
       "registeredCapital": "e.g. 5,000,000",
       "certificateNumber": "e.g. CERT-2023-889",
+      "expirationDate": "DD/MM/YYYY",
       "projectTitle": "e.g. BMA Web Application & Portal Development",
       "selectSector": "Select Sector",
       "contractValue": "e.g. 2,000,000",

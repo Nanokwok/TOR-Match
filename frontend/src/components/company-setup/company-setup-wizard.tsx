@@ -148,6 +148,8 @@ export function CompanySetupWizard({
       if (result.ok) {
         router.push("/company-profile")
         router.refresh()
+      } else {
+        setError(result.error)
       }
     })
   }
@@ -553,6 +555,8 @@ function CertificationsStep({
                   <Input
                     id={`${option.id}-expiry`}
                     type="date"
+                    autoComplete="off"
+                    placeholder={t("companySetup.placeholders.expirationDate")}
                     value={entry.expirationDate}
                     onChange={(event) =>
                       onChange((current) => ({
