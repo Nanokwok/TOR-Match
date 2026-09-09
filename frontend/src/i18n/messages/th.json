@@ -6,6 +6,7 @@
     "clearAll": "ล้างทั้งหมด",
     "activeFilters": "ตัวกรองที่ใช้งาน:",
     "email": "อีเมล",
+    "name": "ชื่อ",
     "password": "รหัสผ่าน",
     "or": "หรือ",
     "share": "แชร์",
@@ -258,6 +259,17 @@
       "noResults": "ไม่พบ TOR",
       "onBoard": "อยู่ในบอร์ดแล้ว"
     },
+    "empty": {
+      "boardTitle": "Workspace ยังว่างอยู่",
+      "boardDescription": "บันทึก TOR ที่สนใจ แล้วเลื่อนไปยัง รอดำเนินการ / กำลังดำเนินการ / เสร็จสิ้น ตามขั้นตอนการประมูลของทีม",
+      "boardHint": "เคล็ดลับ: บันทึกจากหน้า Browse หรือเพิ่ม TOR แรกที่นี่",
+      "addFirstTor": "เพิ่ม TOR แรก",
+      "browseTors": "ค้นหา TOR",
+      "filtersTitle": "ไม่พบ TOR ตามตัวกรองนี้",
+      "filtersDescription": "ลองเปลี่ยนคำค้น ผู้รับผิดชอบ หรือความสำคัญ — หรือล้างตัวกรองเพื่อดูบอร์ดทั้งหมด",
+      "clearFilters": "ล้างตัวกรอง",
+      "columnHint": "ลาก TOR มาวาง หรือกด + เพื่อเพิ่ม"
+    },
     "checklistDefaults": {
       "capital": "ตรวจสอบเกณฑ์ทุนจดทะเบียน (5 ล้าน > 2 ล้าน บาท)",
       "iso": "ตรวจสอบวันหมดอายุใบรับรอง ISO/IEC 29110",
@@ -302,8 +314,7 @@
     "signupTitle": "สมัครสมาชิก",
     "signupSubtitle": "ยินดีต้อนรับ มาสร้างบัญชีของคุณกัน!",
     "signupGoogle": "สมัครด้วย Google",
-    "fullName": "ชื่อ-นามสกุล",
-    "fullNamePlaceholder": "ชื่อ-นามสกุลของคุณ",
+    "namePlaceholder": "ชื่อของคุณ",
     "confirmPassword": "ยืนยันรหัสผ่าน",
     "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
     "creatingAccount": "กำลังสร้างบัญชี...",

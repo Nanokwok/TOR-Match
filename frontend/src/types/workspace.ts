@@ -10,6 +10,8 @@ export type TeamMember = {
 }
 
 export type WorkspaceCard = {
+  /** Backend WorkspaceCard `_id` (needed for move/delete). */
+  id: string
   torId: string
   announcementNo: string
   title: LocalizedText

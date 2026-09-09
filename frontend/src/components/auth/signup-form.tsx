@@ -82,7 +82,7 @@ export function SignupForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="signup-name">{t("auth.fullName")}</Label>
+              <Label htmlFor="signup-name">{t("common.name")}</Label>
               <Input
                 id="signup-name"
                 type="text"
@@ -90,7 +90,7 @@ export function SignupForm() {
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder={t("auth.fullNamePlaceholder")}
+                placeholder={t("auth.namePlaceholder")}
                 className="h-11 border-neutral-300 bg-white"
               />
             </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react"
 
 import { searchTorsAction } from "@/actions/tor"
+import { bookmarkTorAction } from "@/actions/workspace"
 import {
   filtersToQuery,
   TorFilterBar,
@@ -10,7 +11,6 @@ import {
 } from "@/components/browse/tor-filter-bar"
 import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
-import { browseActions } from "@/lib/browse-actions"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
 import type { CompanySetupProfile } from "@/types/company-setup"
 import type { LocalizedText } from "@/types/localized"
@@ -44,6 +44,7 @@ export function BrowseView({
     initialItems[0]?.id ?? null
   )
   const [isPending, startTransition] = useTransition()
+  const [bookmarkError, setBookmarkError] = useState<string | null>(null)
 
   const selectedTor = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -76,14 +77,27 @@ export function BrowseView({
     }
   }
 
-  function handleToggleBookmark(torId: string) {
+  function setBookmarked(torId: string, bookmarked: boolean) {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === torId ? { ...item, bookmarked: !item.bookmarked } : item
+        item.id === torId ? { ...item, bookmarked } : item
       )
     )
-    // Persist later via server action; UI updates immediately for UX.
-    browseActions.bookmarkTor(torId)
+  }
+
+  function handleToggleBookmark(torId: string) {
+    const current = items.find((item) => item.id === torId)
+    if (!current) return
+
+    const next = !current.bookmarked
+    setBookmarkError(null)
+    setBookmarked(torId, next)
+
+    void bookmarkTorAction(torId, next).then((result) => {
+      if (result.ok) return
+      setBookmarked(torId, current.bookmarked)
+      setBookmarkError(result.error)
+    })
   }
 
   return (
@@ -95,6 +109,15 @@ export function BrowseView({
         onChange={handleFiltersChange}
         onSearch={handleSearch}
       />
+
+      {bookmarkError ? (
+        <p
+          role="alert"
+          className="border-b border-destructive/20 bg-destructive/5 px-4 py-2 text-sm text-destructive md:px-6"
+        >
+          {bookmarkError}
+        </p>
+      ) : null}
 
       <div
         className={`grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4 ${
