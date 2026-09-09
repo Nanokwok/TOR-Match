@@ -142,6 +142,52 @@ async function fetchBoardCards(): Promise<WorkspaceCard[]> {
   )
 }
 
+export type BookmarkedTorIndex = {
+  byTorId: Set<string>
+  byAnnouncementNo: Set<string>
+}
+
+const EMPTY_BOOKMARK_INDEX: BookmarkedTorIndex = {
+  byTorId: new Set(),
+  byAnnouncementNo: new Set(),
+}
+
+
+export async function getBookmarkedTorIndex(): Promise<BookmarkedTorIndex> {
+  const token = await getAuthToken()
+  if (!token) return EMPTY_BOOKMARK_INDEX
+
+  try {
+    const cards = await fetchBoardCards()
+    const byTorId = new Set<string>()
+    const byAnnouncementNo = new Set<string>()
+
+    for (const card of cards) {
+      byTorId.add(card.torId)
+      const announcementNo = card.announcementNo.trim().toLowerCase()
+      if (announcementNo) byAnnouncementNo.add(announcementNo)
+    }
+
+    return { byTorId, byAnnouncementNo }
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      return EMPTY_BOOKMARK_INDEX
+    }
+    console.error("getBookmarkedTorIndex failed", error)
+    return EMPTY_BOOKMARK_INDEX
+  }
+}
+
+export function isTorBookmarked(
+  tor: Pick<Tor, "id" | "announcementNo">,
+  index: BookmarkedTorIndex
+): boolean {
+  return (
+    index.byTorId.has(tor.id) ||
+    index.byAnnouncementNo.has(tor.announcementNo.trim().toLowerCase())
+  )
+}
+
 async function resolveBackendTorId(torIdOrKey: string): Promise<string | null> {
   const key = torIdOrKey.trim()
   if (!key) return null
