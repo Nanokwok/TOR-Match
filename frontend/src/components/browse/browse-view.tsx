@@ -27,6 +27,7 @@ const initialFilters: BrowseFiltersState = {
 
 type BrowseViewProps = {
   initialItems: Tor[]
+  initialSelectedId: string | null
   departments: LocalizedText[]
   localOffices: string[]
   companyProfile: CompanySetupProfile | null
@@ -34,15 +35,14 @@ type BrowseViewProps = {
 
 export function BrowseView({
   initialItems,
+  initialSelectedId,
   departments,
   localOffices,
   companyProfile,
 }: BrowseViewProps) {
   const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
   const [items, setItems] = useState(initialItems)
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialItems[0]?.id ?? null
-  )
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
   const [isPending, startTransition] = useTransition()
 
   const selectedTor = useMemo(
