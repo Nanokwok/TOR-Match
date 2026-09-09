@@ -10,7 +10,7 @@ export const browseActions = {
     });
   },
   bookmarkTor(torId: string) {
-    console.log("Action clicked: Bookmark", { torId });
+    console.log("Action clicked: Bookmark (use bookmarkTorAction)", { torId });
   },
   shareTor(torId: string) {
     console.log("Action clicked: Share", { torId });

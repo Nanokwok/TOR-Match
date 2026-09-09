@@ -311,19 +311,74 @@ export async function removeWorkspaceCard(
   }
 
   try {
+    const backendTorId = (await resolveBackendTorId(torId)) ?? torId
     const cards = await fetchBoardCards()
-    const card = cards.find((item) => item.torId === torId)
+    const card = cards.find((item) => item.torId === backendTorId)
     if (!card) {
       return { ok: false, error: "Card not found" }
     }
 
-    await apiFetch(`/workspace/cards/${card.id}`, { method: "DELETE" })
-    return { ok: true, cards: cards.filter((item) => item.torId !== torId) }
+    await apiFetch(`/workspace/cards/by-tor/${backendTorId}`, {
+      method: "DELETE",
+    })
+    return {
+      ok: true,
+      cards: cards.filter((item) => item.torId !== backendTorId),
+    }
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return { ok: false, error: error.message }
     }
     console.error("removeWorkspaceCard failed", error)
+    return { ok: false, error: "Something went wrong. Please try again." }
+  }
+}
+
+
+export async function bookmarkTor(
+  torId: string,
+  bookmarked: boolean
+): Promise<
+  | { ok: true; bookmarked: boolean }
+  | { ok: false; error: string }
+> {
+  const token = await getAuthToken()
+  if (!token) {
+    return { ok: false, error: "You must be signed in to bookmark a TOR." }
+  }
+
+  try {
+    const backendTorId = await resolveBackendTorId(torId)
+    if (!backendTorId) {
+      return { ok: false, error: "TOR not found" }
+    }
+
+    if (bookmarked) {
+      // $setOnInsert on the backend: existing cards in any column stay put.
+      await apiFetch("/workspace/cards", {
+        method: "POST",
+        body: JSON.stringify({ torId: backendTorId, column: "bookmark" }),
+      })
+      return { ok: true, bookmarked: true }
+    }
+
+    try {
+      await apiFetch(`/workspace/cards/by-tor/${backendTorId}`, {
+        method: "DELETE",
+      })
+    } catch (error) {
+      // Idempotent: already off the board.
+      if (!(error instanceof ApiRequestError) || error.status !== 404) {
+        throw error
+      }
+    }
+
+    return { ok: true, bookmarked: false }
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      return { ok: false, error: error.message }
+    }
+    console.error("bookmarkTor failed", error)
     return { ok: false, error: "Something went wrong. Please try again." }
   }
 }
