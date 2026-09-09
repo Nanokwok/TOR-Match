@@ -27,17 +27,19 @@ import { browseActions } from "@/lib/browse-actions";
 import { formatTorDeadline } from "@/lib/format"
 import { projectScaleLabel, procurementMethodLabel } from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
-import { buildQualificationCheck } from "@/lib/qualification";
+import { buildQualificationCheck, withRealCertifications } from "@/lib/qualification";
 import { cn } from "@/lib/utils";
 import { getMockCompanyProfile } from "@/server/db/mock/tors";
+import type { CompanySetupProfile } from "@/types/company-setup";
 import type { Tor } from "@/types/tor";
 
 type TorDetailProps = {
   tor: Tor | null;
+  companyProfile: CompanySetupProfile | null;
   onToggleBookmark: (torId: string) => void;
 };
 
-export function TorDetail({ tor, onToggleBookmark }: TorDetailProps) {
+export function TorDetail({ tor, companyProfile, onToggleBookmark }: TorDetailProps) {
   const { t } = useLocale();
 
   if (!tor) {
@@ -49,15 +51,21 @@ export function TorDetail({ tor, onToggleBookmark }: TorDetailProps) {
   }
 
   return (
-    <TorDetailContent tor={tor} onToggleBookmark={onToggleBookmark} />
+    <TorDetailContent
+      tor={tor}
+      companyProfile={companyProfile}
+      onToggleBookmark={onToggleBookmark}
+    />
   );
 }
 
 function TorDetailContent({
   tor,
+  companyProfile,
   onToggleBookmark,
 }: {
   tor: Tor;
+  companyProfile: CompanySetupProfile | null;
   onToggleBookmark: (torId: string) => void;
 }) {
   const { locale, t } = useLocale();
@@ -66,7 +74,7 @@ function TorDetailContent({
 
   const qualificationCheck = buildQualificationCheck(
     tor,
-    getMockCompanyProfile(),
+    withRealCertifications(getMockCompanyProfile(), companyProfile),
   );
 
   return (

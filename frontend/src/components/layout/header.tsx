@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
+import { logoutAction } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
@@ -17,7 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { browseActions } from "@/lib/browse-actions";
+import {
+  getCompanyDisplayName,
+  type CompanyDisplaySource,
+} from "@/lib/company-setup";
 import { cn } from "@/lib/utils";
 
 export type HeaderNavItem = {
@@ -27,7 +31,11 @@ export type HeaderNavItem = {
 
 type HeaderProps = {
   className?: string;
-  companyName?: string;
+  /**
+   * Signed-in company identity from the saved profile.
+   * Omit for guests — the header will not invent a placeholder name.
+   */
+  account?: CompanyDisplaySource | null;
   navItems?: HeaderNavItem[];
 };
 
@@ -42,13 +50,14 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   className,
-  companyName,
+  account,
   navItems = defaultNavItems,
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const displayName = getCompanyDisplayName(account, locale);
 
   return (
     <header
@@ -96,9 +105,11 @@ export function Header({
 
           <LanguageSwitcher variant="dark" />
 
-          <span className="hidden text-sm text-white/90 lg:inline">
-            {companyName ?? t("header.companyName")}
-          </span>
+          {displayName ? (
+            <span className="hidden max-w-48 truncate text-sm text-white/90 lg:inline">
+              {displayName}
+            </span>
+          ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -128,8 +139,7 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  browseActions.logout();
-                  router.push("/login");
+                  void logoutAction().then(() => router.push("/login"));
                 }}
               >
                 {t("header.logout")}

@@ -88,6 +88,7 @@ export type CompanyProfile = {
 export type TorQualificationCheck = {
   profileSetup: boolean
   rows: {
+    id: string
     requirement: LocalizedText
     torCriteria: LocalizedText
     companyValue: string | null

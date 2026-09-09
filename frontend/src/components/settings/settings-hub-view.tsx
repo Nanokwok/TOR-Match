@@ -4,9 +4,9 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Bell, ChevronRight, LogOut, Monitor } from "lucide-react"
 
+import { logoutAction } from "@/actions/auth"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
-import { browseActions } from "@/lib/browse-actions"
 import { cn } from "@/lib/utils"
 
 const SETTINGS_LINKS = [
@@ -28,8 +28,8 @@ export function SettingsHubView() {
   const router = useRouter()
   const { t } = useLocale()
 
-  function handleLogout() {
-    browseActions.logout()
+  async function handleLogout() {
+    await logoutAction()
     router.push("/login")
   }
 
