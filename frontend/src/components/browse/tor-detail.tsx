@@ -27,19 +27,15 @@ import { browseActions } from "@/lib/browse-actions";
 import { formatTorDeadline } from "@/lib/format"
 import { projectScaleLabel, procurementMethodLabel } from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
-import { buildQualificationCheck, withRealCertifications } from "@/lib/qualification";
 import { cn } from "@/lib/utils";
-import { getMockCompanyProfile } from "@/server/db/mock/tors";
-import type { CompanySetupProfile } from "@/types/company-setup";
 import type { Tor } from "@/types/tor";
 
 type TorDetailProps = {
   tor: Tor | null;
-  companyProfile: CompanySetupProfile | null;
   onToggleBookmark: (torId: string) => void;
 };
 
-export function TorDetail({ tor, companyProfile, onToggleBookmark }: TorDetailProps) {
+export function TorDetail({ tor, onToggleBookmark }: TorDetailProps) {
   const { t } = useLocale();
 
   if (!tor) {
@@ -53,7 +49,6 @@ export function TorDetail({ tor, companyProfile, onToggleBookmark }: TorDetailPr
   return (
     <TorDetailContent
       tor={tor}
-      companyProfile={companyProfile}
       onToggleBookmark={onToggleBookmark}
     />
   );
@@ -61,21 +56,16 @@ export function TorDetail({ tor, companyProfile, onToggleBookmark }: TorDetailPr
 
 function TorDetailContent({
   tor,
-  companyProfile,
   onToggleBookmark,
 }: {
   tor: Tor;
-  companyProfile: CompanySetupProfile | null;
   onToggleBookmark: (torId: string) => void;
 }) {
   const { locale, t } = useLocale();
   const [shareOpen, setShareOpen] = useState(false);
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
-  const qualificationCheck = buildQualificationCheck(
-    tor,
-    withRealCertifications(getMockCompanyProfile(), companyProfile),
-  );
+  const qualificationCheck = tor.qualification;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
@@ -89,7 +79,7 @@ function TorDetailContent({
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-muted-foreground">
-                  {t("common.notEligible")}
+                  {t(`browse.qualificationStatus.${qualificationCheck?.status ?? "insufficient-data"}`)}
                 </Badge>
               )}
               <p className="text-sm text-muted-foreground">
@@ -250,7 +240,7 @@ function TorDetailContent({
           </TabsContent>
 
           <TabsContent value="qualification" className="mt-0">
-            <TorQualificationPanel check={qualificationCheck} />
+            {qualificationCheck ? <TorQualificationPanel check={qualificationCheck} /> : <p>{t("browse.qualificationUnavailable")}</p>}
           </TabsContent>
 
           <TabsContent value="financials" className="mt-0">
