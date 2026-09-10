@@ -41,10 +41,13 @@ async function main() {
     return
   }
   if (process.argv.includes("--criteria-only")) {
+    // Already validated against the schema (including per-row `criteria`) by
+    // Tor(document).validate() above — this cast is just Mongoose's bulkWrite
+    // typing not following through JSON-sourced `unknown` fields.
     const result = await Tor.bulkWrite(documents.map((document) => ({
       updateOne: {
         filter: { announcementNo: document.announcementNo },
-        update: { $set: { qualificationRequirements: document.qualificationRequirements } },
+        update: { $set: { qualificationRequirements: document.qualificationRequirements as never } },
         upsert: false,
       },
     })))
