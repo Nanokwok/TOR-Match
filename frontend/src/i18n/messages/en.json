@@ -412,6 +412,7 @@
     "saving": "Saving...",
     "restoredDefaults": "Restored default preferences. Click Save to apply.",
     "preferencesSaved": "Preferences saved.",
+    "saveFailed": "Failed to save preferences. Please try again.",
     "unsavedChanges": "You have unsaved changes.",
     "allSaved": "All changes saved.",
     "ariaInApp": "{event} in-app",

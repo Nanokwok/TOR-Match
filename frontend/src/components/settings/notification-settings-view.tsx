@@ -111,6 +111,8 @@ export function NotificationSettingsView({
         setSavedSnapshot(cloneNotificationSettings(result.settings))
         setSettings(cloneNotificationSettings(result.settings))
         setStatusMessage(t("notificationSettings.preferencesSaved"))
+      } else {
+        setStatusMessage(t("notificationSettings.saveFailed"))
       }
     })
   }
