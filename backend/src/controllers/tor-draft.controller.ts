@@ -124,6 +124,9 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
         autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
+        // Not exposed on the review form — preserve whatever extraction
+        // computed rather than silently wiping it on every edit.
+        criteria: existing?.criteria,
       }
     }),
   }

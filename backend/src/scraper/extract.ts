@@ -36,7 +36,29 @@ const localizedList = z.object({
   th: z.array(z.string()),
 })
 
-const extractionSchema = z.object({
+/**
+ * Mirrors qualificationCriteriaSchema in @/validation/qualification — that
+ * schema is zod v3 (the rest of the backend), this file is zod v4 (required
+ * by the SDK's structured-output helper), so the shape is redefined here
+ * rather than shared. Mongoose re-validates against the v3 schema on save,
+ * so a drift between the two would surface then, not silently.
+ */
+export const KNOWN_CERTIFICATION_IDS = ["iso-29110", "iso-27001", "cmmi-2", "iso-9001"] as const
+
+export const criteriaSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("min-registered-capital"), minAmountThb: z.number() }),
+  z.object({ type: z.literal("min-past-contract"), minAmountThb: z.number() }),
+  z.object({
+    type: z.literal("certification"),
+    certificationIds: z.array(z.enum(KNOWN_CERTIFICATION_IDS)).min(1),
+    mode: z.enum(["any", "all"]),
+  }),
+  z.object({ type: z.literal("egp-registered") }),
+  z.object({ type: z.literal("not-blacklisted") }),
+  z.object({ type: z.literal("manual") }),
+])
+
+export const extractionSchema = z.object({
   title: localizedText,
   department: localizedText,
   localOffice: localizedText,
@@ -67,7 +89,10 @@ const extractionSchema = z.object({
       torCriteria: localizedText.describe("The threshold the TOR sets for it."),
       autoCheckable: z
         .boolean()
-        .describe("True only if a company profile field could verify this without human judgement."),
+        .describe("True only if a company profile field could verify this without human judgement. Must equal (criteria.type !== \"manual\")."),
+      criteria: criteriaSchema.describe(
+        "The machine-checkable form of this requirement. Use \"manual\" whenever it can't be mapped confidently to one of the other types — never guess a threshold or a certification id that isn't clearly stated."
+      ),
     })
   ),
   aiConfidence: z
@@ -86,6 +111,13 @@ Rules:
 - "method" must reflect the stated procurement method: ประกวดราคาอิเล็กทรอนิกส์/e-bidding -> "e-bidding", ตลาดอิเล็กทรอนิกส์/e-market -> "e-market", คัดเลือก -> "selective", เฉพาะเจาะจง -> "specific", ตกลงราคา/ราคาคงที่ -> "price-agreement".
 - "projectScale" follows the budget: under 5M baht SMALL, 5-20M MEDIUM, 20-100M LARGE, above 100M ENTERPRISE.
 - Payment milestone amounts should reconcile with percent x total budget.
+- Every qualification requirement needs a "criteria" value the matching engine can evaluate against a saved company profile:
+  - "min-registered-capital" — a minimum ทุนจดทะเบียน threshold in THB.
+  - "min-past-contract" — a minimum value for a single past contract (ผลงาน/สัญญาย้อนหลัง) in THB. Only the money threshold, never the scope of work described alongside it — that part stays manual review even when a capital figure is also present.
+  - "certification" — the TOR names a specific standard from this fixed set: iso-29110 (ISO/IEC 29110), iso-27001 (ISO/IEC 27001), cmmi-2 (CMMI Level 2+), iso-9001 (ISO 9001). Set certificationIds to only the ones actually named, and mode to "any" when the TOR says "or" between them, "all" when it requires every one listed. Never invent an id outside this set — if the TOR names a different standard, use "manual" instead.
+  - "egp-registered" — requires e-GP vendor registration (ผู้ค้ากับภาครัฐ / ลงทะเบียนในระบบ e-GP).
+  - "not-blacklisted" — requires not being on the comptroller-general's blacklist (บัญชีรายชื่อผู้ทิ้งงาน).
+  - "manual" — anything else: work-scope descriptions, team/staffing requirements, document submission rules, or a requirement you are not confident fits one of the types above. This is the safe default — prefer it over guessing.
 - Set aiConfidence honestly. A scanned document you struggled to read, or one missing the qualification section, deserves a low score — it routes the draft to a human.`
 
 let client: AnthropicVertex | null = null

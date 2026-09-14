@@ -135,6 +135,7 @@ async function ingest(
               requirement: row.requirement,
               torCriteria: row.torCriteria,
               autoCheckable: row.autoCheckable,
+              criteria: row.criteria,
             })
           ),
           aiConfidence: extraction.aiConfidence,
