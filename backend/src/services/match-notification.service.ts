@@ -1,12 +1,32 @@
 import type { CompanyDoc } from "@/models/Company.model"
+import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import { matchCompanyToTor } from "@/services/qualification.service"
 
-/** Pure: which of the currently-eligible TOR ids have no existing "match" notification yet. */
-export function selectNewMatches(eligibleTorIds: string[], alreadyNotifiedTorIds: string[]): string[] {
-  const notified = new Set(alreadyNotifiedTorIds)
-  return eligibleTorIds.filter((id) => !notified.has(id))
+/** Pure: which of the currently-eligible ids (TOR ids, or owner/user ids) have no existing "match" notification yet. */
+export function selectNewMatches(eligibleIds: string[], alreadyNotifiedIds: string[]): string[] {
+  const notified = new Set(alreadyNotifiedIds)
+  return eligibleIds.filter((id) => !notified.has(id))
+}
+
+function buildMatchNotification(userId: unknown, tor: TorDoc) {
+  return {
+    userId,
+    category: "match" as const,
+    torId: tor._id,
+    autoVerifiedMatch: true,
+    link: "/browse",
+    action: "view-tor" as const,
+    title: {
+      en: `You now qualify for ${tor.title.en}`,
+      th: `คุณมีคุณสมบัติสำหรับ ${tor.title.th} แล้ว`,
+    },
+    description: {
+      en: "Your saved company profile now meets every automated eligibility criterion for this TOR.",
+      th: "โปรไฟล์บริษัทที่บันทึกไว้ผ่านคุณสมบัติอัตโนมัติทุกข้อสำหรับ TOR นี้แล้ว",
+    },
+  }
 }
 
 /**
@@ -37,22 +57,39 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
   const newMatches = eligibleTors.filter((tor) => newMatchIds.has(String(tor._id)))
   if (!newMatches.length) return
 
+  await Notification.insertMany(newMatches.map((tor) => buildMatchNotification(userId, tor)))
+}
+
+/**
+ * Checks every saved company against one TOR and creates a "match"
+ * notification for any company newly eligible for it. Call this right after
+ * a TOR is published (see publishTorDraft in tor-draft.controller.ts) — that
+ * is the real point a TOR becomes visible to users, not the seed script.
+ */
+export async function notifyCompaniesForTor(tor: TorDoc): Promise<void> {
+  if (!["open", "closing-soon"].includes(tor.status)) return
+
+  const companies = await Company.find()
+  if (!companies.length) return
+
+  const eligibleCompanies = companies.filter((company) => matchCompanyToTor(company, tor).eligible)
+  if (!eligibleCompanies.length) return
+
+  const alreadyNotified = await Notification.find({
+    category: "match",
+    torId: tor._id,
+    userId: { $in: eligibleCompanies.map((company) => company.ownerId) },
+  }).distinct("userId")
+  const newMatchOwnerIds = new Set(
+    selectNewMatches(
+      eligibleCompanies.map((company) => String(company.ownerId)),
+      alreadyNotified.map(String)
+    )
+  )
+  const newMatches = eligibleCompanies.filter((company) => newMatchOwnerIds.has(String(company.ownerId)))
+  if (!newMatches.length) return
+
   await Notification.insertMany(
-    newMatches.map((tor) => ({
-      userId,
-      category: "match" as const,
-      torId: tor._id,
-      autoVerifiedMatch: true,
-      link: "/browse",
-      action: "view-tor" as const,
-      title: {
-        en: `You now qualify for ${tor.title.en}`,
-        th: `คุณมีคุณสมบัติสำหรับ ${tor.title.th} แล้ว`,
-      },
-      description: {
-        en: "Your saved company profile now meets every automated eligibility criterion for this TOR.",
-        th: "โปรไฟล์บริษัทที่บันทึกไว้ผ่านคุณสมบัติอัตโนมัติทุกข้อสำหรับ TOR นี้แล้ว",
-      },
-    }))
+    newMatches.map((company) => buildMatchNotification(company.ownerId, tor))
   )
 }

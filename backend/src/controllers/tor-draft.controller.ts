@@ -9,6 +9,7 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { notifyCompaniesForTor } from "@/services/match-notification.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -216,6 +217,16 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
     publishedAt: new Date(),
   })
   await draft.save()
+
+  // Awaited (not fire-and-forget) so a client refetching notifications right
+  // after this response can't race ahead of the write — same reasoning as
+  // the company-save trigger in company.controller.ts. A notification bug
+  // must still never fail the publish itself, hence the catch.
+  if (published) {
+    await notifyCompaniesForTor(published).catch((error) => {
+      console.error("notifyCompaniesForTor failed", error)
+    })
+  }
 
   res.status(200).json({ draft, tor: published })
 })
