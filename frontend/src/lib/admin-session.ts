@@ -11,6 +11,13 @@ export const ADMIN_SESSION_COOKIE = "tm_admin_session"
 export type AdminSession = {
   email: string
   name: string
+  /**
+   * Backend JWT for the signed-in admin, forwarded as `Authorization: Bearer`
+   * by admin server actions. The Express API cannot verify this cookie's own
+   * HMAC signature, so without carrying a real token the admin screens have no
+   * way to authenticate against it.
+   */
+  token: string
   issuedAt: number
   lastActiveAt: number
 }
@@ -106,6 +113,7 @@ export async function decodeAdminSession(
     if (
       typeof session.email !== "string" ||
       typeof session.name !== "string" ||
+      typeof session.token !== "string" ||
       typeof session.issuedAt !== "number" ||
       typeof session.lastActiveAt !== "number"
     ) {
@@ -152,10 +160,8 @@ export async function clearAdminSessionCookie() {
   })
 }
 
-export function getAdminCredentials() {
-  return {
-    email: process.env.ADMIN_EMAIL || "admin@example.com",
-    password: process.env.ADMIN_PASSWORD || "admin123",
-    name: process.env.ADMIN_NAME || "Admin",
-  }
+/** The backend JWT for the current admin, or null when signed out. */
+export async function getAdminToken(): Promise<string | null> {
+  const session = await getAdminSession()
+  return session?.token ?? null
 }

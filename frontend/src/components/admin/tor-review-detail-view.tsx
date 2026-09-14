@@ -1,14 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Trash2, X } from "lucide-react"
+
+import {
+  publishTorReviewAction,
+  saveTorReviewAction,
+} from "@/actions/admin-tor-review"
 
 import {
   createEmptyMilestone,
   createEmptyQualification,
   type TorReviewDetail,
-} from "@/server/db/mock/admin-tor-review"
+} from "@/types/tor-review"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,10 +28,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDuration } from "@/lib/format"
-import type {
-  ReviewMilestone,
-  ReviewQualification,
-} from "@/server/db/mock/admin-tor-review"
+import type { ReviewMilestone, ReviewQualification } from "@/types/tor-review"
 import type {
   TorProcurementMethod,
   TorProcurementStatus,
@@ -66,6 +69,16 @@ function toDateTimeLocal(iso: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+/**
+ * Inverse of {@link toDateTimeLocal}. These are Bangkok procurement dates and
+ * the stored format carries Thailand's offset, so the reviewer's local input is
+ * written back as +07:00 rather than the browser's own zone.
+ */
+function fromDateTimeLocal(value: string) {
+  if (!value) return ""
+  return `${value}:00+07:00`
+}
+
 export function TorReviewDetailView({
   tor,
   departments,
@@ -95,6 +108,8 @@ export function TorReviewDetailView({
     tor.qualificationRequirements
   )
   const [message, setMessage] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const budgetNumber = Number(budget) || 0
 
@@ -140,12 +155,52 @@ export function TorReviewDetailView({
     )
   }
 
+  /** Collects the form back into the shape the review API takes. */
+  function currentDetail(): TorReviewDetail {
+    return {
+      ...tor,
+      announcementId,
+      projectTitle: projectTitleEn,
+      projectTitleEn,
+      projectTitleTh,
+      department,
+      localOffice,
+      budgetBaht: budgetNumber,
+      medianPriceBaht: Number(medianPrice) || 0,
+      projectScale,
+      durationDays: Number(durationDays) || 0,
+      method,
+      status,
+      deadline: fromDateTimeLocal(deadline),
+      announcementDate: fromDateTimeLocal(announcementDate),
+      sourceUrl,
+      summary,
+      deliverables,
+      techTags,
+      milestones,
+      qualificationRequirements: qualifications,
+    }
+  }
+
   function handleSaveDraft() {
-    setMessage("Draft saved (frontend only).")
+    setMessage(null)
+    startTransition(async () => {
+      const result = await saveTorReviewAction(currentDetail())
+      setMessage(result.ok ? "Draft saved." : result.error)
+    })
   }
 
   function handleApprove() {
-    setMessage("Approved & published (frontend only).")
+    setMessage(null)
+    startTransition(async () => {
+      const result = await publishTorReviewAction(currentDetail())
+      if (!result.ok) {
+        setMessage(result.error)
+        return
+      }
+      setMessage("Approved and published.")
+      router.refresh()
+    })
   }
 
   return (
@@ -167,10 +222,12 @@ export function TorReviewDetailView({
           </h1>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={handleSaveDraft}>
-            Save Draft
+          <Button variant="outline" onClick={handleSaveDraft} disabled={isPending}>
+            {isPending ? "Saving..." : "Save Draft"}
           </Button>
-          <Button onClick={handleApprove}>Approve & Publish</Button>
+          <Button onClick={handleApprove} disabled={isPending}>
+            Approve &amp; Publish
+          </Button>
         </div>
       </div>
 

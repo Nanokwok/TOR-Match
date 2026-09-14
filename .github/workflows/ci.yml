@@ -10,6 +10,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Playwright is a backend devDependency for the TOR scraper. CI only typechecks
+# and builds, so it never needs the ~300MB of browser binaries the package
+# downloads on install.
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
 jobs:
   frontend:
     name: Frontend
