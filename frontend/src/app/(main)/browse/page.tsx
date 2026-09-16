@@ -1,5 +1,5 @@
 import { BrowseView } from "@/components/browse/browse-view"
-import { resolveBrowseDeepLink } from "@/lib/browse-deep-link"
+import { resolveBrowseDeepLink } from "@/lib/browse-deep-link.server"
 import {
   listTorDepartments,
   listTorLocalOffices,
