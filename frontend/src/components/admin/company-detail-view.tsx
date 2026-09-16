@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
@@ -53,13 +53,9 @@ function labelCertification(id: string) {
 
 export function CompanyDetailView({ company }: CompanyDetailViewProps) {
   const router = useRouter()
-  const [status, setStatus] = useState(company.status)
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-
-  useEffect(() => {
-    setStatus(company.status)
-  }, [company.status])
+  const status = company.status
 
   function applyStatus(next: AdminCompanyStatus, successMessage: string) {
     setMessage(null)
@@ -69,7 +65,6 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
         setMessage(result.error)
         return
       }
-      setStatus(result.company.status)
       setMessage(successMessage)
       router.refresh()
     })

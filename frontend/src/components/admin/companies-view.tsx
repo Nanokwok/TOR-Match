@@ -89,11 +89,14 @@ export function CompaniesView({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(q)
+  const [urlQ, setUrlQ] = useState(q)
   const [isPending, startTransition] = useTransition()
 
-  useEffect(() => {
+  // Keep the input in sync when the URL `q` changes (back/forward, filters reset).
+  if (q !== urlQ) {
+    setUrlQ(q)
     setSearch(q)
-  }, [q])
+  }
 
   function replaceQuery(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString())
