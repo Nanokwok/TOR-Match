@@ -1,4 +1,8 @@
 import type { Request, Response } from "express"
+import { isValidObjectId } from "mongoose"
+import { Company } from "@/models/Company.model"
+import { matchCompanyToTor } from "@/services/qualification.service"
+import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filters"
 import { Tor } from "@/models/Tor.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
@@ -13,6 +17,14 @@ const BUDGET_RANGES: Record<string, { min: number; max: number }> = {
 export const listTors = asyncHandler(async (req: Request, res: Response) => {
   const { keyword, status, department, budgetRange } = req.query as Record<string, string | undefined>
 
+  let detail: ReturnType<typeof detailFiltersSchema.parse> | undefined
+  if (req.query.detail !== undefined) {
+    try {
+      detail = detailFiltersSchema.parse(JSON.parse(String(req.query.detail)))
+    } catch {
+      throw ApiError.badRequest("Invalid detail filters")
+    }
+  }
   const filter: Record<string, unknown> = {}
   if (status && status !== "all") filter.status = status
   // English is the canonical identity for localized values.
@@ -22,7 +34,7 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
     filter.budgetBaht = { $gte: min, $lt: max }
   }
   if (keyword?.trim()) {
-    const q = keyword.trim()
+    const q = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     // Search every locale so a Thai term still finds a TOR read in English.
     const localizedFields = ["title", "department", "localOffice", "summary"]
     filter.$or = [
@@ -35,14 +47,27 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
     ]
   }
 
-  const items = await Tor.find(filter).sort({ createdAt: -1 })
+  const [tors, company] = await Promise.all([
+    Tor.find(filter).sort({ createdAt: -1 }),
+    req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
+  ])
+  const now = new Date()
+  const items = tors.filter((tor) => matchesDetailFilters(tor, detail)).map((tor) => {
+    const qualification = matchCompanyToTor(company, tor, now)
+    return { ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false }
+  }).filter((tor) => req.query.eligibleOnly !== "true" || tor.eligible)
   res.status(200).json({ items, total: items.length })
 })
 
 export const getTorById = asyncHandler(async (req: Request, res: Response) => {
-  const tor = await Tor.findById(req.params.id)
+  if (!isValidObjectId(req.params.id)) throw ApiError.notFound("TOR not found")
+  const [tor, company] = await Promise.all([
+    Tor.findById(req.params.id),
+    req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
+  ])
   if (!tor) throw ApiError.notFound("TOR not found")
-  res.status(200).json(tor)
+  const qualification = matchCompanyToTor(company, tor)
+  res.status(200).json({ ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false })
 })
 
 /** Returns the localized values, de-duplicated by their canonical English name. */
@@ -61,4 +86,15 @@ export const listTorDepartments = asyncHandler(async (_req: Request, res: Respon
 
 export const listTorLocalOffices = asyncHandler(async (_req: Request, res: Response) => {
   res.status(200).json(await distinctLocalized("localOffice"))
+})
+
+export const getTorQualification = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) throw ApiError.unauthorized()
+  if (!isValidObjectId(req.params.id)) throw ApiError.notFound("TOR not found")
+  const [tor, company] = await Promise.all([
+    Tor.findById(req.params.id),
+    Company.findOne({ ownerId: req.user.sub }),
+  ])
+  if (!tor) throw ApiError.notFound("TOR not found")
+  res.status(200).json(matchCompanyToTor(company, tor))
 })

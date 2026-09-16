@@ -10,6 +10,8 @@ const notificationSchema = new Schema(
     description: { type: localizedTextSchema, required: true },
     isRead: { type: Boolean, default: false },
     autoVerifiedMatch: { type: Boolean, default: false },
+    /** Set for category "match" notifications; identifies which TOR this alert is about, for dedup. */
+    torId: { type: Schema.Types.ObjectId, ref: "Tor", index: true },
     link: { type: String },
     /** UI label key; the wording lives in the frontend i18n dictionary. */
     action: { type: String, enum: ["view-tor", "open-workspace"] },
