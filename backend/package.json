@@ -12,7 +12,8 @@
     "seed": "tsx src/seed/seed-tors.ts",
     "seed:admin": "tsx src/seed/seed-admin.ts",
     "scrape": "tsx src/scraper/run-scrape.ts",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",

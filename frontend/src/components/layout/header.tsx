@@ -23,6 +23,7 @@ import {
   type CompanyDisplaySource,
 } from "@/lib/company-setup";
 import { cn } from "@/lib/utils";
+import type { AppNotification } from "@/types/notification";
 
 export type HeaderNavItem = {
   labelKey: string;
@@ -37,6 +38,7 @@ type HeaderProps = {
    */
   account?: CompanyDisplaySource | null;
   navItems?: HeaderNavItem[];
+  initialNotifications?: AppNotification[];
 };
 
 const defaultNavItems: HeaderNavItem[] = [
@@ -52,6 +54,7 @@ export function Header({
   className,
   account,
   navItems = defaultNavItems,
+  initialNotifications = [],
 }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -93,7 +96,7 @@ export function Header({
         </nav>
 
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
-          <NotificationCenter />
+          <NotificationCenter initialNotifications={initialNotifications} />
 
           <AnimatedThemeToggler
             theme={resolvedTheme}

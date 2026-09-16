@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type FormEvent } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 import { AuthShell } from "@/components/auth/auth-shell"
 import { GoogleAuthButton } from "@/components/auth/google-auth-button"
@@ -15,7 +15,6 @@ import { loginWithEmailAction, loginWithGoogleAction } from "@/actions/auth"
 
 export function LoginForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -33,7 +32,7 @@ export function LoginForm() {
         setError(result.error)
         return
       }
-      router.push(redirectTarget())
+      router.push("/browse")
     })
   }
 
@@ -45,17 +44,8 @@ export function LoginForm() {
         setError(result.error)
         return
       }
-      router.push(redirectTarget())
+      router.push("/")
     })
-  }
-
-  function redirectTarget() {
-    const redirectTo = searchParams.get("redirectTo")
-    // Only ever follow an internal path — never let the query param send
-    // someone off-site (e.g. redirectTo=https://evil.example).
-    return redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
-      ? redirectTo
-      : "/browse"
   }
 
   return (

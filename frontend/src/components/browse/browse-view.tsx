@@ -1,8 +1,10 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
+import { Link2, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
+import { bookmarkTorAction } from "@/actions/workspace"
 import {
   filtersToQuery,
   TorFilterBar,
@@ -10,9 +12,13 @@ import {
 } from "@/components/browse/tor-filter-bar"
 import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
-import { browseActions } from "@/lib/browse-actions"
+import { useLocale } from "@/components/i18n/locale-provider"
+import { Button } from "@/components/ui/button"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
-import type { CompanySetupProfile } from "@/types/company-setup"
+import {
+  pinTorToFront,
+  type BrowseDeepLinkMeta,
+} from "@/lib/browse-deep-link"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
@@ -27,39 +33,84 @@ const initialFilters: BrowseFiltersState = {
 
 type BrowseViewProps = {
   initialItems: Tor[]
+  initialSelectedId: string | null
+  initialDeepLink: BrowseDeepLinkMeta | null
   departments: LocalizedText[]
   localOffices: string[]
-  companyProfile: CompanySetupProfile | null
 }
 
 export function BrowseView({
   initialItems,
+  initialSelectedId,
+  initialDeepLink,
   departments,
   localOffices,
-  companyProfile,
 }: BrowseViewProps) {
+  const { t } = useLocale()
   const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
   const [items, setItems] = useState(initialItems)
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialItems[0]?.id ?? null
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
+  /** Keeps detail available when the current selection drops out of search results. */
+  const [anchorTor, setAnchorTor] = useState<Tor | null>(
+    () => initialItems.find((tor) => tor.id === initialSelectedId) ?? null
   )
   const [isPending, startTransition] = useTransition()
+  const [notFoundDismissed, setNotFoundDismissed] = useState(false)
+  const [ineligibleHintDismissed, setIneligibleHintDismissed] = useState(false)
+  const [bookmarkError, setBookmarkError] = useState<string | null>(null)
 
-  const selectedTor = useMemo(
-    () => items.find((item) => item.id === selectedId) ?? null,
-    [items, selectedId]
+  const linkedTorId =
+    initialDeepLink?.found === true ? initialDeepLink.requestedId : null
+
+  const selectedTor = useMemo(() => {
+    const inList = items.find((item) => item.id === selectedId)
+    if (inList) return inList
+    if (anchorTor && anchorTor.id === selectedId) return anchorTor
+    return null
+  }, [items, selectedId, anchorTor])
+
+  const selectionHiddenFromList = Boolean(
+    selectedId && selectedTor && !items.some((item) => item.id === selectedId)
   )
+
+  const showNotFoundBanner =
+    initialDeepLink?.found === false && !notFoundDismissed
+
+  const showIneligibleHint = Boolean(
+    linkedTorId &&
+      selectedTor?.id === linkedTorId &&
+      selectedTor &&
+      !selectedTor.eligible &&
+      !ineligibleHintDismissed
+  )
+
+  function selectTor(id: string) {
+    setSelectedId(id)
+    const tor = items.find((item) => item.id === id) ?? anchorTor
+    if (tor?.id === id) setAnchorTor(tor)
+  }
 
   function runSearch(nextFilters: BrowseFiltersState) {
     startTransition(async () => {
+      const previousSelected =
+        items.find((item) => item.id === selectedId) ?? anchorTor
       const result = await searchTorsAction(filtersToQuery(nextFilters))
       setItems(result.items)
-      setSelectedId((current) => {
-        if (current && result.items.some((item) => item.id === current)) {
-          return current
-        }
-        return result.items[0]?.id ?? null
-      })
+
+      if (selectedId && result.items.some((item) => item.id === selectedId)) {
+        const stillThere = result.items.find((item) => item.id === selectedId)
+        if (stillThere) setAnchorTor(stillThere)
+        return
+      }
+
+      if (selectedId && previousSelected?.id === selectedId) {
+        setAnchorTor(previousSelected)
+        return
+      }
+
+      const nextId = result.items[0]?.id ?? null
+      setSelectedId(nextId)
+      setAnchorTor(result.items[0] ?? null)
     })
   }
 
@@ -76,14 +127,43 @@ export function BrowseView({
     }
   }
 
-  function handleToggleBookmark(torId: string) {
+  function handleShowEligibleAll() {
+    const next = { ...filters, eligibleOnly: false }
+    setFilters(next)
+    setIneligibleHintDismissed(true)
+    runSearch(next)
+  }
+
+  function handleShowSelectedInList() {
+    if (!selectedTor) return
+    setItems((prev) => pinTorToFront(prev, selectedTor))
+    setAnchorTor(selectedTor)
+  }
+
+  function setBookmarked(torId: string, bookmarked: boolean) {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === torId ? { ...item, bookmarked: !item.bookmarked } : item
-      )
+      prev.map((item) => (item.id === torId ? { ...item, bookmarked } : item))
     )
-    // Persist later via server action; UI updates immediately for UX.
-    browseActions.bookmarkTor(torId)
+    setAnchorTor((prev) =>
+      prev?.id === torId ? { ...prev, bookmarked } : prev
+    )
+  }
+
+  function handleToggleBookmark(torId: string) {
+    const current =
+      items.find((item) => item.id === torId) ??
+      (anchorTor?.id === torId ? anchorTor : null)
+    if (!current) return
+
+    const next = !current.bookmarked
+    setBookmarkError(null)
+    setBookmarked(torId, next)
+
+    void bookmarkTorAction(torId, next).then((result) => {
+      if (result.ok) return
+      setBookmarked(torId, current.bookmarked)
+      setBookmarkError(result.error)
+    })
   }
 
   return (
@@ -96,6 +176,48 @@ export function BrowseView({
         onSearch={handleSearch}
       />
 
+      {showNotFoundBanner ? (
+        <BrowseNotice
+          message={t("browse.deepLink.notFound")}
+          onDismiss={() => setNotFoundDismissed(true)}
+        />
+      ) : null}
+
+      {showIneligibleHint ? (
+        <BrowseNotice
+          message={t("browse.deepLink.ineligibleHint")}
+          actionLabel={t("browse.deepLink.showAllEligible")}
+          onAction={handleShowEligibleAll}
+          onDismiss={() => setIneligibleHintDismissed(true)}
+        />
+      ) : null}
+
+      {selectionHiddenFromList ? (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-4 py-2 md:px-6">
+          <span className="text-sm text-muted-foreground">
+            {t("browse.deepLink.hiddenFromResults")}
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7"
+            onClick={handleShowSelectedInList}
+          >
+            {t("browse.deepLink.showSelectedInList")}
+          </Button>
+        </div>
+      ) : null}
+
+      {bookmarkError ? (
+        <p
+          role="alert"
+          className="border-b border-destructive/20 bg-destructive/5 px-4 py-2 text-sm text-destructive md:px-6"
+        >
+          {bookmarkError}
+        </p>
+      ) : null}
+
       <div
         className={`grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4 ${
           isPending ? "opacity-70" : ""
@@ -105,7 +227,8 @@ export function BrowseView({
           <TorList
             items={items}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            linkedTorId={linkedTorId}
+            onSelect={selectTor}
             onToggleBookmark={handleToggleBookmark}
           />
         </aside>
@@ -113,11 +236,55 @@ export function BrowseView({
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
           <TorDetail
             tor={selectedTor}
-            companyProfile={companyProfile}
             onToggleBookmark={handleToggleBookmark}
           />
         </section>
       </div>
+    </div>
+  )
+}
+
+function BrowseNotice({
+  message,
+  actionLabel,
+  onAction,
+  onDismiss,
+}: {
+  message: string
+  actionLabel?: string
+  onAction?: () => void
+  onDismiss: () => void
+}) {
+  const { t } = useLocale()
+
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-2 border-b border-[#0088C9]/20 bg-[#0088C9]/5 px-4 py-2 text-sm text-foreground md:px-6"
+    >
+      <Link2 className="size-4 shrink-0 text-[#0088C9]" aria-hidden />
+      <p className="min-w-0 flex-1">{message}</p>
+      {actionLabel && onAction ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </Button>
+      ) : null}
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="ghost"
+        className="size-7 text-muted-foreground"
+        aria-label={t("common.close")}
+        onClick={onDismiss}
+      >
+        <X className="size-4" />
+      </Button>
     </div>
   )
 }
