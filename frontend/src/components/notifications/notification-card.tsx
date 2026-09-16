@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Bell, Sparkles } from "lucide-react";
+import { AlertTriangle, Bell, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +43,13 @@ const CATEGORY_STYLES: Record<
 type NotificationCardProps = {
   notification: AppNotification;
   onMarkRead: (id: string) => void;
+  onDelete: (id: string) => void;
 };
 
 export function NotificationCard({
   notification,
   onMarkRead,
+  onDelete,
 }: NotificationCardProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
@@ -65,52 +67,68 @@ export function NotificationCard({
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleActivate}
+    <div
       className={cn(
-        "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60",
+        "flex w-full items-start gap-2 px-4 py-3 transition-colors hover:bg-muted/60",
         !notification.isRead && "bg-primary/5",
       )}
     >
-      <span className="mt-1.5 flex w-2 shrink-0 justify-center">
-        {!notification.isRead ? (
-          <span className="size-2 rounded-full bg-primary" aria-hidden />
-        ) : null}
-      </span>
-
-      <span
-        className={cn(
-          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm border border-border",
-          category.className,
-        )}
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete(notification.id);
+        }}
+        aria-label={t("common.delete")}
+        className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
-        <Icon className="size-3.5" />
-      </span>
+        <X className="size-3.5" />
+      </button>
 
-      <span className="min-w-0 flex-1 space-y-1">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">
-            {pickLocalized(notification.title, locale)}
+      <button
+        type="button"
+        onClick={handleActivate}
+        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+      >
+        <span className="mt-1.5 flex w-2 shrink-0 justify-center">
+          {!notification.isRead ? (
+            <span className="size-2 rounded-full bg-primary" aria-hidden />
+          ) : null}
+        </span>
+
+        <span
+          className={cn(
+            "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm border border-border",
+            category.className,
+          )}
+        >
+          <Icon className="size-3.5" />
+        </span>
+
+        <span className="min-w-0 flex-1 space-y-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">
+              {pickLocalized(notification.title, locale)}
+            </span>
+            {notification.autoVerifiedMatch ? (
+              <Badge className="h-5 rounded-md border-transparent bg-emerald-100 px-1.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
+                {t("notifications.autoVerified")}
+              </Badge>
+            ) : null}
           </span>
-          {notification.autoVerifiedMatch ? (
-            <Badge className="h-5 rounded-md border-transparent bg-emerald-100 px-1.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
-              {t("notifications.autoVerified")}
-            </Badge>
-          ) : null}
-        </span>
 
-        <span className="line-clamp-2 text-sm text-muted-foreground">
-          {pickLocalized(notification.description, locale)}
-        </span>
+          <span className="line-clamp-2 text-sm text-muted-foreground">
+            {pickLocalized(notification.description, locale)}
+          </span>
 
-        <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatRelativeTime(notification.createdAt, locale)}</span>
-          {notification.link && actionLabel ? (
-            <span className="font-medium text-primary">{actionLabel}</span>
-          ) : null}
+          <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>{formatRelativeTime(notification.createdAt, locale)}</span>
+            {notification.link && actionLabel ? (
+              <span className="font-medium text-primary">{actionLabel}</span>
+            ) : null}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    </div>
   );
 }

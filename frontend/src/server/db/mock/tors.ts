@@ -1,4 +1,4 @@
-import type { CompanyProfile, Tor } from "@/types/tor";
+import type {  Tor } from "@/types/tor";
 import {
   applyTorTranslations,
   type TorSeed,
@@ -645,35 +645,3 @@ export function getMockTors(): Tor[] {
   ]).map(applyTorTranslations)
 }
 
-/**
- * Toggle to `null` to preview the "not yet setup" qualification empty state.
- * Replace with a real company-profile fetch later.
- */
-export function getMockCompanyProfile(): CompanyProfile | null {
-  return {
-    id: "company-001",
-    name: "NanoTalBoss Company",
-    matches: [
-      {
-        requirementId: "registered-capital",
-        displayValue: "5,000,000 THB",
-        passed: true,
-      },
-      {
-        requirementId: "past-performance",
-        displayValue: "Contract #2024-A (2,000,000 THB)",
-        passed: true,
-      },
-      {
-        requirementId: "certifications",
-        displayValue: "ISO/IEC 29110 (Exp: 2027)",
-        passed: true,
-      },
-      {
-        requirementId: "deal-breaker",
-        displayValue: "e-GP Registered Vendor",
-        passed: true,
-      },
-    ],
-  };
-}
