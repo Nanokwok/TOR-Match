@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import {
+  ADMIN_API_TOKEN_COOKIE,
   ADMIN_SESSION_COOKIE,
+  adminApiTokenCookieOptions,
   adminSessionCookieOptions,
   decodeAdminSession,
   encodeAdminSession,
@@ -89,6 +91,15 @@ export async function proxy(request: NextRequest) {
       await encodeAdminSession(refreshed),
       adminSessionCookieOptions()
     )
+
+    const apiToken = request.cookies.get(ADMIN_API_TOKEN_COOKIE)?.value
+    if (apiToken) {
+      response.cookies.set(
+        ADMIN_API_TOKEN_COOKIE,
+        apiToken,
+        adminApiTokenCookieOptions()
+      )
+    }
   }
 
   return response
