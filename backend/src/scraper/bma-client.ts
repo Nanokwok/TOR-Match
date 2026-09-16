@@ -59,8 +59,14 @@ export type BmaProjectDetail = BmaListing & {
   procurementType: string
   procurementCategory: string
   workType: string
+  /** "พัสดุจัดหา", e.g. "จ้างเหมางานรักษาความปลอดภัย". */
+  procurementItem: string
   medianPriceBaht: number | null
   projectStatus: string
+  /** "วันที่เสนอราคา" as rendered; empty until bidding opens. */
+  bidDate: string
+  /** "ระยะเวลาดำเนินการของสัญญา (วัน)"; null until a contract is signed. */
+  contractDurationDays: number | null
   documents: BmaDocument[]
 }
 
@@ -101,6 +107,13 @@ function parseLabeledFields(text: string): Record<string, string> {
   const fields: Record<string, string> = {}
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i]
+    // The contract table renders "label : value" on one line instead.
+    const inline = line.match(/^(.+?)\s+:\s+(.+)$/)
+    if (inline) {
+      const [, label, value] = inline
+      if (!(label in fields)) fields[label.trim()] = value.trim() === "-" ? "" : value.trim()
+      continue
+    }
     if (!line.endsWith(":")) continue
     const label = line.slice(0, -1).trim()
     const value = lines[i + 1]
@@ -306,6 +319,9 @@ export async function fetchProjectDetail(
     procurementType: fields["ประเภทการจัดซื้อจัดจ้าง"] ?? "",
     procurementCategory: fields["ประเภทการจัดหา"] ?? "",
     workType: fields["ด้านตามลักษณะงาน"] ?? "",
+    procurementItem: fields["พัสดุจัดหา"] ?? "",
+    bidDate: fields["วันที่เสนอราคา"] ?? "",
+    contractDurationDays: parseThaiNumber(fields["ระยะเวลาดำเนินการของสัญญา (วัน)"]),
     budgetBaht: parseThaiNumber(fields["งบประมาณ"]) ?? listing.budgetBaht,
     medianPriceBaht: parseThaiNumber(fields["ราคากลาง"]),
     projectStatus: fields["สถานะโครงการ"] ?? "",

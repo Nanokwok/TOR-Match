@@ -123,6 +123,9 @@
     "ctaSubtitle": "Start with a free search, or check eligibility against your company profile."
   },
   "browse": {
+    "localOffice": "Local office",
+    "budget": "Budget",
+    "announcementDate": "Announced",
     "searchPlaceholder": "Search your keyword...",
     "eligibleOnly": "Automated criteria met only",
     "budgetRange": "Budget Range",

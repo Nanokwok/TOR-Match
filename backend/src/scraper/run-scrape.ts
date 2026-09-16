@@ -6,12 +6,19 @@
  *   npm run scrape -- --min-budget 5000000 --keyword ระบบ
  *   npm run scrape -- --dry-run                     # discover + filter only, no PDF, no LLM
  *   npm run scrape -- --no-extract                  # metadata-only drafts, no PDF, no LLM
+ *   npm run scrape -- --refresh                     # re-read pages of published TORs
  *
  * --no-extract builds drafts from the announcement page alone (Thai title,
  * department, budget, median price, method, TOR link). Everything that lives
  * only inside the PDF — English, summary, deliverables, milestones,
  * qualifications — plus the deadline stays empty. The draft can be approved
  * as-is: browse renders missing fields as "not specified".
+ *
+ * --refresh re-reads the announcement page of every published TOR and updates
+ * the fields the page decides — status, bid date, category tags, contract
+ * length — on both the TOR and its draft. Announcements move on (bidding
+ * opens, contracts get signed, projects get cancelled); nothing else would
+ * ever update a published TOR.
  *
  * Nothing here writes to the published `tors` collection — drafts land in
  * `tordrafts` and a human publishes them from /admin/tor-review.
@@ -26,7 +33,7 @@ import { connectDB, disconnectDB } from "@/config/db"
 import { ScrapeJob } from "@/models/ScrapeJob.model"
 import { Tor } from "@/models/Tor.model"
 import { AUTO_APPROVE_CONFIDENCE_THRESHOLD, TorDraft } from "@/models/TorDraft.model"
-import { PROCUREMENT_METHODS, PROJECT_SCALES } from "@/models/tor-fields.schema"
+import { PROCUREMENT_METHODS, PROCUREMENT_STATUSES, PROJECT_SCALES } from "@/models/tor-fields.schema"
 import {
   discoverListings,
   downloadDocument,
@@ -35,6 +42,7 @@ import {
   parseThaiDate,
   pickTorDocument,
   type BmaListing,
+  type BmaProjectDetail,
 } from "@/scraper/bma-client"
 import { extractTorFromPdf } from "@/scraper/extract"
 
@@ -45,6 +53,7 @@ type Options = {
   keyword: string
   dryRun: boolean
   noExtract: boolean
+  refresh: boolean
 }
 
 function parseArgs(argv: string[]): Options {
@@ -63,6 +72,7 @@ function parseArgs(argv: string[]): Options {
     keyword: read("--keyword") ?? "",
     dryRun: argv.includes("--dry-run"),
     noExtract: argv.includes("--no-extract"),
+    refresh: argv.includes("--refresh"),
   }
 }
 
@@ -82,6 +92,78 @@ function localOfficeFrom(detail: { department: string; government: string; subGo
   const district = detail.department.match(/^สำนักงาน(เขต.+)$/)
   if (district) return district[1].trim()
   return detail.subGovernment || detail.government || detail.department
+}
+
+const CLOSING_SOON_DAYS = 7
+
+/**
+ * The TOR fields an announcement page decides, derived from what it shows.
+ *
+ * Only values the page actually states are returned; callers leave everything
+ * else alone. Status follows the page's project status first, then the bid
+ * date: a cancelled project is closed even if its date is in the future.
+ */
+function pageDerivedFields(detail: BmaProjectDetail, now = new Date()) {
+  const bidDateMatch = detail.bidDate.match(/\d{1,2}\/\d{1,2}\/\d{4}/)
+  const deadline = bidDateMatch ? parseThaiDate(bidDateMatch[0]) ?? "" : ""
+
+  let status: (typeof PROCUREMENT_STATUSES)[number] = "open"
+  if (/ยกเลิก/.test(detail.projectStatus)) {
+    status = "closed"
+  } else if (/สัญญา|ประกาศผู้ชนะ|ประกาศผล/.test(detail.projectStatus)) {
+    status = "awarded"
+  } else if (deadline) {
+    const msLeft = new Date(deadline).getTime() - now.getTime()
+    if (msLeft < 0) status = "closed"
+    else if (msLeft < CLOSING_SOON_DAYS * 24 * 60 * 60 * 1000) status = "closing-soon"
+  }
+
+  return {
+    status,
+    deadline,
+    // "ประเภทการจัดหา" and "พัสดุจัดหา", e.g. "เช่า" / "เช่ารถยนต์ที่ใช้ในราชการ".
+    listTags: [detail.procurementCategory, detail.procurementItem].filter(Boolean),
+    durationDays: detail.contractDurationDays ?? 0,
+  }
+}
+
+/** Re-reads each published TOR's page and applies {@link pageDerivedFields}. */
+async function refreshPublished(page: Page): Promise<void> {
+  const tors = await Tor.find({ sourceUrl: { $regex: "/project-detail/" } })
+    .select("announcementNo sourceUrl title budgetBaht department status deadline listTags durationDays")
+  console.log(`[refresh] ${tors.length} published TORs`)
+
+  for (const tor of tors) {
+    try {
+      const detail = await fetchProjectDetail(page, {
+        detailUrl: tor.sourceUrl,
+        projectNo: tor.announcementNo,
+        title: tor.title.th,
+        department: tor.department.th,
+        budgetBaht: tor.budgetBaht,
+      })
+      const derived = pageDerivedFields(detail)
+
+      // Page-stated values win; an empty page value never erases stored data
+      // (e.g. a deadline an admin or the AI filled in from the PDF).
+      const update: Record<string, unknown> = { status: derived.status }
+      if (derived.deadline) update.deadline = derived.deadline
+      if (derived.listTags.length) update.listTags = derived.listTags
+      if (derived.durationDays) update.durationDays = derived.durationDays
+
+      await Tor.updateOne({ _id: tor._id }, { $set: update }, { runValidators: true })
+      await TorDraft.updateOne({ announcementNo: tor.announcementNo }, { $set: update }, { runValidators: true })
+
+      const changed = Object.keys(update).filter(
+        (key) => JSON.stringify(update[key]) !== JSON.stringify(tor.get(key))
+      )
+      console.log(
+        `[refresh] ${tor.announcementNo} ${changed.length ? `updated ${changed.map((k) => `${k}=${JSON.stringify(update[k])}`).join(", ")}` : "unchanged"} (page status: ${detail.projectStatus || "-"})`
+      )
+    } catch (error) {
+      console.error(`[refresh] ${tor.announcementNo} failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
 }
 
 /** "ประเภทการจัดซื้อจัดจ้าง" as the page renders it -> our method enum. */
@@ -115,6 +197,8 @@ async function ingestMetadataOnly(listing: BmaListing, page: Page): Promise<void
       method = "e-bidding"
     }
 
+    const derived = pageDerivedFields(detail)
+
     job.set({ stage: "index" })
     await job.save()
 
@@ -132,15 +216,15 @@ async function ingestMetadataOnly(listing: BmaListing, page: Page): Promise<void
           deliverables: { en: [], th: [] },
           budgetBaht,
           projectScale: scaleForBudget(budgetBaht),
-          durationDays: 0,
+          durationDays: derived.durationDays,
           method,
-          status: "open",
-          deadline: "",
+          status: derived.status,
+          deadline: derived.deadline,
           announcementDate: (document && parseThaiDate(document.postedDate)) || "",
           sourceUrl: detail.detailUrl,
           pdfUrl: document?.url ?? "",
           techTags: [],
-          listTags: [],
+          listTags: derived.listTags,
           financials: {
             totalBudgetBaht: budgetBaht,
             medianPriceBaht: detail.medianPriceBaht ?? budgetBaht,
@@ -291,6 +375,11 @@ async function main() {
   const page = await context.newPage()
 
   try {
+    if (options.refresh) {
+      await refreshPublished(page)
+      return
+    }
+
     const listings = await discoverListings(page, { pages: options.pages })
     console.log(`[scrape] discovered ${listings.length} announcements`)
 

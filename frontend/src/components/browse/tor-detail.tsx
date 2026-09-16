@@ -3,8 +3,11 @@
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import {
+  Activity,
   Bookmark,
+  Building2,
   CalendarDays,
+  CalendarPlus,
   CircleDollarSign,
   Clock3,
   Copy,
@@ -14,6 +17,7 @@ import {
   ListChecks,
   Scale,
   Share2,
+  Wallet,
 } from "lucide-react";
 
 import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
@@ -23,8 +27,12 @@ import { useLocale } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatTorDeadline } from "@/lib/format"
-import { projectScaleLabel, procurementMethodLabel } from "@/lib/browse-labels";
+import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
+import {
+  procurementMethodLabel,
+  procurementStatusLabel,
+  projectScaleLabel,
+} from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
 import { cn } from "@/lib/utils";
 import type { Tor } from "@/types/tor";
@@ -122,6 +130,40 @@ function TorDetailContent({
                 icon={Gavel}
                 label={t("browse.method")}
                 value={procurementMethodLabel(tor.method, t)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-row gap-4 w-full">
+          <div className="w-[300px] md:w-[325px] lg:w-[350px] shrink-0">
+            <MetaItem
+              icon={Building2}
+              label={t("browse.localOffice")}
+              value={localized.localOffice || t("common.notSpecified")}
+            />
+          </div>
+
+          <div className="flex flex-1 flex-row gap-4">
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={Wallet}
+                label={t("browse.budget")}
+                value={formatBaht(tor.budgetBaht, locale)}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={CalendarPlus}
+                label={t("browse.announcementDate")}
+                value={formatShortDate(tor.announcementDate, locale)}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={Activity}
+                label={t("browse.procurementStatus")}
+                value={procurementStatusLabel(tor.status, t)}
               />
             </div>
           </div>
