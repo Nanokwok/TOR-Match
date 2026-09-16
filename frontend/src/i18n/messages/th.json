@@ -1,5 +1,6 @@
 {
   "common": {
+    "notSpecified": "ไม่ระบุ",
     "search": "ค้นหา",
     "all": "ทั้งหมด",
     "filters": "ตัวกรอง",

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 import { isValidObjectId } from "mongoose"
 import { Company } from "@/models/Company.model"
+import { localizedKey } from "@/models/localized.schema"
 import { matchCompanyToTor } from "@/services/qualification.service"
 import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filters"
 import { Tor } from "@/models/Tor.model"
@@ -27,8 +28,11 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
   }
   const filter: Record<string, unknown> = {}
   if (status && status !== "all") filter.status = status
-  // English is the canonical identity for localized values.
-  if (department && department !== "all") filter["department.en"] = department
+  // The filter value is localizedKey(): English, or Thai for a Thai-only TOR.
+  const and: Record<string, unknown>[] = []
+  if (department && department !== "all") {
+    and.push({ $or: [{ "department.en": department }, { "department.en": "", "department.th": department }] })
+  }
   if (budgetRange && budgetRange !== "all" && BUDGET_RANGES[budgetRange]) {
     const { min, max } = BUDGET_RANGES[budgetRange]
     filter.budgetBaht = { $gte: min, $lt: max }
@@ -37,15 +41,18 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
     const q = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     // Search every locale so a Thai term still finds a TOR read in English.
     const localizedFields = ["title", "department", "localOffice", "summary"]
-    filter.$or = [
-      ...localizedFields.flatMap((field) => [
-        { [`${field}.en`]: { $regex: q, $options: "i" } },
-        { [`${field}.th`]: { $regex: q, $options: "i" } },
-      ]),
-      { announcementNo: { $regex: q, $options: "i" } },
-      { techTags: { $regex: q, $options: "i" } },
-    ]
+    and.push({
+      $or: [
+        ...localizedFields.flatMap((field) => [
+          { [`${field}.en`]: { $regex: q, $options: "i" } },
+          { [`${field}.th`]: { $regex: q, $options: "i" } },
+        ]),
+        { announcementNo: { $regex: q, $options: "i" } },
+        { techTags: { $regex: q, $options: "i" } },
+      ],
+    })
   }
+  if (and.length) filter.$and = and
 
   const [tors, company] = await Promise.all([
     Tor.find(filter).sort({ createdAt: -1 }),
@@ -70,14 +77,15 @@ export const getTorById = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false })
 })
 
-/** Returns the localized values, de-duplicated by their canonical English name. */
+/** Returns the localized values, de-duplicated by {@link localizedKey}. */
 async function distinctLocalized(field: "department" | "localOffice") {
   const values = await Tor.distinct(field)
   const byKey = new Map<string, { en: string; th: string }>()
   for (const value of values as { en: string; th: string }[]) {
-    if (value?.en) byKey.set(value.en, value)
+    const key = localizedKey(value)
+    if (key) byKey.set(key, value)
   }
-  return [...byKey.values()].sort((a, b) => a.en.localeCompare(b.en))
+  return [...byKey.values()].sort((a, b) => localizedKey(a).localeCompare(localizedKey(b), "th"))
 }
 
 export const listTorDepartments = asyncHandler(async (_req: Request, res: Response) => {

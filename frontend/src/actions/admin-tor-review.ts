@@ -70,8 +70,8 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
   return {
     id: draft._id,
     announcementId: draft.announcementNo,
-    projectTitle: draft.title.en || draft.title.th,
-    department: draft.department.en || draft.department.th,
+    projectTitle: draft.title.th || draft.title.en,
+    department: draft.department.th || draft.department.en,
     budgetBaht: draft.budgetBaht,
     aiConfidence: draft.aiConfidence,
     reviewStatus: draft.reviewStatus,
@@ -81,9 +81,13 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
 function toDetail(draft: BackendDraft): TorReviewDetail {
   return {
     ...toListItem(draft),
+    // The form edits Thai (the site default). The list may fall back to
+    // English for display; the form must not, or a save writes English into
+    // `.th`.
+    department: draft.department.th,
     projectTitleEn: draft.title.en,
     projectTitleTh: draft.title.th,
-    localOffice: draft.localOffice.en,
+    localOffice: draft.localOffice.th,
     projectScale: draft.projectScale,
     durationDays: draft.durationDays,
     method: draft.method,
@@ -91,8 +95,8 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
     deadline: draft.deadline,
     announcementDate: draft.announcementDate,
     sourceUrl: draft.sourceUrl,
-    summary: draft.summary.en,
-    deliverables: draft.deliverables?.en ?? [],
+    summary: draft.summary.th,
+    deliverables: draft.deliverables?.th ?? [],
     techTags: draft.techTags,
     listTags: draft.listTags,
     medianPriceBaht: draft.financials.medianPriceBaht,
@@ -101,12 +105,12 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
       milestoneNumber: milestone.milestoneNumber,
       percent: milestone.percent,
       amountBaht: milestone.amountBaht,
-      deliverable: milestone.deliverable.en,
+      deliverable: milestone.deliverable.th,
     })),
     qualificationRequirements: draft.qualificationRequirements.map((row) => ({
       id: row.id,
-      requirement: row.requirement.en,
-      torCriteria: row.torCriteria.en,
+      requirement: row.requirement.th,
+      torCriteria: row.torCriteria.th,
       autoCheckable: row.autoCheckable,
     })),
     pdfUrl: draft.pdfUrl,
@@ -114,8 +118,8 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
 }
 
 /**
- * Only the English side goes back. The backend re-attaches the stored Thai
- * values field by field, so a save through this form never blanks them.
+ * Only the Thai side goes back (plus both titles). The backend re-attaches any
+ * stored English values field by field, so a save never blanks them.
  */
 function toBackendUpdate(detail: TorReviewDetail) {
   return {

@@ -1,6 +1,19 @@
 import type { Locale } from "@/lib/i18n"
 import { localeToIntl } from "@/lib/i18n"
 
+/**
+ * Scraped TORs are published with whatever the source stated, so a deadline,
+ * date or duration can be empty. Every formatter below renders that as this
+ * label rather than a blank — or, for dates, a RangeError from Intl.
+ */
+export function notSpecified(locale: Locale = "en") {
+  return locale === "th" ? "ไม่ระบุ" : "Not specified"
+}
+
+function isValidDate(isoDate: string) {
+  return Boolean(isoDate) && !Number.isNaN(new Date(isoDate).getTime())
+}
+
 export function formatBaht(amount: number, locale: Locale = "en") {
   const label = locale === "th" ? "บาท" : "Baht"
   return `${amount.toLocaleString(localeToIntl(locale))} ${label}`
@@ -29,6 +42,7 @@ export function formatMilestoneLabel(
  * what `durationDays` already carries.
  */
 export function formatDuration(days: number, locale: Locale = "en") {
+  if (!days) return notSpecified(locale)
   const months = Math.round(days / 30)
   const intl = localeToIntl(locale)
   const dayCount = days.toLocaleString(intl)
@@ -45,6 +59,7 @@ export function formatDuration(days: number, locale: Locale = "en") {
 }
 
 export function formatTorDeadline(isoDate: string, locale: Locale = "en") {
+  if (!isValidDate(isoDate)) return notSpecified(locale)
   const date = new Date(isoDate)
   const intl = localeToIntl(locale)
   const datePart = new Intl.DateTimeFormat(intl, {
@@ -71,6 +86,7 @@ export function getDaysUntilDeadline(deadline: string) {
 }
 
 export function formatShortDate(isoDate: string, locale: Locale = "en") {
+  if (!isValidDate(isoDate)) return notSpecified(locale)
   return new Intl.DateTimeFormat(localeToIntl(locale), {
     month: "short",
     day: "numeric",
@@ -84,6 +100,7 @@ export function formatDaysLeft(
   locale: Locale = "en",
   labels?: { dueToday: string; oneDayLeft: string; daysLeft: string }
 ) {
+  if (!isValidDate(deadline)) return notSpecified(locale)
   const days = getDaysUntilDeadline(deadline)
   const dueToday = labels?.dueToday ?? "Due today"
   const oneDayLeft = labels?.oneDayLeft ?? "1 Day Left"
@@ -95,6 +112,7 @@ export function formatDaysLeft(
 }
 
 export function formatRelativeTime(isoDate: string, locale: Locale = "en") {
+  if (!isValidDate(isoDate)) return notSpecified(locale)
   const now = Date.now()
   const then = new Date(isoDate).getTime()
   const diffMs = Math.max(0, now - then)

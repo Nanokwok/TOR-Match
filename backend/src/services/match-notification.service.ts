@@ -46,8 +46,8 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
       link: "/browse",
       action: "view-tor" as const,
       title: {
-        en: `You now qualify for ${tor.title.en}`,
-        th: `คุณมีคุณสมบัติสำหรับ ${tor.title.th} แล้ว`,
+        en: `You now qualify for ${tor.title.en || tor.title.th}`,
+        th: `คุณมีคุณสมบัติสำหรับ ${tor.title.th || tor.title.en} แล้ว`,
       },
       description: {
         en: "Your saved company profile now meets every automated eligibility criterion for this TOR.",

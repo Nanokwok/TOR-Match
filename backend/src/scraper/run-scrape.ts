@@ -10,9 +10,8 @@
  * --no-extract builds drafts from the announcement page alone (Thai title,
  * department, budget, median price, method, TOR link). Everything that lives
  * only inside the PDF — English, summary, deliverables, milestones,
- * qualifications — plus the deadline is left for the reviewer, so these drafts
- * can't be published until someone fills those in. It exists so the review →
- * publish → /browse path can run on real announcements without Vertex access.
+ * qualifications — plus the deadline stays empty. The draft can be approved
+ * as-is: browse renders missing fields as "not specified".
  *
  * Nothing here writes to the published `tors` collection — drafts land in
  * `tordrafts` and a human publishes them from /admin/tor-review.
@@ -75,6 +74,16 @@ function scaleForBudget(budgetBaht: number): (typeof PROJECT_SCALES)[number] {
   return "ENTERPRISE"
 }
 
+/**
+ * District offices name themselves "สำนักงานเขตX"; the local-office filter
+ * lists districts as "เขตX" (matching the seeded TORs), so strip the prefix.
+ */
+function localOfficeFrom(detail: { department: string; government: string; subGovernment: string }): string {
+  const district = detail.department.match(/^สำนักงาน(เขต.+)$/)
+  if (district) return district[1].trim()
+  return detail.subGovernment || detail.government || detail.department
+}
+
 /** "ประเภทการจัดซื้อจัดจ้าง" as the page renders it -> our method enum. */
 function methodFromProcurementType(raw: string): (typeof PROCUREMENT_METHODS)[number] | null {
   if (/e-bidding|ประกวดราคา/i.test(raw)) return "e-bidding"
@@ -118,7 +127,7 @@ async function ingestMetadataOnly(listing: BmaListing, page: Page): Promise<void
           announcementNo: detail.projectNo,
           title: { en: "", th: detail.title },
           department: { en: "", th: detail.department },
-          localOffice: { en: "", th: detail.subGovernment || detail.government || detail.department },
+          localOffice: { en: "", th: localOfficeFrom(detail) },
           summary: { en: "", th: "" },
           deliverables: { en: [], th: [] },
           budgetBaht,

@@ -9,14 +9,16 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { localizedKey } from "@/models/localized.schema"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
 /**
- * The admin review screen is an English editing surface (see the frontend's
- * TorReviewDetail): it renders one string per localized field, plus the Thai
- * title. Everything it sends back is therefore the English side only, and the
- * stored Thai side has to survive the round trip — see mergeLocalized below.
+ * The admin review screen is a Thai editing surface — Thai is the site's
+ * default language (see the frontend's TorReviewDetail). It renders one string
+ * per localized field, plus both titles. Everything it sends back is therefore
+ * the Thai side only, and any stored English has to survive the round trip —
+ * see mergeLocalized below.
  */
 const milestoneSchema = z.object({
   day: z.number(),
@@ -59,13 +61,18 @@ const updateDraftSchema = z.object({
 type LocalizedText = { en: string; th: string }
 
 /**
- * Keeps the stored Thai value while taking the reviewer's English edit.
+ * Takes the reviewer's Thai edit and keeps any stored English value.
  *
- * Without this every save through the review form would blank out `.th` on
- * every field but the title, silently destroying the Thai half of the record.
+ * Without this every save through the review form would blank out `.en` (from
+ * AI extraction or the seed) on every field but the title.
+ *
+ * An English value identical to the old Thai one is not a translation — it is
+ * a copy an earlier English-only form wrote into the wrong locale — so it is
+ * dropped rather than preserved.
  */
-function mergeLocalized(existing: LocalizedText | undefined, en: string): LocalizedText {
-  return { en, th: existing?.th ?? "" }
+function mergeLocalized(existing: LocalizedText | undefined, th: string): LocalizedText {
+  const en = existing?.en?.trim() ?? ""
+  return { en: en && en !== existing?.th?.trim() ? en : "", th }
 }
 
 function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSchema>) {
@@ -83,12 +90,12 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
     department: mergeLocalized(draft.department, input.department),
     localOffice: mergeLocalized(draft.localOffice, input.localOffice),
     summary: mergeLocalized(draft.summary, input.summary),
-    // Deliverables have no stable key, so the Thai list is matched by position.
-    // A reviewer who reorders or inserts English rows will misalign it; the
-    // fix is a bilingual form, tracked for Phase 2.
+    // Deliverables have no stable key, so the English list is matched by
+    // position. A reviewer who reorders or inserts Thai rows will misalign it;
+    // the fix is a bilingual form, tracked for Phase 2.
     deliverables: {
-      en: input.deliverables,
-      th: draft.deliverables?.th ?? [],
+      en: draft.deliverables?.en ?? [],
+      th: input.deliverables,
     },
     techTags: input.techTags,
     listTags: input.listTags,
@@ -136,7 +143,9 @@ export const listTorDrafts = asyncHandler(async (req: Request, res: Response) =>
 
   const filter: Record<string, unknown> = {}
   if (reviewStatus && reviewStatus !== "all") filter.reviewStatus = reviewStatus
-  if (department && department !== "all") filter["department.en"] = department
+  if (department && department !== "all") {
+    filter.$or = [{ "department.th": department }, { "department.en": department }]
+  }
 
   const items = await TorDraft.find(filter).sort({ createdAt: -1 })
   res.status(200).json({ items, total: items.length })
@@ -167,18 +176,13 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  // A blank English value would drop the TOR out of the department and
-  // local-office filter lists, which de-duplicate on `.en` — catch it here
-  // rather than letting it disappear from browse after publishing.
-  for (const field of ["title", "department", "localOffice", "summary"] as const) {
-    if (!draft[field]?.en?.trim()) {
-      throw ApiError.badRequest(`Cannot publish: ${field} is missing its English value`)
-    }
-  }
-  // Optional on drafts, required on published TORs.
-  for (const field of ["deadline", "announcementDate"] as const) {
-    if (!draft[field]?.trim()) {
-      throw ApiError.badRequest(`Cannot publish: ${field} is not set`)
+  // TORs publish with whatever the scraper found — summary, deadline and the
+  // rest may be empty and render as "not specified". Only a title and a
+  // department are required: without them a TOR is a blank card that no
+  // department filter can reach.
+  for (const field of ["title", "department"] as const) {
+    if (!localizedKey(draft[field])) {
+      throw ApiError.badRequest(`Cannot publish: ${field} is empty`)
     }
   }
 

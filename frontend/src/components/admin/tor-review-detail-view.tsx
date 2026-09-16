@@ -107,7 +107,7 @@ export function TorReviewDetailView({
   const [qualifications, setQualifications] = useState(
     tor.qualificationRequirements
   )
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
@@ -160,7 +160,7 @@ export function TorReviewDetailView({
     return {
       ...tor,
       announcementId,
-      projectTitle: projectTitleEn,
+      projectTitle: projectTitleTh || projectTitleEn,
       projectTitleEn,
       projectTitleTh,
       department,
@@ -186,7 +186,7 @@ export function TorReviewDetailView({
     setMessage(null)
     startTransition(async () => {
       const result = await saveTorReviewAction(currentDetail())
-      setMessage(result.ok ? "Draft saved." : result.error)
+      setMessage(result.ok ? { text: "Draft saved.", error: false } : { text: result.error, error: true })
     })
   }
 
@@ -195,10 +195,10 @@ export function TorReviewDetailView({
     startTransition(async () => {
       const result = await publishTorReviewAction(currentDetail())
       if (!result.ok) {
-        setMessage(result.error)
+        setMessage({ text: result.error, error: true })
         return
       }
-      setMessage("Approved and published.")
+      setMessage({ text: "Approved and published.", error: false })
       router.refresh()
     })
   }
@@ -218,7 +218,7 @@ export function TorReviewDetailView({
             Back to Review List
           </Button>
           <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-            {announcementId}: {projectTitleEn}
+            {announcementId}: {projectTitleTh || projectTitleEn}
           </h1>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -232,8 +232,15 @@ export function TorReviewDetailView({
       </div>
 
       {message ? (
-        <p className="shrink-0 border-b bg-muted/40 px-4 py-2 text-sm text-muted-foreground sm:px-6">
-          {message}
+        <p
+          role={message.error ? "alert" : "status"}
+          className={
+            message.error
+              ? "shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive sm:px-6"
+              : "shrink-0 border-b bg-muted/40 px-4 py-2 text-sm text-muted-foreground sm:px-6"
+          }
+        >
+          {message.text}
         </p>
       ) : null}
 
@@ -285,7 +292,7 @@ export function TorReviewDetailView({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="title-en">Project Title (EN)</Label>
+                <Label htmlFor="title-en">Project Title (EN, optional)</Label>
                 <Input
                   id="title-en"
                   value={projectTitleEn}
@@ -294,27 +301,23 @@ export function TorReviewDetailView({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Department</Label>
-                  <Select
+                  <Label htmlFor="department">Department (TH)</Label>
+                  {/* Free text with suggestions: a scraped draft's department
+                      is often not in any list yet. */}
+                  <Input
+                    id="department"
+                    list="department-suggestions"
                     value={department}
-                    onValueChange={(value) => {
-                      if (value) setDepartment(value)
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(event) => setDepartment(event.target.value)}
+                  />
+                  <datalist id="department-suggestions">
+                    {departments.map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="local-office">Local Office</Label>
+                  <Label htmlFor="local-office">Local Office (TH)</Label>
                   <Input
                     id="local-office"
                     value={localOffice}
@@ -440,7 +443,7 @@ export function TorReviewDetailView({
                 2. Summary, Deliverables & Tech Tags
               </h2>
               <div className="space-y-2">
-                <Label htmlFor="summary">Summary</Label>
+                <Label htmlFor="summary">Summary (TH)</Label>
                 <Textarea
                   id="summary"
                   value={summary}
@@ -449,7 +452,7 @@ export function TorReviewDetailView({
                 />
               </div>
               <div className="space-y-3">
-                <Label>Key Deliverables</Label>
+                <Label>Key Deliverables (TH)</Label>
                 <ol className="space-y-2">
                   {deliverables.map((item, index) => (
                     <li key={index} className="flex items-start gap-2">
@@ -541,7 +544,7 @@ export function TorReviewDetailView({
                     className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]"
                   >
                     <div className="space-y-1.5">
-                      <Label>Requirement</Label>
+                      <Label>Requirement (TH)</Label>
                       <Input
                         value={item.requirement}
                         onChange={(event) =>
@@ -552,7 +555,7 @@ export function TorReviewDetailView({
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>TOR Criteria</Label>
+                      <Label>TOR Criteria (TH)</Label>
                       <Input
                         value={item.torCriteria}
                         onChange={(event) =>

@@ -1,9 +1,13 @@
 import type { Locale } from "@/lib/i18n"
 import type { LocalizedList, LocalizedText } from "@/types/localized"
 
-/** Reads the requested locale from localized content, falling back to English. */
+/**
+ * Reads the requested locale from localized content, falling back to the
+ * other one. A TOR can be published in Thai only (Thai is the site default),
+ * so English readers see Thai rather than a blank.
+ */
 export function pickLocalized(value: LocalizedText, locale: Locale): string {
-  return value[locale] || value.en || ""
+  return value[locale] || value.en || value.th || ""
 }
 
 /**
@@ -20,11 +24,13 @@ export function localizedIncludes(
 }
 
 /**
- * The canonical key for a localized value. English is the identity used for
- * filtering and cross-referencing; Thai is presentation only.
+ * The canonical key for filtering and cross-referencing a localized value:
+ * English when present, otherwise Thai. Mirrors localizedKey() in
+ * backend/src/models/localized.schema.ts — the two must agree, since the
+ * browse department filter sends this key to the API.
  */
 export function localizedKey(value: LocalizedText): string {
-  return value.en
+  return value.en?.trim() || value.th?.trim() || ""
 }
 
 /** List counterpart of {@link pickLocalized}. */
@@ -33,5 +39,6 @@ export function pickLocalizedList(
   locale: Locale
 ): string[] {
   const localized = value[locale]
-  return localized?.length ? localized : (value.en ?? [])
+  if (localized?.length) return localized
+  return value.en?.length ? value.en : (value.th ?? [])
 }

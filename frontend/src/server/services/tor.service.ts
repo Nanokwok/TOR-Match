@@ -1,6 +1,7 @@
 import "server-only"
 
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
+import { localizedKey } from "@/lib/localized-content"
 import {
   getBookmarkedTorIndex,
   isTorBookmarked,
@@ -43,7 +44,7 @@ export async function listTorDepartments(): Promise<LocalizedText[]> {
 
 export async function listTorLocalOffices(): Promise<string[]> {
   const offices = await apiFetch<LocalizedText[]>("/tors/local-offices")
-  return offices.map((office) => office.en)
+  return offices.map(localizedKey)
 }
 
 export async function getTorFinancials(torId: string): Promise<TorFinancials | null> {
