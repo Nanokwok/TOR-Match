@@ -1,18 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 
-import {
-  // companyPlanLabels,
-  companySizeLabels,
-  companyStatusLabels,
-  type AdminCompanyListItem,
-  // type AdminCompanyPlan,
-  type AdminCompanySize,
-  type AdminCompanyStatus,
-} from "@/server/db/mock/admin-companies"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,15 +34,26 @@ import {
 } from "@/components/ui/table"
 import { formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import {
+  companySizeLabels,
+  companyStatusLabels,
+  formatCompanySize,
+  type AdminCompanyListItem,
+  type AdminCompanySize,
+  type AdminCompanyStats,
+  type AdminCompanyStatus,
+} from "@/types/admin-company"
 
 type CompaniesViewProps = {
-  stats: {
-    total: string
-    active: string
-    pending: string
-    suspended: string
-  }
+  stats: AdminCompanyStats | null
   companies: AdminCompanyListItem[]
+  total: number
+  page: number
+  pageSize: number
+  q: string
+  status: AdminCompanyStatus | "all"
+  size: AdminCompanySize | "all"
+  error?: string | null
 }
 
 const statusStyles: Record<AdminCompanyStatus, string> = {
@@ -62,56 +65,80 @@ const statusStyles: Record<AdminCompanyStatus, string> = {
     "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
 }
 
-// Subscription plans (Free / Pro / Enterprise) — hidden for now
-// const planStyles: Record<AdminCompanyPlan, string> = {
-//   free: "border-border text-muted-foreground",
-//   pro: "border-transparent bg-primary/10 text-primary",
-//   enterprise: "border-transparent bg-violet-100 text-violet-800",
-// }
+function formatJoined(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  }).format(new Date(value))
+}
 
-export function CompaniesView({ stats, companies }: CompaniesViewProps) {
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState("all")
-  // const [plan, setPlan] = useState("all")
-  const [size, setSize] = useState("all")
-  const [page, setPage] = useState(1)
-  const pageSize = 5
+export function CompaniesView({
+  stats,
+  companies,
+  total,
+  page,
+  pageSize,
+  q,
+  status,
+  size,
+  error,
+}: CompaniesViewProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [search, setSearch] = useState(q)
+  const [isPending, startTransition] = useTransition()
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    return companies.filter((company) => {
-      const matchesSearch =
-        !query ||
-        company.nameEnglish.toLowerCase().includes(query) ||
-        company.nameThai.toLowerCase().includes(query) ||
-        company.taxId.includes(query) ||
-        company.contactEmail.toLowerCase().includes(query)
-      const matchesStatus = status === "all" || company.status === status
-      // const matchesPlan = plan === "all" || company.plan === plan
-      const matchesSize = size === "all" || company.size === size
-      return matchesSearch && matchesStatus && matchesSize
-      // && matchesPlan
+  useEffect(() => {
+    setSearch(q)
+  }, [q])
+
+  function replaceQuery(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString())
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value) params.delete(key)
+      else params.set(key, value)
+    }
+    const qs = params.toString()
+    startTransition(() => {
+      router.replace(qs ? `${pathname}?${qs}` : pathname)
     })
-  }, [companies, search, status, size])
-  // }, [companies, search, status, plan, size])
+  }
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = search.trim()
+      if (next === q) return
+      replaceQuery({
+        q: next || null,
+        page: null,
+      })
+    }, 300)
+    return () => window.clearTimeout(handle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when the typed query changes
+  }, [search])
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  )
 
   const statCards = [
-    { label: "Total Companies", value: stats.total },
-    { label: "Active", value: stats.active },
-    { label: "Pending", value: stats.pending },
-    { label: "Suspended", value: stats.suspended },
+    { label: "Total Companies", value: stats ? String(stats.total) : "—" },
+    { label: "Active", value: stats ? String(stats.active) : "—" },
+    { label: "Pending", value: stats ? String(stats.pending) : "—" },
+    { label: "Suspended", value: stats ? String(stats.suspended) : "—" },
   ]
 
   return (
     <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
       <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
+
+      {error ? (
+        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((card) => (
@@ -130,16 +157,18 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <div
+        className={cn(
+          "flex flex-col gap-3 xl:flex-row xl:items-center",
+          isPending && "opacity-70"
+        )}
+      >
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(event) => {
-              setSearch(event.target.value)
-              setPage(1)
-            }}
-            placeholder="Search companies..."
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search name or tax ID..."
             className="pl-8"
           />
         </div>
@@ -147,8 +176,11 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
         <Select
           value={status}
           onValueChange={(value) => {
-            setStatus(value ?? "all")
-            setPage(1)
+            const next = (value ?? "all") as AdminCompanyStatus | "all"
+            replaceQuery({
+              status: next === "all" ? null : next,
+              page: null,
+            })
           }}
         >
           <SelectTrigger className="w-full xl:w-40">
@@ -166,35 +198,14 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
           </SelectContent>
         </Select>
 
-        {/* Plan filter (Free / Pro / Enterprise) — hidden for now
-        <Select
-          value={plan}
-          onValueChange={(value) => {
-            setPlan(value ?? "all")
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="w-full xl:w-40">
-            <SelectValue placeholder="Plan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All plans</SelectItem>
-            {(Object.keys(companyPlanLabels) as AdminCompanyPlan[]).map(
-              (key) => (
-                <SelectItem key={key} value={key}>
-                  {companyPlanLabels[key]}
-                </SelectItem>
-              )
-            )}
-          </SelectContent>
-        </Select>
-        */}
-
         <Select
           value={size}
           onValueChange={(value) => {
-            setSize(value ?? "all")
-            setPage(1)
+            const next = (value ?? "all") as AdminCompanySize | "all"
+            replaceQuery({
+              size: next === "all" ? null : next,
+              page: null,
+            })
           }}
         >
           <SelectTrigger className="w-full xl:w-40">
@@ -220,49 +231,43 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
               <TableHead className="px-4">Company</TableHead>
               <TableHead>Tax ID</TableHead>
               <TableHead>Size</TableHead>
-              {/* <TableHead>Plan</TableHead> */}
               <TableHead>Capital</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Joined</TableHead>
               <TableHead className="px-4 text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageItems.length === 0 ? (
+            {companies.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  No companies match your filters.
+                  {error
+                    ? "Could not load companies."
+                    : "No companies match your filters."}
                 </TableCell>
               </TableRow>
             ) : (
-              pageItems.map((company) => (
+              companies.map((company) => (
                 <TableRow key={company.id}>
                   <TableCell className="px-4">
                     <div className="min-w-0">
                       <p className="truncate font-medium">
-                        {company.nameEnglish}
+                        {company.nameEnglish || company.nameThai || "—"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {company.contactEmail}
+                        {company.nameThai && company.nameEnglish
+                          ? company.nameThai
+                          : company.contactEmail || "—"}
                       </p>
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {company.taxId}
+                    {company.taxId || "—"}
                   </TableCell>
-                  <TableCell>{companySizeLabels[company.size]}</TableCell>
-                  {/* Plan badge (Free / Pro / Enterprise) — hidden for now
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(planStyles[company.plan])}
-                    >
-                      {companyPlanLabels[company.plan]}
-                    </Badge>
-                  </TableCell>
-                  */}
+                  <TableCell>{formatCompanySize(company.size)}</TableCell>
                   <TableCell>
                     {formatThb(company.registeredCapitalBaht)}
                   </TableCell>
@@ -270,6 +275,9 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
                     <Badge className={cn(statusStyles[company.status])}>
                       {companyStatusLabels[company.status]}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatJoined(company.joinedAt)}
                   </TableCell>
                   <TableCell className="px-4 text-right">
                     <Button
@@ -299,7 +307,10 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
                 href="#"
                 onClick={(event) => {
                   event.preventDefault()
-                  setPage((current) => Math.max(1, current - 1))
+                  if (currentPage <= 1) return
+                  replaceQuery({
+                    page: currentPage - 1 > 1 ? String(currentPage - 1) : null,
+                  })
                 }}
                 className={
                   currentPage <= 1 ? "pointer-events-none opacity-50" : ""
@@ -314,7 +325,9 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
                     isActive={pageNumber === currentPage}
                     onClick={(event) => {
                       event.preventDefault()
-                      setPage(pageNumber)
+                      replaceQuery({
+                        page: pageNumber > 1 ? String(pageNumber) : null,
+                      })
                     }}
                   >
                     {pageNumber}
@@ -327,7 +340,8 @@ export function CompaniesView({ stats, companies }: CompaniesViewProps) {
                 href="#"
                 onClick={(event) => {
                   event.preventDefault()
-                  setPage((current) => Math.min(totalPages, current + 1))
+                  if (currentPage >= totalPages) return
+                  replaceQuery({ page: String(currentPage + 1) })
                 }}
                 className={
                   currentPage >= totalPages
