@@ -1,14 +1,20 @@
 import "server-only"
 
-import { cookies } from "next/headers"
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
-import { required } from "@/lib/env"
+import {
+  getBookmarkedTorIndex,
+  isTorBookmarked,
+} from "@/server/services/workspace.service"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor, TorFinancials, TorListQuery, TorListResult, TorQualificationCheck } from "@/types/tor"
 
-async function authHeaders(): Promise<Record<string, string>> {
-  const token = (await cookies()).get(required("AUTH_COOKIE_NAME"))?.value
-  return token ? { Authorization: `Bearer ${token}` } : {}
+/** The backend always returns `bookmarked: false`; bookmarks live on the workspace board. */
+async function withBookmarkedState(items: Tor[]): Promise<Tor[]> {
+  const index = await getBookmarkedTorIndex()
+  return items.map((tor) => ({
+    ...tor,
+    bookmarked: isTorBookmarked(tor, index),
+  }))
 }
 
 export async function listTors(query: TorListQuery = {}): Promise<TorListResult> {
@@ -16,12 +22,15 @@ export async function listTors(query: TorListQuery = {}): Promise<TorListResult>
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined) params.set(key, key === "detail" ? JSON.stringify(value) : String(value))
   }
-  return apiFetch<TorListResult>(`/tors?${params}`, { headers: await authHeaders() })
+  const result = await apiFetch<TorListResult>(`/tors?${params}`)
+  return { ...result, items: await withBookmarkedState(result.items) }
 }
 
 export async function getTorById(id: string): Promise<Tor | null> {
   try {
-    return await apiFetch<Tor>(`/tors/${encodeURIComponent(id)}`, { headers: await authHeaders() })
+    const tor = await apiFetch<Tor>(`/tors/${encodeURIComponent(id)}`)
+    const [withFlag] = await withBookmarkedState([tor])
+    return withFlag
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 404) return null
     throw error
@@ -43,7 +52,7 @@ export async function getTorFinancials(torId: string): Promise<TorFinancials | n
 
 export async function getTorQualificationCheck(torId: string): Promise<TorQualificationCheck | null> {
   try {
-    return await apiFetch<TorQualificationCheck>(`/tors/${encodeURIComponent(torId)}/qualification`, { headers: await authHeaders() })
+    return await apiFetch<TorQualificationCheck>(`/tors/${encodeURIComponent(torId)}/qualification`)
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 404) return null
     throw error
