@@ -1,7 +1,6 @@
 "use server"
 
-import { getAdminToken } from "@/lib/admin-session"
-import { ApiRequestError, apiFetch } from "@/lib/api-client"
+import { adminApiFetch } from "@/lib/admin-api"
 import type { OcrJob } from "@/types/scraper"
 
 /** Reads the ingestion pipeline's job history for /admin/scraper-ocr. */
@@ -77,12 +76,7 @@ export async function listScrapeJobsAction(): Promise<{
   stats: ScraperOcrStats
 }> {
   try {
-    const token = await getAdminToken()
-    if (!token) throw new ApiRequestError(401, "Admin session expired")
-
-    const response = await apiFetch<JobsResponse>("/tor-drafts/jobs", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const response = await adminApiFetch<JobsResponse>("/tor-drafts/jobs")
 
     return { jobs: response.items.map(toOcrJob), stats: toStats(response) }
   } catch (error) {

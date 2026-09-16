@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 
-import { getAdminToken } from "@/lib/admin-session"
-import { ApiRequestError, apiFetch } from "@/lib/api-client"
+import { AdminApiAuthError, adminApiFetch } from "@/lib/admin-api"
+import { ApiRequestError } from "@/lib/api-client"
 import type {
   TorReviewDetail,
   TorReviewListItem,
@@ -146,18 +146,8 @@ function toBackendUpdate(detail: TorReviewDetail) {
   }
 }
 
-async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await getAdminToken()
-  if (!token) throw new ApiRequestError(401, "Your admin session has expired. Sign in again.")
-
-  return apiFetch<T>(path, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, ...init?.headers },
-  })
-}
-
 function messageFrom(error: unknown, context: string): string {
-  if (error instanceof ApiRequestError) return error.message
+  if (error instanceof ApiRequestError || error instanceof AdminApiAuthError) return error.message
   console.error(context, error)
   return "Something went wrong. Please try again."
 }
@@ -165,7 +155,7 @@ function messageFrom(error: unknown, context: string): string {
 /** Reads degrade to an empty list rather than throwing across the RSC boundary. */
 export async function listTorReviewsAction(): Promise<TorReviewListItem[]> {
   try {
-    const { items } = await adminFetch<{ items: BackendDraft[] }>("/tor-drafts")
+    const { items } = await adminApiFetch<{ items: BackendDraft[] }>("/tor-drafts")
     return items.map(toListItem)
   } catch (error) {
     console.error("listTorReviewsAction failed", error)
@@ -175,7 +165,7 @@ export async function listTorReviewsAction(): Promise<TorReviewListItem[]> {
 
 export async function getTorReviewAction(id: string): Promise<TorReviewDetail | null> {
   try {
-    return toDetail(await adminFetch<BackendDraft>(`/tor-drafts/${id}`))
+    return toDetail(await adminApiFetch<BackendDraft>(`/tor-drafts/${id}`))
   } catch (error) {
     console.error("getTorReviewAction failed", error)
     return null
@@ -186,7 +176,7 @@ export async function saveTorReviewAction(
   detail: TorReviewDetail
 ): Promise<AdminActionResult<TorReviewDetail>> {
   try {
-    const updated = await adminFetch<BackendDraft>(`/tor-drafts/${detail.id}`, {
+    const updated = await adminApiFetch<BackendDraft>(`/tor-drafts/${detail.id}`, {
       method: "PUT",
       body: JSON.stringify(toBackendUpdate(detail)),
     })
@@ -205,7 +195,7 @@ export async function publishTorReviewAction(
   if (!saved.ok) return saved
 
   try {
-    const { draft } = await adminFetch<{ draft: BackendDraft }>(
+    const { draft } = await adminApiFetch<{ draft: BackendDraft }>(
       `/tor-drafts/${detail.id}/publish`,
       { method: "POST" }
     )

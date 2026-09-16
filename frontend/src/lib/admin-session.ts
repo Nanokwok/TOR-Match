@@ -8,16 +8,11 @@ export const USER_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
 export const ADMIN_SESSION_COOKIE = "tm_admin_session"
 
+export const ADMIN_API_TOKEN_COOKIE = "tm_admin_api_token"
+
 export type AdminSession = {
   email: string
   name: string
-  /**
-   * Backend JWT for the signed-in admin, forwarded as `Authorization: Bearer`
-   * by admin server actions. The Express API cannot verify this cookie's own
-   * HMAC signature, so without carrying a real token the admin screens have no
-   * way to authenticate against it.
-   */
-  token: string
   issuedAt: number
   lastActiveAt: number
 }
@@ -113,7 +108,6 @@ export async function decodeAdminSession(
     if (
       typeof session.email !== "string" ||
       typeof session.name !== "string" ||
-      typeof session.token !== "string" ||
       typeof session.issuedAt !== "number" ||
       typeof session.lastActiveAt !== "number"
     ) {
@@ -160,8 +154,21 @@ export async function clearAdminSessionCookie() {
   })
 }
 
-/** The backend JWT for the current admin, or null when signed out. */
-export async function getAdminToken(): Promise<string | null> {
-  const session = await getAdminSession()
-  return session?.token ?? null
+export function adminApiTokenCookieOptions(
+  maxAge = ADMIN_SESSION_MAX_AGE_SECONDS
+): AdminSessionCookieOptions {
+  return adminSessionCookieOptions(maxAge)
+}
+
+export async function setAdminApiTokenCookie(token: string) {
+  const cookieStore = await cookies()
+  cookieStore.set(ADMIN_API_TOKEN_COOKIE, token, adminApiTokenCookieOptions())
+}
+
+export async function clearAdminApiTokenCookie() {
+  const cookieStore = await cookies()
+  cookieStore.set(ADMIN_API_TOKEN_COOKIE, "", {
+    ...adminApiTokenCookieOptions(0),
+    maxAge: 0,
+  })
 }
