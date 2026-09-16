@@ -2,7 +2,8 @@ import { localizedText } from "@/types/localized"
 import type { TeamMember, WorkspaceCard } from "@/types/workspace"
 
 /** Seed rows are authored in English; Thai is layered on by {@link localizeWorkspaceCard}. */
-type WorkspaceCardSeed = Omit<WorkspaceCard, "title" | "department"> & {
+type WorkspaceCardSeed = Omit<WorkspaceCard, "title" | "department" | "id"> & {
+  id?: string
   title: string
   department: string
 }
@@ -65,6 +66,7 @@ function departmentThFromAnnouncement(announcementNo: string) {
 function localizeWorkspaceCard(card: WorkspaceCardSeed): WorkspaceCard {
   return {
     ...card,
+    id: card.id ?? `mock-${card.torId}`,
     title: localizedText(card.title, WORKSPACE_TITLE_TH[card.title]),
     department: localizedText(
       card.department,

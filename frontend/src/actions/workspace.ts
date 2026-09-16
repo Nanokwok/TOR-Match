@@ -1,42 +1,47 @@
-"use server";
+"use server"
 
 import {
   addTorToWorkspace,
+  bookmarkTor,
   getWorkspaceBoard,
   listWorkspaceAssignees,
   moveWorkspaceCard,
   removeWorkspaceCard,
   searchTorsForWorkspace,
-} from "@/server/services/workspace.service";
-import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace";
+} from "@/server/services/workspace.service"
+import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace"
 
 export async function getWorkspaceBoardAction(query: WorkspaceQuery = {}) {
-  return getWorkspaceBoard(query);
+  return getWorkspaceBoard(query)
 }
 
 export async function getWorkspaceAssigneesAction() {
-  return listWorkspaceAssignees();
+  return listWorkspaceAssignees()
 }
 
 export async function moveWorkspaceCardAction(
   torId: string,
   toColumn: WorkspaceColumnId,
-  toIndex: number,
+  toIndex: number
 ) {
-  return moveWorkspaceCard(torId, toColumn, toIndex);
+  return moveWorkspaceCard(torId, toColumn, toIndex)
 }
 
 export async function searchTorsForWorkspaceAction(keyword = "") {
-  return searchTorsForWorkspace(keyword);
+  return searchTorsForWorkspace(keyword)
 }
 
 export async function addTorToWorkspaceAction(
   torId: string,
-  column: WorkspaceColumnId,
+  column: WorkspaceColumnId
 ) {
-  return addTorToWorkspace(torId, column);
+  return addTorToWorkspace(torId, column)
 }
 
 export async function removeWorkspaceCardAction(torId: string) {
-  return removeWorkspaceCard(torId);
+  return removeWorkspaceCard(torId)
+}
+
+export async function bookmarkTorAction(torId: string, bookmarked: boolean) {
+  return bookmarkTor(torId, bookmarked)
 }

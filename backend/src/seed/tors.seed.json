@@ -115,6 +115,10 @@
         "torCriteria": {
           "en": "≥ 2,000,000 THB",
           "th": "≥ 2,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 2000000
         }
       },
       {
@@ -125,8 +129,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 1,500,000 THB",
-          "th": "สัญญา Web App ≥ 1,500,000 บาท"
+          "en": "Individual contract value ≥ 1,500,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 1,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 1500000
         }
       },
       {
@@ -139,6 +147,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -151,6 +167,9 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
         }
       },
       {
@@ -163,6 +182,9 @@
         "torCriteria": {
           "en": "Must have prior experience delivering procurement or budget systems for government agencies",
           "th": "ต้องมีประสบการณ์ส่งมอบระบบจัดซื้อจัดจ้างหรือระบบงบประมาณให้หน่วยงานภาครัฐ"
+        },
+        "criteria": {
+          "type": "manual"
         }
       },
       {
@@ -175,6 +197,24 @@
         "torCriteria": {
           "en": "Must assign a full-time project manager and at least 2 senior developers for the contract duration",
           "th": "ต้องมีผู้จัดการโครงการเต็มเวลาและนักพัฒนาระดับอาวุโสอย่างน้อย 2 คนตลอดสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -300,6 +340,10 @@
         "torCriteria": {
           "en": "≥ 5,000,000 THB",
           "th": "≥ 5,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 5000000
         }
       },
       {
@@ -310,8 +354,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 3,000,000 THB",
-          "th": "สัญญา Web App ≥ 3,000,000 บาท"
+          "en": "Individual contract value ≥ 3,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 3,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 3000000
         }
       },
       {
@@ -324,6 +372,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -336,6 +392,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -461,6 +535,10 @@
         "torCriteria": {
           "en": "≥ 4,000,000 THB",
           "th": "≥ 4,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 4000000
         }
       },
       {
@@ -471,8 +549,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 2,500,000 THB",
-          "th": "สัญญา Web App ≥ 2,500,000 บาท"
+          "en": "Individual contract value ≥ 2,500,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 2,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 2500000
         }
       },
       {
@@ -485,6 +567,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -497,6 +587,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -609,6 +717,10 @@
         "torCriteria": {
           "en": "≥ 1,000,000 THB",
           "th": "≥ 1,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 1000000
         }
       },
       {
@@ -619,8 +731,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 800,000 THB",
-          "th": "สัญญา Web App ≥ 800,000 บาท"
+          "en": "Individual contract value ≥ 800,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 800,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 800000
         }
       },
       {
@@ -633,6 +749,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -645,6 +769,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -768,6 +910,10 @@
         "torCriteria": {
           "en": "≥ 1,500,000 THB",
           "th": "≥ 1,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 1500000
         }
       },
       {
@@ -778,8 +924,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 1,000,000 THB",
-          "th": "สัญญา Web App ≥ 1,000,000 บาท"
+          "en": "Individual contract value ≥ 1,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 1,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 1000000
         }
       },
       {
@@ -792,6 +942,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -804,6 +962,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -926,6 +1102,10 @@
         "torCriteria": {
           "en": "≥ 2,500,000 THB",
           "th": "≥ 2,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 2500000
         }
       },
       {
@@ -936,8 +1116,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 2,000,000 THB",
-          "th": "สัญญา Web App ≥ 2,000,000 บาท"
+          "en": "Individual contract value ≥ 2,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 2,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 2000000
         }
       },
       {
@@ -950,6 +1134,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -962,6 +1154,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1085,6 +1295,10 @@
         "torCriteria": {
           "en": "≥ 3,500,000 THB",
           "th": "≥ 3,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 3500000
         }
       },
       {
@@ -1095,8 +1309,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 2,200,000 THB",
-          "th": "สัญญา Web App ≥ 2,200,000 บาท"
+          "en": "Individual contract value ≥ 2,200,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 2,200,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 2200000
         }
       },
       {
@@ -1109,6 +1327,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1121,6 +1347,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1243,6 +1487,10 @@
         "torCriteria": {
           "en": "≥ 1,200,000 THB",
           "th": "≥ 1,200,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 1200000
         }
       },
       {
@@ -1253,8 +1501,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 900,000 THB",
-          "th": "สัญญา Web App ≥ 900,000 บาท"
+          "en": "Individual contract value ≥ 900,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 900,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 900000
         }
       },
       {
@@ -1267,6 +1519,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1279,6 +1539,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1401,6 +1679,10 @@
         "torCriteria": {
           "en": "≥ 3,000,000 THB",
           "th": "≥ 3,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 3000000
         }
       },
       {
@@ -1411,8 +1693,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 2,000,000 THB",
-          "th": "สัญญา Web App ≥ 2,000,000 บาท"
+          "en": "Individual contract value ≥ 2,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 2,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 2000000
         }
       },
       {
@@ -1425,6 +1711,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1437,6 +1731,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1559,6 +1871,10 @@
         "torCriteria": {
           "en": "≥ 1,200,000 THB",
           "th": "≥ 1,200,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 1200000
         }
       },
       {
@@ -1569,8 +1885,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 1,000,000 THB",
-          "th": "สัญญา Web App ≥ 1,000,000 บาท"
+          "en": "Individual contract value ≥ 1,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 1,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 1000000
         }
       },
       {
@@ -1583,6 +1903,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1595,6 +1923,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1707,6 +2053,10 @@
         "torCriteria": {
           "en": "≥ 800,000 THB",
           "th": "≥ 800,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 800000
         }
       },
       {
@@ -1717,8 +2067,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 600,000 THB",
-          "th": "สัญญา Web App ≥ 600,000 บาท"
+          "en": "Individual contract value ≥ 600,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 600,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 600000
         }
       },
       {
@@ -1731,6 +2085,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1743,6 +2105,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -1865,6 +2245,10 @@
         "torCriteria": {
           "en": "≥ 3,500,000 THB",
           "th": "≥ 3,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 3500000
         }
       },
       {
@@ -1875,8 +2259,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 2,500,000 THB",
-          "th": "สัญญา Web App ≥ 2,500,000 บาท"
+          "en": "Individual contract value ≥ 2,500,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 2,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 2500000
         }
       },
       {
@@ -1889,6 +2277,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -1901,6 +2297,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -2024,6 +2438,10 @@
         "torCriteria": {
           "en": "≥ 1,800,000 THB",
           "th": "≥ 1,800,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 1800000
         }
       },
       {
@@ -2034,8 +2452,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 1,200,000 THB",
-          "th": "สัญญา Web App ≥ 1,200,000 บาท"
+          "en": "Individual contract value ≥ 1,200,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 1,200,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 1200000
         }
       },
       {
@@ -2048,6 +2470,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -2060,6 +2490,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -2182,6 +2630,10 @@
         "torCriteria": {
           "en": "≥ 8,000,000 THB",
           "th": "≥ 8,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 8000000
         }
       },
       {
@@ -2192,8 +2644,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 5,000,000 THB",
-          "th": "สัญญา Web App ≥ 5,000,000 บาท"
+          "en": "Individual contract value ≥ 5,000,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 5,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 5000000
         }
       },
       {
@@ -2206,6 +2662,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -2218,6 +2682,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],
@@ -2340,6 +2822,10 @@
         "torCriteria": {
           "en": "≥ 2,000,000 THB",
           "th": "≥ 2,000,000 บาท"
+        },
+        "criteria": {
+          "type": "min-registered-capital",
+          "minAmountThb": 2000000
         }
       },
       {
@@ -2350,8 +2836,12 @@
           "th": "ผลงานที่ผ่านมา"
         },
         "torCriteria": {
-          "en": "Web App Contract ≥ 1,500,000 THB",
-          "th": "สัญญา Web App ≥ 1,500,000 บาท"
+          "en": "Individual contract value ≥ 1,500,000 THB",
+          "th": "มูลค่าสัญญารายฉบับ ≥ 1,500,000 บาท"
+        },
+        "criteria": {
+          "type": "min-past-contract",
+          "minAmountThb": 1500000
         }
       },
       {
@@ -2364,6 +2854,14 @@
         "torCriteria": {
           "en": "ISO/IEC 29110 or CMMI Level 2+",
           "th": "ISO/IEC 29110 หรือ CMMI Level 2+"
+        },
+        "criteria": {
+          "type": "certification",
+          "certificationIds": [
+            "iso-29110",
+            "cmmi-2"
+          ],
+          "mode": "any"
         }
       },
       {
@@ -2376,6 +2874,24 @@
         "torCriteria": {
           "en": "Must be registered e-GP Vendor",
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
+        },
+        "criteria": {
+          "type": "egp-registered"
+        }
+      },
+      {
+        "id": "manual-contract-scope",
+        "autoCheckable": false,
+        "requirement": {
+          "en": "Past contract scope",
+          "th": "ประเภทงานในสัญญาผลงาน"
+        },
+        "torCriteria": {
+          "en": "The qualifying past contract must be for a Web App; review the supporting contract.",
+          "th": "สัญญาที่ใช้ยื่นผลงานต้องเป็นงาน Web App โดยตรวจจากเอกสารสัญญา"
+        },
+        "criteria": {
+          "type": "manual"
         }
       }
     ],

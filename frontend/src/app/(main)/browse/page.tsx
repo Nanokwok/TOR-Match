@@ -1,4 +1,3 @@
-import { getCompanySetupProfileAction } from "@/actions/company-setup"
 import { BrowseView } from "@/components/browse/browse-view"
 import { resolveBrowseDeepLink } from "@/lib/browse-deep-link"
 import {
@@ -13,13 +12,11 @@ type BrowsePageProps = {
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const params = await searchParams
-  const [{ items: listed }, departments, localOffices, companyProfile] =
-    await Promise.all([
-      listTors({ eligibleOnly: true }),
-      listTorDepartments(),
-      listTorLocalOffices(),
-      getCompanySetupProfileAction(),
-    ])
+  const [{ items: listed }, departments, localOffices] = await Promise.all([
+    listTors({ eligibleOnly: true }),
+    listTorDepartments(),
+    listTorLocalOffices(),
+  ])
 
   const { items, selectedId, deepLink } = await resolveBrowseDeepLink(
     params.tor,
@@ -34,7 +31,6 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         initialDeepLink={deepLink}
         departments={departments}
         localOffices={localOffices}
-        companyProfile={companyProfile}
       />
     </div>
   )

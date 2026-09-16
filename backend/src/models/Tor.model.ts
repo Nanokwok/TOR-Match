@@ -4,6 +4,8 @@ import {
   localizedTextSchema,
 } from "@/models/localized.schema"
 
+import { qualificationCriteriaSchema } from "@/validation/qualification"
+
 const paymentMilestoneSchema = new Schema(
   {
     day: { type: Number, required: true },
@@ -31,11 +33,19 @@ const financialsSchema = new Schema(
 
 const qualificationRequirementSchema = new Schema(
   {
-    /** Stable key the company profile matches against (CompanyProfileMatch.requirementId). */
+    /** Stable requirement key returned in matching results. */
     id: { type: String, required: true },
     requirement: { type: localizedTextSchema, required: true },
     torCriteria: { type: localizedTextSchema, required: true },
     autoCheckable: { type: Boolean, default: false },
+    criteria: {
+      type: Schema.Types.Mixed,
+      default: undefined,
+      validate: {
+        validator: (value: unknown) => value == null || qualificationCriteriaSchema.safeParse(value).success,
+        message: "Invalid qualification criteria for its type",
+      },
+    },
   },
   { _id: false }
 )

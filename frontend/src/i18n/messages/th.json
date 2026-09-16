@@ -6,6 +6,7 @@
     "clearAll": "ล้างทั้งหมด",
     "activeFilters": "ตัวกรองที่ใช้งาน:",
     "email": "อีเมล",
+    "name": "ชื่อ",
     "password": "รหัสผ่าน",
     "or": "หรือ",
     "share": "แชร์",
@@ -13,7 +14,7 @@
     "bookmarked": "บันทึกแล้ว",
     "copied": "คัดลอกแล้ว",
     "summary": "สรุป",
-    "eligible": "มีสิทธิ์",
+    "eligible": "ผ่านเกณฑ์อัตโนมัติ",
     "notEligible": "ไม่มีสิทธิ์",
     "high": "สูง",
     "medium": "ปานกลาง",
@@ -122,7 +123,7 @@
   },
   "browse": {
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
-    "eligibleOnly": "เฉพาะที่มีสิทธิ์",
+    "eligibleOnly": "เฉพาะที่ผ่านเกณฑ์อัตโนมัติ",
     "budgetRange": "ช่วงงบประมาณ",
     "procurementStatus": "สถานะการจัดซื้อจัดจ้าง",
     "department": "หน่วยงาน",
@@ -163,7 +164,9 @@
       "selfAssessment": "ต้องประเมินด้วยตนเอง",
       "setupPrompt": "ตั้งค่าโปรไฟล์บริษัทเพื่อตรวจสอบคุณสมบัติอัตโนมัติ",
       "companySetup": "ตั้งค่าบริษัท →",
-      "weComply": "บริษัทมีคุณสมบัตินี้"
+      "weComply": "บริษัทมีคุณสมบัตินี้",
+      "scopeNote": "ผลนี้เปรียบเทียบข้อมูลที่บริษัทบันทึกกับเกณฑ์ TOR ยังไม่ใช่การรับรองสิทธิ์ยื่นเสนอราคา",
+      "pendingReview": "ยังมีข้อกำหนดที่ต้องตรวจเอกสารเพิ่มเติม"
     },
     "financials": "การเงิน",
     "keyDeliverables": "ขอบเขตงานหลัก",
@@ -235,6 +238,13 @@
       "counting": "กำลังนับ...",
       "from": "จาก",
       "to": "ถึง"
+    },
+    "qualificationUnavailable": "ไม่สามารถแสดงผลตรวจคุณสมบัติได้",
+    "qualificationStatus": {
+      "passed": "ผ่าน",
+      "failed": "ไม่ผ่าน",
+      "insufficient-data": "ข้อมูลไม่พอ",
+      "manual-review": "ต้องตรวจด้วยคน"
     }
   },
   "workspace": {
@@ -273,6 +283,17 @@
       "searching": "กำลังค้นหา...",
       "noResults": "ไม่พบ TOR",
       "onBoard": "อยู่ในบอร์ดแล้ว"
+    },
+    "empty": {
+      "boardTitle": "Workspace ยังว่างอยู่",
+      "boardDescription": "บันทึก TOR ที่สนใจ แล้วเลื่อนไปยัง รอดำเนินการ / กำลังดำเนินการ / เสร็จสิ้น ตามขั้นตอนการประมูลของทีม",
+      "boardHint": "เคล็ดลับ: บันทึกจากหน้า Browse หรือเพิ่ม TOR แรกที่นี่",
+      "addFirstTor": "เพิ่ม TOR แรก",
+      "browseTors": "ค้นหา TOR",
+      "filtersTitle": "ไม่พบ TOR ตามตัวกรองนี้",
+      "filtersDescription": "ลองเปลี่ยนคำค้น ผู้รับผิดชอบ หรือความสำคัญ — หรือล้างตัวกรองเพื่อดูบอร์ดทั้งหมด",
+      "clearFilters": "ล้างตัวกรอง",
+      "columnHint": "ลาก TOR มาวาง หรือกด + เพื่อเพิ่ม"
     },
     "checklistDefaults": {
       "capital": "ตรวจสอบเกณฑ์ทุนจดทะเบียน (5 ล้าน > 2 ล้าน บาท)",
@@ -318,8 +339,7 @@
     "signupTitle": "สมัครสมาชิก",
     "signupSubtitle": "ยินดีต้อนรับ มาสร้างบัญชีของคุณกัน!",
     "signupGoogle": "สมัครด้วย Google",
-    "fullName": "ชื่อ-นามสกุล",
-    "fullNamePlaceholder": "ชื่อ-นามสกุลของคุณ",
+    "namePlaceholder": "ชื่อของคุณ",
     "confirmPassword": "ยืนยันรหัสผ่าน",
     "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
     "creatingAccount": "กำลังสร้างบัญชี...",

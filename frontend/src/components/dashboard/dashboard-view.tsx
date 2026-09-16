@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
+import { bookmarkTorAction } from "@/actions/workspace"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
-import { browseActions } from "@/lib/browse-actions"
 import { pickLocalized } from "@/lib/localized-content"
 import { formatDaysLeft, formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -149,6 +150,26 @@ function RecommendedTorRow({
 }) {
   const router = useRouter()
   const { locale } = useLocale()
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle"
+  )
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleQuickSave() {
+    if (status === "saving" || status === "saved") return
+
+    setStatus("saving")
+    setError(null)
+
+    const result = await bookmarkTorAction(tor.id, true)
+    if (!result.ok) {
+      setStatus("error")
+      setError(result.error)
+      return
+    }
+
+    setStatus("saved")
+  }
 
   return (
     <article className="grid gap-4 py-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6">
@@ -167,6 +188,11 @@ function RecommendedTorRow({
           <span className="mx-2 text-border">·</span>
           {formatDaysLeft(tor.deadline)}
         </p>
+        {error ? (
+          <p className="text-xs text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -174,9 +200,16 @@ function RecommendedTorRow({
           type="button"
           variant="ghost"
           className="h-9 px-3 text-foreground hover:bg-muted"
-          onClick={() => browseActions.bookmarkTor(tor.id)}
+          disabled={status === "saving" || status === "saved"}
+          onClick={() => {
+            void handleQuickSave()
+          }}
         >
-          Quick Save
+          {status === "saving"
+            ? "Saving…"
+            : status === "saved"
+              ? "Saved"
+              : "Quick Save"}
         </Button>
         <Button
           type="button"

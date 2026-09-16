@@ -1,13 +1,8 @@
 "use server"
 
-import { cookies } from "next/headers"
-
-import { ApiRequestError, apiFetch } from "@/lib/api-client"
-import { required } from "@/lib/env"
+import { ApiRequestError, apiFetch, getAuthToken } from "@/lib/api-client"
 import { CERTIFICATION_OPTIONS } from "@/lib/company-setup"
 import type { CertificationEntry, CompanySetupProfile } from "@/types/company-setup"
-
-const AUTH_COOKIE_NAME = required("AUTH_COOKIE_NAME")
 
 // Shape returned by the backend (backend/src/models/Company.model.ts serialized
 // to JSON) — a superset of CompanySetupProfile (adds Mongo's _id/timestamps,
@@ -92,19 +87,12 @@ function toBackend(profile: CompanySetupProfile) {
   }
 }
 
-async function getAuthToken(): Promise<string | null> {
-  const cookieStore = await cookies()
-  return cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null
-}
-
 export async function getCompanySetupProfileAction(): Promise<CompanySetupProfile | null> {
   const token = await getAuthToken()
   if (!token) return null
 
   try {
-    const company = await apiFetch<BackendCompany | null>("/companies/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const company = await apiFetch<BackendCompany | null>("/companies/me")
     return company ? fromBackend(company) : null
   } catch (error) {
     console.error("getCompanySetupProfileAction failed", error)
@@ -127,7 +115,6 @@ export async function saveCompanySetupProfileAction(
   try {
     const company = await apiFetch<BackendCompany>("/companies/me", {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(toBackend(profile)),
     })
     return { ok: true, profile: fromBackend(company) }

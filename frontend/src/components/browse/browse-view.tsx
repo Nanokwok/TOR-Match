@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react"
 import { Link2, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
+import { bookmarkTorAction } from "@/actions/workspace"
 import {
   filtersToQuery,
   TorFilterBar,
@@ -13,13 +14,11 @@ import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
-import { browseActions } from "@/lib/browse-actions"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
 import {
   pinTorToFront,
   type BrowseDeepLinkMeta,
 } from "@/lib/browse-deep-link"
-import type { CompanySetupProfile } from "@/types/company-setup"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
@@ -38,7 +37,6 @@ type BrowseViewProps = {
   initialDeepLink: BrowseDeepLinkMeta | null
   departments: LocalizedText[]
   localOffices: string[]
-  companyProfile: CompanySetupProfile | null
 }
 
 export function BrowseView({
@@ -47,7 +45,6 @@ export function BrowseView({
   initialDeepLink,
   departments,
   localOffices,
-  companyProfile,
 }: BrowseViewProps) {
   const { t } = useLocale()
   const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
@@ -60,6 +57,7 @@ export function BrowseView({
   const [isPending, startTransition] = useTransition()
   const [notFoundDismissed, setNotFoundDismissed] = useState(false)
   const [ineligibleHintDismissed, setIneligibleHintDismissed] = useState(false)
+  const [bookmarkError, setBookmarkError] = useState<string | null>(null)
 
   const linkedTorId =
     initialDeepLink?.found === true ? initialDeepLink.requestedId : null
@@ -78,14 +76,13 @@ export function BrowseView({
   const showNotFoundBanner =
     initialDeepLink?.found === false && !notFoundDismissed
 
-  const showIneligibleHint =
-    Boolean(
-      linkedTorId &&
-        selectedTor?.id === linkedTorId &&
-        selectedTor &&
-        !selectedTor.eligible &&
-        !ineligibleHintDismissed
-    )
+  const showIneligibleHint = Boolean(
+    linkedTorId &&
+      selectedTor?.id === linkedTorId &&
+      selectedTor &&
+      !selectedTor.eligible &&
+      !ineligibleHintDismissed
+  )
 
   function selectTor(id: string) {
     setSelectedId(id)
@@ -100,10 +97,7 @@ export function BrowseView({
       const result = await searchTorsAction(filtersToQuery(nextFilters))
       setItems(result.items)
 
-      if (
-        selectedId &&
-        result.items.some((item) => item.id === selectedId)
-      ) {
+      if (selectedId && result.items.some((item) => item.id === selectedId)) {
         const stillThere = result.items.find((item) => item.id === selectedId)
         if (stillThere) setAnchorTor(stillThere)
         return
@@ -146,16 +140,30 @@ export function BrowseView({
     setAnchorTor(selectedTor)
   }
 
-  function handleToggleBookmark(torId: string) {
+  function setBookmarked(torId: string, bookmarked: boolean) {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === torId ? { ...item, bookmarked: !item.bookmarked } : item
-      )
+      prev.map((item) => (item.id === torId ? { ...item, bookmarked } : item))
     )
     setAnchorTor((prev) =>
-      prev?.id === torId ? { ...prev, bookmarked: !prev.bookmarked } : prev
+      prev?.id === torId ? { ...prev, bookmarked } : prev
     )
-    browseActions.bookmarkTor(torId)
+  }
+
+  function handleToggleBookmark(torId: string) {
+    const current =
+      items.find((item) => item.id === torId) ??
+      (anchorTor?.id === torId ? anchorTor : null)
+    if (!current) return
+
+    const next = !current.bookmarked
+    setBookmarkError(null)
+    setBookmarked(torId, next)
+
+    void bookmarkTorAction(torId, next).then((result) => {
+      if (result.ok) return
+      setBookmarked(torId, current.bookmarked)
+      setBookmarkError(result.error)
+    })
   }
 
   return (
@@ -201,6 +209,15 @@ export function BrowseView({
         </div>
       ) : null}
 
+      {bookmarkError ? (
+        <p
+          role="alert"
+          className="border-b border-destructive/20 bg-destructive/5 px-4 py-2 text-sm text-destructive md:px-6"
+        >
+          {bookmarkError}
+        </p>
+      ) : null}
+
       <div
         className={`grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4 ${
           isPending ? "opacity-70" : ""
@@ -219,7 +236,6 @@ export function BrowseView({
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
           <TorDetail
             tor={selectedTor}
-            companyProfile={companyProfile}
             onToggleBookmark={handleToggleBookmark}
           />
         </section>
