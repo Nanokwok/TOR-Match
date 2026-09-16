@@ -77,7 +77,7 @@ function ProfileCell({
   onSelfAssessChange: (checked: boolean) => void
 }) {
   const router = useRouter()
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   if (!row.autoCheckable) {
     return (
@@ -110,19 +110,14 @@ function ProfileCell({
     )
   }
 
-  if (!row.companyValue) {
-    return <span className="text-sm text-muted-foreground">—</span>
-  }
-
   return (
-    <span
-      className={cn(
-        "font-medium",
-        row.passed ? "text-emerald-600" : "text-red-600"
-      )}
-    >
-      {row.passed ? "✓" : "✗"} {row.companyValue}
-    </span>
+    <div className="space-y-1">
+      <p className={cn("font-medium", row.status === "passed" ? "text-emerald-600" : row.status === "failed" ? "text-red-600" : "text-amber-600")}>
+        {t(`browse.qualificationStatus.${row.status}`)}
+      </p>
+      {row.companyValue ? <p>{row.companyValue}</p> : null}
+      <p className="text-xs text-muted-foreground">{pickLocalized(row.reason, locale)}</p>
+    </div>
   )
 }
 
@@ -142,7 +137,7 @@ function RequirementRows({
   const { locale } = useLocale()
 
   return rows.map((row, index) => (
-    <tr key={row.id} className="border-t border-border bg-card">
+    <tr key={row.requirementId} className="border-t border-border bg-card">
       <td className="px-4 py-3 font-medium text-foreground">
         {pickLocalized(row.requirement, locale)}
       </td>
@@ -154,8 +149,8 @@ function RequirementRows({
           row={row}
           profileSetup={profileSetup}
           showSetupPrompt={showSetupPrompt && index === 0}
-          selfAssessed={selfAssessedById[row.id] === true}
-          onSelfAssessChange={(checked) => onSelfAssessChange(row.id, checked)}
+          selfAssessed={selfAssessedById[row.requirementId] === true}
+          onSelfAssessChange={(checked) => onSelfAssessChange(row.requirementId, checked)}
         />
       </td>
     </tr>
@@ -174,7 +169,7 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
     const initial: Record<string, boolean> = {}
     for (const row of check.rows) {
       if (!row.autoCheckable && row.passed === true) {
-        initial[row.id] = true
+        initial[row.requirementId] = true
       }
     }
     return initial
@@ -189,6 +184,10 @@ export function TorQualificationPanel({ check }: TorQualificationPanelProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-border">
+      <p className="border-b border-border bg-muted/50 p-4 text-sm">
+        {t("browse.qualificationPanel.scopeNote")}
+        {check.requiresManualReview ? ` ${t("browse.qualificationPanel.pendingReview")}` : ""}
+      </p>
       <table className="w-full border-collapse text-left text-sm">
         <thead>
           <tr className="bg-primary text-primary-foreground">

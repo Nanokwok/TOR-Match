@@ -1,13 +1,11 @@
 import { ApiRequestError, apiFetch, getAuthToken } from "@/lib/api-client"
-import { localizedIncludes } from "@/lib/localized-content"
 import { localizedText } from "@/types/localized"
 import { getMockTeamMembers } from "@/server/db/mock/workspace"
-import { getMockTors } from "@/server/db/mock/tors"
 import {
   filterWorkspaceCards,
 } from "@/lib/workspace-board"
 import type { LocalizedText } from "@/types/localized"
-import type { Tor, TorPriority } from "@/types/tor"
+import type { Tor, TorListResult, TorPriority } from "@/types/tor"
 import type {
   WorkspaceBoardResult,
   WorkspaceCard,
@@ -100,41 +98,6 @@ function mapBackendCard(raw: BackendWorkspaceCard): WorkspaceCard {
   }
 }
 
-function mapBackendTorToTor(raw: BackendTor): Tor {
-  const id = String(raw._id)
-  return {
-    id,
-    announcementNo: raw.announcementNo,
-    title: toLocalized(raw.title, raw.announcementNo),
-    department: toLocalized(raw.department),
-    localOffice: toLocalized(raw.localOffice),
-    budgetBaht: raw.budgetBaht ?? 0,
-    projectScale: raw.projectScale ?? "MEDIUM",
-    durationDays: raw.durationDays ?? 0,
-    method: raw.method ?? "e-bidding",
-    status: raw.status ?? "open",
-    eligible: true,
-    bookmarked: false,
-    deadline: raw.deadline ?? "",
-    announcementDate: raw.announcementDate ?? "",
-    sourceUrl: raw.sourceUrl ?? "",
-    summary: toLocalized(raw.summary),
-    deliverables: {
-      en: raw.deliverables?.en ?? [],
-      th: raw.deliverables?.th ?? raw.deliverables?.en ?? [],
-    },
-    techTags: raw.techTags ?? [],
-    listTags: raw.listTags ?? [],
-    financials: raw.financials ?? {
-      totalBudgetBaht: raw.budgetBaht ?? 0,
-      medianPriceBaht: raw.budgetBaht ?? 0,
-      method: raw.method ?? "e-bidding",
-      milestones: [],
-    },
-    qualificationRequirements: raw.qualificationRequirements ?? [],
-  }
-}
-
 async function fetchBoardCards(): Promise<WorkspaceCard[]> {
   const data = await apiFetch<BackendBoardResponse>("/workspace/board")
   return WORKSPACE_COLUMNS.flatMap((column) =>
@@ -193,12 +156,7 @@ async function resolveBackendTorId(torIdOrKey: string): Promise<string | null> {
   if (!key) return null
   if (/^[a-f\d]{24}$/i.test(key)) return key
 
-  const mock = getMockTors().find(
-    (tor) =>
-      tor.id === key ||
-      tor.announcementNo.toLowerCase() === key.toLowerCase()
-  )
-  const announcementNo = mock?.announcementNo ?? key
+  const announcementNo = key
 
   const { items } = await apiFetch<{ items: BackendTor[]; total: number }>(
     `/tors?keyword=${encodeURIComponent(announcementNo)}`
@@ -265,31 +223,11 @@ export async function moveWorkspaceCard(
 }
 
 export async function searchTorsForWorkspace(keyword = "") {
+  // Not tor.service's listTors: that imports this module for bookmark state.
   const q = keyword.trim()
-  const path = q
-    ? `/tors?keyword=${encodeURIComponent(q)}`
-    : "/tors"
-
-  try {
-    const { items } = await apiFetch<{ items: BackendTor[]; total: number }>(
-      path
-    )
-    return items.slice(0, q ? 20 : 12).map(mapBackendTorToTor)
-  } catch (error) {
-    // Fall back to mock catalog if the TOR API is unavailable.
-    if (!(error instanceof ApiRequestError)) throw error
-    const tors = getMockTors()
-    if (!q) return tors.slice(0, 12)
-    const lower = q.toLowerCase()
-    return tors
-      .filter(
-        (tor) =>
-          tor.id.toLowerCase().includes(lower) ||
-          tor.announcementNo.toLowerCase().includes(lower) ||
-          localizedIncludes(tor.title, lower)
-      )
-      .slice(0, 20)
-  }
+  const path = q ? `/tors?keyword=${encodeURIComponent(q)}` : "/tors"
+  const { items } = await apiFetch<TorListResult>(path)
+  return items.slice(0, q ? 20 : 12)
 }
 
 export async function addTorToWorkspace(
