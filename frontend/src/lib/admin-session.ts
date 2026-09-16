@@ -8,6 +8,8 @@ export const USER_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
 export const ADMIN_SESSION_COOKIE = "tm_admin_session"
 
+export const ADMIN_API_TOKEN_COOKIE = "tm_admin_api_token"
+
 export type AdminSession = {
   email: string
   name: string
@@ -152,10 +154,21 @@ export async function clearAdminSessionCookie() {
   })
 }
 
-export function getAdminCredentials() {
-  return {
-    email: process.env.ADMIN_EMAIL || "admin@example.com",
-    password: process.env.ADMIN_PASSWORD || "admin123",
-    name: process.env.ADMIN_NAME || "Admin",
-  }
+export function adminApiTokenCookieOptions(
+  maxAge = ADMIN_SESSION_MAX_AGE_SECONDS
+): AdminSessionCookieOptions {
+  return adminSessionCookieOptions(maxAge)
+}
+
+export async function setAdminApiTokenCookie(token: string) {
+  const cookieStore = await cookies()
+  cookieStore.set(ADMIN_API_TOKEN_COOKIE, token, adminApiTokenCookieOptions())
+}
+
+export async function clearAdminApiTokenCookie() {
+  const cookieStore = await cookies()
+  cookieStore.set(ADMIN_API_TOKEN_COOKIE, "", {
+    ...adminApiTokenCookieOptions(0),
+    maxAge: 0,
+  })
 }
