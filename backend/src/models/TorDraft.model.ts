@@ -20,6 +20,12 @@ const torDraftSchema = new Schema(
   {
     ...torContentFields,
 
+    // Not required on a draft: the announcement page carries no deadline, so a
+    // metadata-only draft (`npm run scrape -- --no-extract`) arrives without
+    // one. A reviewer fills them in; publishing refuses until they have.
+    deadline: { type: String, default: "" },
+    announcementDate: { type: String, default: "" },
+
     reviewStatus: {
       type: String,
       enum: REVIEW_STATUSES,

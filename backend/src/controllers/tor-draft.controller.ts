@@ -124,6 +124,8 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
         autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
+        // The review form doesn't edit matching criteria; keep what's stored.
+        criteria: existing?.criteria,
       }
     }),
   }
@@ -171,6 +173,12 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   for (const field of ["title", "department", "localOffice", "summary"] as const) {
     if (!draft[field]?.en?.trim()) {
       throw ApiError.badRequest(`Cannot publish: ${field} is missing its English value`)
+    }
+  }
+  // Optional on drafts, required on published TORs.
+  for (const field of ["deadline", "announcementDate"] as const) {
+    if (!draft[field]?.trim()) {
+      throw ApiError.badRequest(`Cannot publish: ${field} is not set`)
     }
   }
 

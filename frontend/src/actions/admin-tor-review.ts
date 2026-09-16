@@ -71,7 +71,7 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
     id: draft._id,
     announcementId: draft.announcementNo,
     projectTitle: draft.title.en || draft.title.th,
-    department: draft.department.en,
+    department: draft.department.en || draft.department.th,
     budgetBaht: draft.budgetBaht,
     aiConfidence: draft.aiConfidence,
     reviewStatus: draft.reviewStatus,
