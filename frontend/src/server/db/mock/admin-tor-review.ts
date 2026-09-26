@@ -1,4 +1,5 @@
 import { getMockTors } from "@/server/db/mock/tors"
+import { defaultCriteriaForType } from "@/lib/qualification-criteria"
 import type { TorSeed } from "@/server/db/mock/tor-translations"
 import type {
   Tor,
@@ -268,11 +269,26 @@ export function createEmptyMilestone(
   }
 }
 
-export function createEmptyQualification(): ReviewQualification {
+export function createEmptyAutoQualification(): ReviewQualification {
+  return {
+    id: `req-${Math.random().toString(36).slice(2, 8)}`,
+    requirement: "Registered Capital",
+    torCriteria: "",
+    autoCheckable: true,
+    criteria: defaultCriteriaForType("registered-capital"),
+  }
+}
+
+export function createEmptyManualQualification(): ReviewQualification {
   return {
     id: `req-${Math.random().toString(36).slice(2, 8)}`,
     requirement: "",
     torCriteria: "",
     autoCheckable: false,
+    criteria: undefined,
   }
+}
+
+export function createEmptyQualification(): ReviewQualification {
+  return createEmptyManualQualification()
 }
