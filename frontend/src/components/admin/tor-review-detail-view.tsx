@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { ArrowLeft, Plus, Trash2, X } from "lucide-react"
 
@@ -17,6 +17,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -84,6 +89,20 @@ function toSafeIsoString(value: string, fallback: string): string {
   return Number.isNaN(date.getTime()) ? fallback : date.toISOString()
 }
 
+function subscribeDesktopMedia(callback: () => void) {
+  const media = window.matchMedia("(min-width: 1024px)")
+  media.addEventListener("change", callback)
+  return () => media.removeEventListener("change", callback)
+}
+
+function getDesktopSnapshot() {
+  return window.matchMedia("(min-width: 1024px)").matches
+}
+
+function getDesktopServerSnapshot() {
+  return true
+}
+
 export function TorReviewDetailView({
   tor,
   departments,
@@ -117,6 +136,12 @@ export function TorReviewDetailView({
   const [reviewStatus, setReviewStatus] = useState<TorReviewStatus>(
     tor.reviewStatus
   )
+  const isDesktop = useSyncExternalStore(
+    subscribeDesktopMedia,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot
+  )
+  const [isResizing, setIsResizing] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -331,16 +356,48 @@ export function TorReviewDetailView({
         </p>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 grid-rows-2 lg:grid-cols-2 lg:grid-rows-1">
-        <div className="min-h-0 overflow-hidden border-b bg-muted/30 lg:border-r lg:border-b-0">
-          <iframe
-            title={`TOR PDF ${announcementId}`}
-            src={tor.pdfUrl}
-            className="h-full w-full"
-          />
-        </div>
+      <ResizablePanelGroup
+        orientation={isDesktop ? "horizontal" : "vertical"}
+        className="min-h-0 flex-1"
+      >
+        <ResizablePanel
+          defaultSize="50%"
+          minSize="20%"
+          maxSize="80%"
+          className="flex min-h-0 flex-col overflow-hidden bg-muted/30"
+        >
+          <div className="flex h-9 shrink-0 items-center justify-between border-b bg-muted/40 px-3 text-xs text-muted-foreground">
+            <span className="font-medium">Original TOR Document (PDF)</span>
+          </div>
+          <div className="relative min-h-0 flex-1 w-full">
+            <iframe
+              title={`TOR PDF ${announcementId}`}
+              src={tor.pdfUrl}
+              className="h-full w-full border-none"
+            />
+            {isResizing ? (
+              <div className="absolute inset-0 z-50 bg-transparent" />
+            ) : null}
+          </div>
+        </ResizablePanel>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
+        <ResizableHandle
+          withHandle
+          onPointerDown={() => {
+            setIsResizing(true)
+            const handlePointerUp = () => {
+              setIsResizing(false)
+              window.removeEventListener("pointerup", handlePointerUp)
+            }
+            window.addEventListener("pointerup", handlePointerUp)
+          }}
+        />
+
+        <ResizablePanel
+          defaultSize="50%"
+          minSize="20%"
+          className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6"
+        >
           <form
             className="space-y-8"
             onSubmit={(event) => {
@@ -944,8 +1001,8 @@ export function TorReviewDetailView({
               </div>
             </section>
           </form>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   )
 }
