@@ -45,7 +45,9 @@ export function formatDuration(days: number, locale: Locale = "en") {
 }
 
 export function formatTorDeadline(isoDate: string, locale: Locale = "en") {
+  if (!isoDate?.trim()) return "—"
   const date = new Date(isoDate)
+  if (Number.isNaN(date.getTime())) return "—"
   const intl = localeToIntl(locale)
   const datePart = new Intl.DateTimeFormat(intl, {
     weekday: "long",
@@ -65,18 +67,23 @@ export function formatTorDeadline(isoDate: string, locale: Locale = "en") {
 }
 
 export function getDaysUntilDeadline(deadline: string) {
-  const now = new Date()
+  if (!deadline?.trim()) return 0
   const end = new Date(deadline)
+  if (Number.isNaN(end.getTime())) return 0
+  const now = new Date()
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 export function formatShortDate(isoDate: string, locale: Locale = "en") {
+  if (!isoDate?.trim()) return "—"
+  const date = new Date(isoDate)
+  if (Number.isNaN(date.getTime())) return "—"
   return new Intl.DateTimeFormat(localeToIntl(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",
     timeZone: "Asia/Bangkok",
-  }).format(new Date(isoDate))
+  }).format(date)
 }
 
 export function formatDaysLeft(
@@ -84,6 +91,7 @@ export function formatDaysLeft(
   locale: Locale = "en",
   labels?: { dueToday: string; oneDayLeft: string; daysLeft: string }
 ) {
+  if (!deadline?.trim() || Number.isNaN(new Date(deadline).getTime())) return "—"
   const days = getDaysUntilDeadline(deadline)
   const dueToday = labels?.dueToday ?? "Due today"
   const oneDayLeft = labels?.oneDayLeft ?? "1 Day Left"
@@ -95,8 +103,11 @@ export function formatDaysLeft(
 }
 
 export function formatRelativeTime(isoDate: string, locale: Locale = "en") {
+  if (!isoDate?.trim()) return "—"
+  const date = new Date(isoDate)
+  if (Number.isNaN(date.getTime())) return "—"
   const now = Date.now()
-  const then = new Date(isoDate).getTime()
+  const then = date.getTime()
   const diffMs = Math.max(0, now - then)
   const minutes = Math.floor(diffMs / (1000 * 60))
   const hours = Math.floor(diffMs / (1000 * 60 * 60))
