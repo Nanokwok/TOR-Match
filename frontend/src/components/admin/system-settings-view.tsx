@@ -2,12 +2,17 @@
 
 import { useState, type ReactNode } from "react"
 
-import type { AdminSystemSettings } from "@/server/db/mock/admin-settings"
+import {
+  resetAdminSystemSettingsAction,
+  updateAdminSystemSettingsAction,
+} from "@/actions/admin-settings"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
+import type { AdminSystemSettings } from "@/server/db/mock/admin-settings"
 
 type SystemSettingsViewProps = {
   initialSettings: AdminSystemSettings
@@ -18,6 +23,9 @@ export function SystemSettingsView({
 }: SystemSettingsViewProps) {
   const [settings, setSettings] = useState(initialSettings)
   const [message, setMessage] = useState<string | null>(null)
+  const [isError, setIsError] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
   function update<K extends keyof AdminSystemSettings>(
     key: K,
@@ -26,13 +34,34 @@ export function SystemSettingsView({
     setSettings((current) => ({ ...current, [key]: value }))
   }
 
-  function handleSave() {
-    setMessage("Settings saved (frontend only).")
+  async function handleSave() {
+    setIsSaving(true)
+    setMessage(null)
+    const result = await updateAdminSystemSettingsAction(settings)
+    if (result.ok) {
+      setSettings(result.settings)
+      setMessage("Settings saved successfully.")
+      setIsError(false)
+    } else {
+      setMessage(result.error)
+      setIsError(true)
+    }
+    setIsSaving(false)
   }
 
-  function handleReset() {
-    setSettings(initialSettings)
-    setMessage("Settings reset to defaults.")
+  async function handleReset() {
+    setIsResetting(true)
+    setMessage(null)
+    const result = await resetAdminSystemSettingsAction()
+    if (result.ok) {
+      setSettings(result.settings)
+      setMessage("Settings reset to defaults.")
+      setIsError(false)
+    } else {
+      setMessage(result.error)
+      setIsError(true)
+    }
+    setIsResetting(false)
   }
 
   return (
@@ -43,19 +72,35 @@ export function SystemSettingsView({
             System Settings
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure scraper, OCR, review automation, and admin security.
+            Configure API ingest, OCR, review automation, and admin security.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset}>
-            Reset
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={isSaving || isResetting}
+          >
+            {isResetting ? "Resetting..." : "Reset"}
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || isResetting}
+          >
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </div>
 
       {message ? (
-        <p className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+        <p
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm",
+            isError
+              ? "border-destructive/40 bg-destructive/10 text-destructive"
+              : "border-border bg-muted/40 text-muted-foreground"
+          )}
+        >
           {message}
         </p>
       ) : null}
@@ -63,12 +108,12 @@ export function SystemSettingsView({
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Scraper & OCR</CardTitle>
+            <CardTitle className="text-base">API Ingest & OCR</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <SettingRow
-              title="Enable scraper"
-              description="Run scheduled scrapes against source portals."
+              title="Enable automated ingest"
+              description="Run scheduled API collection against source portals."
             >
               <Switch
                 checked={settings.scraperEnabled}
@@ -79,7 +124,7 @@ export function SystemSettingsView({
             </SettingRow>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="scraper-interval">Scrape interval (min)</Label>
+                <Label htmlFor="scraper-interval">Ingest interval (min)</Label>
                 <Input
                   id="scraper-interval"
                   type="number"
