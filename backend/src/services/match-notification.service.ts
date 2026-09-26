@@ -43,7 +43,7 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
       category: "match" as const,
       torId: tor._id,
       autoVerifiedMatch: true,
-      link: "/browse",
+      link: `/browse?tor=${tor._id}`,
       action: "view-tor" as const,
       title: {
         en: `You now qualify for ${tor.title.en}`,

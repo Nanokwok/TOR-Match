@@ -27,14 +27,22 @@ const initialFilters: WorkspaceFiltersState = {
 
 type WorkspaceViewProps = {
   initialBoard: WorkspaceBoardResult
+  initialTorId?: string | null
+  initialTab?: "details" | "checklist"
 }
 
-export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
+export function WorkspaceView({
+  initialBoard,
+  initialTorId,
+  initialTab,
+}: WorkspaceViewProps) {
   const [filters, setFilters] = useState<WorkspaceFiltersState>(initialFilters)
   const [allCards, setAllCards] = useState(() =>
     flattenBoardColumns(initialBoard.columns)
   )
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(
+    initialTorId ?? null
+  )
   const [addColumnId, setAddColumnId] = useState<WorkspaceColumnId | null>(
     null
   )
@@ -50,7 +58,10 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
   )
 
   const selectedCard = useMemo(
-    () => allCards.find((card) => card.torId === selectedCardId) ?? null,
+    () =>
+      allCards.find(
+        (card) => card.torId === selectedCardId || card.id === selectedCardId
+      ) ?? null,
     [allCards, selectedCardId]
   )
 
@@ -120,6 +131,7 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
         card={selectedCard}
         members={initialBoard.members}
         onUpdateCard={handleUpdateCard}
+        initialTab={initialTab}
       />
 
       <AddTorToColumnDialog

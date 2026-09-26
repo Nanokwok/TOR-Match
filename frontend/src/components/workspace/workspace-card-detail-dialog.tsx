@@ -53,6 +53,7 @@ type WorkspaceCardDetailDialogProps = {
   card: WorkspaceCard | null;
   members: TeamMember[];
   onUpdateCard: (card: WorkspaceCard) => void;
+  initialTab?: "details" | "checklist";
 };
 
 export function WorkspaceCardDetailDialog({
@@ -61,6 +62,7 @@ export function WorkspaceCardDetailDialog({
   card,
   members,
   onUpdateCard,
+  initialTab = "details",
 }: WorkspaceCardDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,6 +73,7 @@ export function WorkspaceCardDetailDialog({
           members={members}
           onUpdateCard={onUpdateCard}
           onClose={() => onOpenChange(false)}
+          initialTab={initialTab}
         />
       ) : null}
     </Dialog>
@@ -82,6 +85,7 @@ type WorkspaceCardDetailBodyProps = {
   members: TeamMember[];
   onUpdateCard: (card: WorkspaceCard) => void;
   onClose: () => void;
+  initialTab?: "details" | "checklist";
 };
 
 function WorkspaceCardDetailBody({
@@ -89,6 +93,7 @@ function WorkspaceCardDetailBody({
   members,
   onUpdateCard,
   onClose,
+  initialTab = "details",
 }: WorkspaceCardDetailBodyProps) {
   const { locale, t } = useLocale();
   const [draft, setDraft] = useState(card);
@@ -229,7 +234,7 @@ function WorkspaceCardDetailBody({
           </p>
         </div>
 
-        <Tabs defaultValue="details" className="mt-5 gap-0">
+        <Tabs defaultValue={initialTab} className="mt-5 gap-0">
           <TabsList
             variant="line"
             className="h-auto w-full justify-start rounded-none border-b border-border bg-transparent p-0"
