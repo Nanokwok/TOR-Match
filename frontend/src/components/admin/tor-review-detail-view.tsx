@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDuration } from "@/lib/format"
+import { validateForm, type FormErrors } from "@/lib/tor-review-validation"
+import { cn } from "@/lib/utils"
 import type {
   ReviewMilestone,
   ReviewQualification,
@@ -95,8 +97,18 @@ export function TorReviewDetailView({
     tor.qualificationRequirements
   )
   const [message, setMessage] = useState<string | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const budgetNumber = Number(budget) || 0
+
+  function clearError(field: keyof FormErrors) {
+    setErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
 
   function updateDeliverable(index: number, value: string) {
     setDeliverables((current) =>
@@ -119,6 +131,7 @@ export function TorReviewDetailView({
     index: number,
     patch: Partial<ReviewMilestone>
   ) {
+    clearError("milestones")
     setMilestones((current) =>
       current.map((item, i) => {
         if (i !== index) return item
@@ -141,10 +154,40 @@ export function TorReviewDetailView({
   }
 
   function handleSaveDraft() {
-    setMessage("Draft saved (frontend only).")
+    const validationErrors = validateForm({
+      budget,
+      medianPrice,
+      announcementDate,
+      deadline,
+      durationDays,
+      milestones,
+    })
+
+    setErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) {
+      setMessage("Draft saved with validation warnings.")
+    } else {
+      setMessage("Draft saved (frontend only).")
+    }
   }
 
   function handleApprove() {
+    const validationErrors = validateForm({
+      budget,
+      medianPrice,
+      announcementDate,
+      deadline,
+      durationDays,
+      milestones,
+    })
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      setMessage("Please correct the validation errors before publishing.")
+      return
+    }
+
+    setErrors({})
     setMessage("Approved & published (frontend only).")
   }
 
@@ -175,7 +218,14 @@ export function TorReviewDetailView({
       </div>
 
       {message ? (
-        <p className="shrink-0 border-b bg-muted/40 px-4 py-2 text-sm text-muted-foreground sm:px-6">
+        <p
+          className={cn(
+            "shrink-0 border-b px-4 py-2 text-sm sm:px-6",
+            Object.keys(errors).length > 0
+              ? "border-destructive/30 bg-destructive/10 text-destructive"
+              : "border-border bg-muted/40 text-muted-foreground"
+          )}
+        >
           {message}
         </p>
       ) : null}
@@ -334,8 +384,16 @@ export function TorReviewDetailView({
                     id="duration-days"
                     inputMode="numeric"
                     value={durationDays}
-                    onChange={(event) => setDurationDays(event.target.value)}
+                    aria-invalid={Boolean(errors.durationDays)}
+                    className={cn(errors.durationDays && "border-destructive")}
+                    onChange={(event) => {
+                      setDurationDays(event.target.value)
+                      clearError("durationDays")
+                    }}
                   />
+                  {errors.durationDays ? (
+                    <p className="text-xs text-destructive">{errors.durationDays}</p>
+                  ) : null}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="duration-preview">Duration Label</Label>
@@ -358,22 +416,39 @@ export function TorReviewDetailView({
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deadline">Submission Deadline</Label>
-                  <Input
-                    id="deadline"
-                    type="datetime-local"
-                    value={deadline}
-                    onChange={(event) => setDeadline(event.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="announced">Announcement Date</Label>
                   <Input
                     id="announced"
                     type="datetime-local"
                     value={announcementDate}
-                    onChange={(event) => setAnnouncementDate(event.target.value)}
+                    aria-invalid={Boolean(errors.announcementDate)}
+                    className={cn(errors.announcementDate && "border-destructive")}
+                    onChange={(event) => {
+                      setAnnouncementDate(event.target.value)
+                      clearError("announcementDate")
+                      clearError("deadline")
+                    }}
                   />
+                  {errors.announcementDate ? (
+                    <p className="text-xs text-destructive">{errors.announcementDate}</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deadline">Submission Deadline</Label>
+                  <Input
+                    id="deadline"
+                    type="datetime-local"
+                    value={deadline}
+                    aria-invalid={Boolean(errors.deadline)}
+                    className={cn(errors.deadline && "border-destructive")}
+                    onChange={(event) => {
+                      setDeadline(event.target.value)
+                      clearError("deadline")
+                    }}
+                  />
+                  {errors.deadline ? (
+                    <p className="text-xs text-destructive">{errors.deadline}</p>
+                  ) : null}
                 </div>
               </div>
             </section>
@@ -550,9 +625,12 @@ export function TorReviewDetailView({
                     id="budget"
                     inputMode="numeric"
                     value={budget}
+                    aria-invalid={Boolean(errors.budget)}
+                    className={cn(errors.budget && "border-destructive")}
                     onChange={(event) => {
                       const next = event.target.value
                       setBudget(next)
+                      clearError("budget")
                       const nextBudget = Number(next) || 0
                       setMilestones((current) =>
                         current.map((item) => ({
@@ -564,6 +642,9 @@ export function TorReviewDetailView({
                       )
                     }}
                   />
+                  {errors.budget ? (
+                    <p className="text-xs text-destructive">{errors.budget}</p>
+                  ) : null}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="median-price">Median Price (THB)</Label>
@@ -571,19 +652,33 @@ export function TorReviewDetailView({
                     id="median-price"
                     inputMode="numeric"
                     value={medianPrice}
-                    onChange={(event) => setMedianPrice(event.target.value)}
+                    aria-invalid={Boolean(errors.medianPrice)}
+                    className={cn(errors.medianPrice && "border-destructive")}
+                    onChange={(event) => {
+                      setMedianPrice(event.target.value)
+                      clearError("medianPrice")
+                    }}
                   />
+                  {errors.medianPrice ? (
+                    <p className="text-xs text-destructive">{errors.medianPrice}</p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Label>Payment Milestones (Timeline)</Label>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Label>Payment Milestones (Timeline)</Label>
+                    {errors.milestones ? (
+                      <p className="text-xs text-destructive">{errors.milestones}</p>
+                    ) : null}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      clearError("milestones")
                       setMilestones((current) => [
                         ...current,
                         createEmptyMilestone(
@@ -591,7 +686,7 @@ export function TorReviewDetailView({
                           budgetNumber
                         ),
                       ])
-                    }
+                    }}
                   >
                     <Plus data-icon="inline-start" />
                     Add milestone
