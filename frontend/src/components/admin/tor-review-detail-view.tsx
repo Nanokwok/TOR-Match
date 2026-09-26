@@ -4,30 +4,25 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Plus, Trash2, X } from "lucide-react"
 
+import { saveTorReviewAction } from "@/actions/admin-tor-review"
 import {
   createEmptyMilestone,
   createEmptyQualification,
+  type ReviewMilestone,
+  type ReviewQualification,
   type TorReviewDetail,
+  type TorReviewStatus,
 } from "@/server/db/mock/admin-tor-review"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDuration } from "@/lib/format"
 import { validateForm, type FormErrors } from "@/lib/tor-review-validation"
 import { cn } from "@/lib/utils"
-import type {
-  ReviewMilestone,
-  ReviewQualification,
-} from "@/server/db/mock/admin-tor-review"
 import type {
   TorProcurementMethod,
   TorProcurementStatus,
@@ -37,6 +32,21 @@ import type {
 type TorReviewDetailViewProps = {
   tor: TorReviewDetail
   departments: string[]
+}
+
+const statusStyles: Record<TorReviewStatus, string> = {
+  "need-review":
+    "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  "auto-approved":
+    "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  approved:
+    "border-transparent bg-emerald-600 text-white dark:bg-emerald-500",
+}
+
+const statusLabels: Record<TorReviewStatus, string> = {
+  "need-review": "Need Review",
+  "auto-approved": "Auto approved",
+  approved: "Approved",
 }
 
 const PROJECT_SCALES: TorProjectScale[] = [
@@ -68,6 +78,12 @@ function toDateTimeLocal(iso: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+function toSafeIsoString(value: string, fallback: string): string {
+  if (!value) return fallback
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString()
+}
+
 export function TorReviewDetailView({
   tor,
   departments,
@@ -92,10 +108,17 @@ export function TorReviewDetailView({
   const [deliverables, setDeliverables] = useState(tor.deliverables)
   const [techTags, setTechTags] = useState(tor.techTags)
   const [techInput, setTechInput] = useState("")
+  const [listTags, setListTags] = useState(tor.listTags ?? [])
+  const [listTagInput, setListTagInput] = useState("")
   const [milestones, setMilestones] = useState(tor.milestones)
   const [qualifications, setQualifications] = useState(
     tor.qualificationRequirements
   )
+  const [reviewStatus, setReviewStatus] = useState<TorReviewStatus>(
+    tor.reviewStatus
+  )
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
 
@@ -127,6 +150,17 @@ export function TorReviewDetailView({
     setTechTags((current) => current.filter((item) => item !== tag))
   }
 
+  function addListTag() {
+    const next = listTagInput.trim()
+    if (!next || listTags.includes(next)) return
+    setListTags((current) => [...current, next])
+    setListTagInput("")
+  }
+
+  function removeListTag(tag: string) {
+    setListTags((current) => current.filter((item) => item !== tag))
+  }
+
   function updateMilestone(
     index: number,
     patch: Partial<ReviewMilestone>
@@ -153,8 +187,8 @@ export function TorReviewDetailView({
     )
   }
 
-  function handleSaveDraft() {
-    const validationErrors = validateForm({
+  function getValidationErrors(): FormErrors {
+    return validateForm({
       budget,
       medianPrice,
       announcementDate,
@@ -162,33 +196,84 @@ export function TorReviewDetailView({
       durationDays,
       milestones,
     })
+  }
 
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) {
-      setMessage("Draft saved with validation warnings.")
-    } else {
-      setMessage("Draft saved (frontend only).")
+  function buildPatch(): Partial<TorReviewDetail> {
+    return {
+      projectTitleTh,
+      projectTitleEn,
+      projectTitle: projectTitleEn,
+      announcementId,
+      department,
+      localOffice,
+      budgetBaht: budgetNumber,
+      medianPriceBaht: Number(medianPrice) || 0,
+      projectScale,
+      durationDays: Number(durationDays) || 0,
+      method,
+      status,
+      deadline: toSafeIsoString(deadline, tor.deadline),
+      announcementDate: toSafeIsoString(announcementDate, tor.announcementDate),
+      sourceUrl,
+      summary,
+      deliverables: deliverables.filter((item) => item.trim().length > 0),
+      techTags,
+      listTags,
+      milestones,
+      qualificationRequirements: qualifications,
     }
   }
 
-  function handleApprove() {
-    const validationErrors = validateForm({
-      budget,
-      medianPrice,
-      announcementDate,
-      deadline,
-      durationDays,
-      milestones,
-    })
+  async function handleSaveDraft() {
+    setIsSavingDraft(true)
+    setMessage(null)
+    const validationErrors = getValidationErrors()
+    setErrors(validationErrors)
 
+    try {
+      const res = await saveTorReviewAction(tor.id, buildPatch(), false)
+      if (!res.ok) {
+        setMessage(res.error)
+      } else {
+        setReviewStatus(res.review.reviewStatus)
+        setMessage(
+          Object.keys(validationErrors).length > 0
+            ? "Draft saved with validation warnings."
+            : "Draft saved successfully."
+        )
+      }
+    } catch {
+      setMessage("Failed to save draft. Please try again.")
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
+  async function handleApprove() {
+    const validationErrors = getValidationErrors()
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       setMessage("Please correct the validation errors before publishing.")
       return
     }
 
+    setIsPublishing(true)
+    setMessage(null)
     setErrors({})
-    setMessage("Approved & published (frontend only).")
+
+    try {
+      const res = await saveTorReviewAction(tor.id, buildPatch(), true)
+      if (!res.ok) {
+        setMessage(res.error)
+      } else {
+        setReviewStatus(res.review.reviewStatus)
+        setMessage("Approved & published successfully.")
+      }
+    } catch {
+      setMessage("Failed to approve and publish. Please try again.")
+    } finally {
+      setIsPublishing(false)
+    }
   }
 
   return (
@@ -205,15 +290,29 @@ export function TorReviewDetailView({
             <ArrowLeft data-icon="inline-start" />
             Back to Review List
           </Button>
-          <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-            {announcementId}: {projectTitleEn}
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
+              {announcementId}: {projectTitleEn}
+            </h1>
+            <Badge className={cn("shrink-0", statusStyles[reviewStatus])}>
+              {statusLabels[reviewStatus]}
+            </Badge>
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={handleSaveDraft}>
-            Save Draft
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isPublishing}
+          >
+            {isSavingDraft ? "Saving..." : "Save Draft"}
           </Button>
-          <Button onClick={handleApprove}>Approve & Publish</Button>
+          <Button
+            onClick={handleApprove}
+            disabled={isSavingDraft || isPublishing}
+          >
+            {isPublishing ? "Publishing..." : "Approve & Publish"}
+          </Button>
         </div>
       </div>
 
@@ -223,7 +322,9 @@ export function TorReviewDetailView({
             "shrink-0 border-b px-4 py-2 text-sm sm:px-6",
             Object.keys(errors).length > 0
               ? "border-destructive/30 bg-destructive/10 text-destructive"
-              : "border-border bg-muted/40 text-muted-foreground"
+              : reviewStatus === "approved" && message.includes("Approved")
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                : "border-border bg-muted/40 text-muted-foreground"
           )}
         >
           {message}
@@ -508,42 +609,84 @@ export function TorReviewDetailView({
                   Add deliverable
                 </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="tech-stack">Tech Tags</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="tech-stack"
-                    value={techInput}
-                    onChange={(event) => setTechInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault()
-                        addTechTag()
-                      }
-                    }}
-                    placeholder="Add a tag and press Enter"
-                  />
-                  <Button type="button" variant="outline" onClick={addTechTag}>
-                    Add
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {techTags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      className="gap-1 bg-primary/10 text-primary hover:bg-primary/15"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        className="rounded-sm opacity-70 hover:opacity-100"
-                        onClick={() => removeTechTag(tag)}
-                        aria-label={`Remove ${tag}`}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="tech-stack">Tech Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="tech-stack"
+                      value={techInput}
+                      onChange={(event) => setTechInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault()
+                          addTechTag()
+                        }
+                      }}
+                      placeholder="Add tech tag and press Enter"
+                    />
+                    <Button type="button" variant="outline" onClick={addTechTag}>
+                      Add
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {techTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        className="gap-1 bg-primary/10 text-primary hover:bg-primary/15"
                       >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                        {tag}
+                        <button
+                          type="button"
+                          className="rounded-sm opacity-70 hover:opacity-100"
+                          onClick={() => removeTechTag(tag)}
+                          aria-label={`Remove ${tag}`}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="list-tags">List / Category Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="list-tags"
+                      value={listTagInput}
+                      onChange={(event) => setListTagInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault()
+                          addListTag()
+                        }
+                      }}
+                      placeholder="Add category tag and press Enter"
+                    />
+                    <Button type="button" variant="outline" onClick={addListTag}>
+                      Add
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {listTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="gap-1"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          className="rounded-sm opacity-70 hover:opacity-100"
+                          onClick={() => removeListTag(tag)}
+                          aria-label={`Remove ${tag}`}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
             </section>
@@ -556,44 +699,62 @@ export function TorReviewDetailView({
                 {qualifications.map((item, index) => (
                   <div
                     key={item.id}
-                    className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]"
+                    className="space-y-3 rounded-lg border p-3"
                   >
-                    <div className="space-y-1.5">
-                      <Label>Requirement</Label>
-                      <Input
-                        value={item.requirement}
-                        onChange={(event) =>
-                          updateQualification(index, {
-                            requirement: event.target.value,
-                          })
+                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                      <div className="space-y-1.5">
+                        <Label>Requirement</Label>
+                        <Input
+                          value={item.requirement}
+                          onChange={(event) =>
+                            updateQualification(index, {
+                              requirement: event.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>TOR Criteria</Label>
+                        <Input
+                          value={item.torCriteria}
+                          onChange={(event) =>
+                            updateQualification(index, {
+                              torCriteria: event.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() =>
+                            setQualifications((current) =>
+                              current.filter((_, i) => i !== index)
+                            )
+                          }
+                          aria-label="Remove qualification"
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 border-t pt-2">
+                      <Switch
+                        id={`auto-checkable-${item.id}`}
+                        size="sm"
+                        checked={item.autoCheckable}
+                        onCheckedChange={(checked) =>
+                          updateQualification(index, { autoCheckable: checked })
                         }
                       />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>TOR Criteria</Label>
-                      <Input
-                        value={item.torCriteria}
-                        onChange={(event) =>
-                          updateQualification(index, {
-                            torCriteria: event.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() =>
-                          setQualifications((current) =>
-                            current.filter((_, i) => i !== index)
-                          )
-                        }
-                        aria-label="Remove qualification"
+                      <Label
+                        htmlFor={`auto-checkable-${item.id}`}
+                        className="cursor-pointer text-xs font-normal text-muted-foreground"
                       >
-                        <Trash2 />
-                      </Button>
+                        Auto-checkable by AI
+                      </Label>
                     </div>
                   </div>
                 ))}
