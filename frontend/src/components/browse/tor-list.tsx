@@ -113,9 +113,11 @@ export function TorList({
 
             <div className="mt-3 flex items-end justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
-                {tor.listTags.map((tag) => (
+                {tor.listTags.map((tag, index) => (
                   <span
-                    key={tag}
+                    // Index-suffixed: tags come from scraped announcement
+                    // metadata, so a repeated value is data we do not control.
+                    key={`${tag}-${index}`}
                     className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
                   >
                     {listTagLabel(tag, t)}

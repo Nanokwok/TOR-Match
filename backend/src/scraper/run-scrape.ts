@@ -112,6 +112,23 @@ const CLOSING_SOON_DAYS = 7
  * else alone. Status follows the page's project status first, then the bid
  * date: a cancelled project is closed even if its date is in the future.
  */
+/** What the site prints when a field has no value — never a useful tag. */
+const PLACEHOLDER_TAGS = new Set(["ไม่ระบุ", "-", "—", "n/a", "N/A"])
+
+/**
+ * Browse filter chips built from the announcement's own categories.
+ *
+ * De-duplicated because the two source fields often repeat each other (and are
+ * both "ไม่ระบุ" when the announcement states neither), and a repeated tag
+ * renders as a duplicate React key in the browse list.
+ */
+function browseTags(...values: (string | undefined)[]): string[] {
+  const tags = values
+    .map((value) => value?.trim() ?? "")
+    .filter((value) => value && !PLACEHOLDER_TAGS.has(value))
+  return [...new Set(tags)]
+}
+
 function pageDerivedFields(detail: BmaProjectDetail, now = new Date()) {
   const bidDateMatch = detail.bidDate.match(/\d{1,2}\/\d{1,2}\/\d{4}/)
   const deadline = bidDateMatch ? parseThaiDate(bidDateMatch[0]) ?? "" : ""
@@ -131,7 +148,7 @@ function pageDerivedFields(detail: BmaProjectDetail, now = new Date()) {
     status,
     deadline,
     // "ประเภทการจัดหา" and "พัสดุจัดหา", e.g. "เช่า" / "เช่ารถยนต์ที่ใช้ในราชการ".
-    listTags: [detail.procurementCategory, detail.procurementItem].filter(Boolean),
+    listTags: browseTags(detail.procurementCategory, detail.procurementItem),
     durationDays: detail.contractDurationDays ?? 0,
   }
 }
