@@ -4,6 +4,7 @@ import torRoutes from "@/routes/tor.routes"
 import companyRoutes from "@/routes/company.routes"
 import workspaceRoutes from "@/routes/workspace.routes"
 import notificationRoutes from "@/routes/notification.routes"
+import adminSettingsRoutes from "@/routes/admin-settings.routes"
 
 const router = Router()
 
@@ -14,5 +15,6 @@ router.use("/tors", torRoutes)
 router.use("/companies", companyRoutes)
 router.use("/workspace", workspaceRoutes)
 router.use("/notifications", notificationRoutes)
+router.use("/admin/settings", adminSettingsRoutes)
 
 export default router
