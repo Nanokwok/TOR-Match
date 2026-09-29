@@ -1,4 +1,4 @@
-export type OcrJobStatus = "running" | "success" | "failure"
+export type OcrJobStatus = "running" | "success" | "failure" | "skipped"
 
 export type OcrJobStage = "scrape" | "ocr" | "parse" | "index"
 

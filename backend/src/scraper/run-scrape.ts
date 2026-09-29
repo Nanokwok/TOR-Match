@@ -45,6 +45,11 @@ import {
   type BmaProjectDetail,
 } from "@/scraper/bma-client"
 import { extractTorFromPdf } from "@/scraper/extract"
+import {
+  classifyProject,
+  metadataRejects,
+  titleSuggestsSoftware,
+} from "@/scraper/software-filter"
 
 type Options = {
   pages: number
@@ -54,6 +59,7 @@ type Options = {
   dryRun: boolean
   noExtract: boolean
   refresh: boolean
+  allCategories: boolean
 }
 
 function parseArgs(argv: string[]): Options {
@@ -73,6 +79,9 @@ function parseArgs(argv: string[]): Options {
     dryRun: argv.includes("--dry-run"),
     noExtract: argv.includes("--no-extract"),
     refresh: argv.includes("--refresh"),
+    // The platform exists to match software companies to government work, so
+    // non-software announcements are filtered out by default. --all keeps them.
+    allCategories: argv.includes("--all"),
   }
 }
 
@@ -264,13 +273,17 @@ function countPdfPages(pdf: Buffer): number {
 function matchesFilters(listing: BmaListing, options: Options): boolean {
   if ((listing.budgetBaht ?? 0) < options.minBudget) return false
   if (options.keyword && !listing.title.includes(options.keyword)) return false
+  // Stage 1 of the software filter: free, and keeps the detail-page fetches
+  // below down to plausible candidates.
+  if (!options.allCategories && !titleSuggestsSoftware(listing)) return false
   return true
 }
 
 async function ingest(
   listing: BmaListing,
   page: Page,
-  context: BrowserContext
+  context: BrowserContext,
+  options: Options
 ): Promise<void> {
   const job = await ScrapeJob.create({
     documentSource: listing.projectNo,
@@ -281,6 +294,26 @@ async function ingest(
 
   try {
     const detail = await fetchProjectDetail(page, listing)
+
+    // Stages 2 and 3 of the software filter. Both run before the PDF is
+    // downloaded, so a rejected announcement never costs an extraction.
+    if (!options.allCategories) {
+      const rejected = metadataRejects(detail)
+      if (rejected) {
+        job.set({ status: "skipped", message: `Not software: ${rejected}` })
+        await job.save()
+        console.log(`[scrape] skip ${listing.projectNo} — not software (${rejected})`)
+        return
+      }
+
+      const verdict = await classifyProject(detail)
+      if (!verdict.isSoftwareProject) {
+        job.set({ status: "skipped", message: `Not software: ${verdict.reason}` })
+        await job.save()
+        console.log(`[scrape] skip ${listing.projectNo} — not software (${verdict.reason})`)
+        return
+      }
+    }
 
     const document = pickTorDocument(detail.documents)
     if (!document) {
@@ -415,7 +448,7 @@ async function main() {
       if (options.noExtract) {
         await ingestMetadataOnly(listing, page)
       } else {
-        await ingest(listing, page, context)
+        await ingest(listing, page, context, options)
       }
     }
   } finally {

@@ -3,7 +3,7 @@
  * /admin/scraper-ocr. Mirrors ScrapeJob in the backend.
  */
 
-export type OcrJobStatus = "running" | "success" | "failure"
+export type OcrJobStatus = "running" | "success" | "failure" | "skipped"
 
 /**
  * "ocr" is currently never produced: Claude reads announcement PDFs directly,

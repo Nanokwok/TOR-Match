@@ -54,6 +54,12 @@ export const env = {
   vertexRegion: process.env.VERTEX_REGION ?? "global",
   /** Overridable: which Claude models a Vertex project can call varies by project and region. */
   extractionModel: process.env.EXTRACTION_MODEL ?? "claude-opus-5",
+  /**
+   * Screens listings for software work before any PDF is read. It judges a
+   * title and a few metadata fields, not a document, so the cheapest model is
+   * the right one — the saving comes from the extraction calls it prevents.
+   */
+  classifierModel: process.env.CLASSIFIER_MODEL ?? "claude-haiku-4-5",
   bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
   /**
    * Sent on every scraper request. egp2.bangkok.go.th's robots.txt allows

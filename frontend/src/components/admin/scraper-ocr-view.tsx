@@ -52,12 +52,15 @@ const statusStyles: Record<OcrJobStatus, string> = {
     "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
   failure:
     "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  skipped:
+    "border-transparent bg-muted text-muted-foreground",
 }
 
 const statusLabels: Record<OcrJobStatus, string> = {
   running: "Running",
   success: "Success",
   failure: "Failure",
+  skipped: "Skipped",
 }
 
 const stageLabels: Record<OcrJobStage, string> = {

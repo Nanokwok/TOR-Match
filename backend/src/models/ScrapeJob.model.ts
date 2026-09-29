@@ -11,7 +11,8 @@ import { Schema, model, type InferSchemaType, type HydratedDocument } from "mong
  */
 
 export const SCRAPE_JOB_STAGES = ["scrape", "ocr", "parse", "index"] as const
-export const SCRAPE_JOB_STATUSES = ["running", "success", "failure"] as const
+/** "skipped": filtered out before extraction (e.g. not a software project). */
+export const SCRAPE_JOB_STATUSES = ["running", "success", "failure", "skipped"] as const
 
 const scrapeJobSchema = new Schema(
   {
