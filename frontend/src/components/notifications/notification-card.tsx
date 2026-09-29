@@ -44,12 +44,14 @@ type NotificationCardProps = {
   notification: AppNotification;
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onNavigate?: () => void;
 };
 
 export function NotificationCard({
   notification,
   onMarkRead,
   onDelete,
+  onNavigate,
 }: NotificationCardProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
@@ -62,6 +64,7 @@ export function NotificationCard({
   function handleActivate() {
     onMarkRead(notification.id);
     if (notification.link) {
+      onNavigate?.();
       router.push(notification.link);
     }
   }
