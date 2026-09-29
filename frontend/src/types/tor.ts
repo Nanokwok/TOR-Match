@@ -1,4 +1,5 @@
 import type { LocalizedList, LocalizedText } from "@/types/localized"
+import type { QualificationCriteria } from "@/types/qualification-criteria"
 
 export type TorProjectScale = "SMALL" | "MEDIUM" | "LARGE" | "ENTERPRISE"
 
@@ -44,8 +45,8 @@ export type TorQualificationRequirement = {
   id: string
   requirement: LocalizedText
   torCriteria: LocalizedText
-  /** When true, eligibility can be checked against the company profile. */
   autoCheckable: boolean
+  criteria?: QualificationCriteria
 }
 
 export type Tor = {

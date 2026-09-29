@@ -1,8 +1,9 @@
-import type {  Tor } from "@/types/tor";
+import type { Tor } from "@/types/tor";
 import {
   applyTorTranslations,
   type TorSeed,
 } from "@/server/db/mock/tor-translations";
+import type { QualificationCriteria } from "@/types/qualification-criteria";
 
 function milestonesForBudget(totalBudgetBaht: number) {
   const schedule = [
@@ -56,24 +57,44 @@ function defaultQualifications(
       requirement: "Registered Capital",
       torCriteria: `≥ ${minCapital.toLocaleString("en-US")} THB`,
       autoCheckable: true,
+      criteria: {
+        type: "registered-capital",
+        op: ">=",
+        amountThb: minCapital,
+      } satisfies QualificationCriteria,
     },
     {
       id: "past-performance",
       requirement: "Past Performance",
       torCriteria: `Web App Contract ≥ ${pastContractMin.toLocaleString("en-US")} THB`,
       autoCheckable: true,
+      criteria: {
+        type: "past-contract",
+        op: ">=",
+        amountThb: pastContractMin,
+      } satisfies QualificationCriteria,
     },
     {
       id: "certifications",
       requirement: "Certifications",
       torCriteria: "ISO/IEC 29110 or CMMI Level 2+",
       autoCheckable: true,
+      criteria: {
+        type: "certification",
+        mode: "any",
+        ids: ["iso-29110", "cmmi-2"],
+        customIds: [],
+      } satisfies QualificationCriteria,
     },
     {
       id: "deal-breaker",
       requirement: "Deal-Breaker Clauses",
       torCriteria: "Must be registered e-GP Vendor",
       autoCheckable: true,
+      criteria: {
+        type: "egp-registered",
+        requiredStatus: "registered",
+      } satisfies QualificationCriteria,
     },
   ]
 }
@@ -86,6 +107,7 @@ function manualQualifications(): TorSeed["qualificationRequirements"] {
       torCriteria:
         "Must have prior experience delivering procurement or budget systems for government agencies",
       autoCheckable: false,
+      criteria: { type: "manual" } satisfies QualificationCriteria,
     },
     {
       id: "manual-team",
@@ -93,6 +115,7 @@ function manualQualifications(): TorSeed["qualificationRequirements"] {
       torCriteria:
         "Must assign a full-time project manager and at least 2 senior developers for the contract duration",
       autoCheckable: false,
+      criteria: { type: "manual" } satisfies QualificationCriteria,
     },
   ]
 }

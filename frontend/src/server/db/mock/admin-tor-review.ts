@@ -1,4 +1,5 @@
 import { getMockTors } from "@/server/db/mock/tors"
+import { defaultCriteriaForType } from "@/lib/qualification-criteria"
 import type { TorSeed } from "@/server/db/mock/tor-translations"
 import type {
   Tor,
@@ -164,15 +165,82 @@ function toReviewDetail(tor: Tor, index: number): TorReviewDetail {
   }
 }
 
+declare global {
+  var __editedTorReviewDetails: Map<string, TorReviewDetail> | undefined
+}
+
+const editedReviewDetails: Map<string, TorReviewDetail> =
+  globalThis.__editedTorReviewDetails ??
+  (globalThis.__editedTorReviewDetails = new Map<string, TorReviewDetail>())
+
 export function listTorReviews(): TorReviewListItem[] {
-  return getMockTors().map(toReviewListItem)
+  const base = getMockTors().map(toReviewListItem)
+  return base.map((item) => {
+    const edited = editedReviewDetails.get(item.id)
+    if (!edited) return item
+    return {
+      id: edited.id,
+      announcementId: edited.announcementId,
+      projectTitle: edited.projectTitleEn || edited.projectTitle,
+      department: edited.department,
+      budgetBaht: edited.budgetBaht,
+      aiConfidence: edited.aiConfidence,
+      reviewStatus: edited.reviewStatus,
+    }
+  })
 }
 
 export function getTorReviewById(id: string): TorReviewDetail | null {
+  const cached = editedReviewDetails.get(id)
+  if (cached) return { ...cached }
+
   const tors = getMockTors()
   const index = tors.findIndex((tor) => tor.id === id)
   if (index < 0) return null
   return toReviewDetail(tors[index], index)
+}
+
+export function saveTorReview(
+  id: string,
+  patch: Partial<TorReviewDetail>,
+  publish = false
+): TorReviewDetail | null {
+  const existing = getTorReviewById(id)
+  if (!existing) return null
+
+  const updated: TorReviewDetail = {
+    ...existing,
+    ...patch,
+    id: existing.id,
+    projectTitle:
+      patch.projectTitleEn ||
+      patch.projectTitle ||
+      existing.projectTitleEn ||
+      existing.projectTitle,
+    budgetBaht:
+      patch.budgetBaht != null ? Number(patch.budgetBaht) : existing.budgetBaht,
+    medianPriceBaht:
+      patch.medianPriceBaht != null
+        ? Number(patch.medianPriceBaht)
+        : existing.medianPriceBaht,
+    durationDays:
+      patch.durationDays != null
+        ? Number(patch.durationDays)
+        : existing.durationDays,
+    deadline:
+      patch.deadline && !Number.isNaN(new Date(patch.deadline).getTime())
+        ? new Date(patch.deadline).toISOString()
+        : (patch.deadline ?? existing.deadline),
+    announcementDate:
+      patch.announcementDate &&
+      !Number.isNaN(new Date(patch.announcementDate).getTime())
+        ? new Date(patch.announcementDate).toISOString()
+        : (patch.announcementDate ?? existing.announcementDate),
+    reviewStatus: publish ? "approved" : (patch.reviewStatus ?? "need-review"),
+  }
+
+  editedReviewDetails.set(id, updated)
+  return { ...updated }
 }
 
 export const torReviewDepartments = Array.from(
@@ -201,11 +269,26 @@ export function createEmptyMilestone(
   }
 }
 
-export function createEmptyQualification(): ReviewQualification {
+export function createEmptyAutoQualification(): ReviewQualification {
+  return {
+    id: `req-${Math.random().toString(36).slice(2, 8)}`,
+    requirement: "Registered Capital",
+    torCriteria: "",
+    autoCheckable: true,
+    criteria: defaultCriteriaForType("registered-capital"),
+  }
+}
+
+export function createEmptyManualQualification(): ReviewQualification {
   return {
     id: `req-${Math.random().toString(36).slice(2, 8)}`,
     requirement: "",
     torCriteria: "",
     autoCheckable: false,
+    criteria: undefined,
   }
+}
+
+export function createEmptyQualification(): ReviewQualification {
+  return createEmptyManualQualification()
 }
