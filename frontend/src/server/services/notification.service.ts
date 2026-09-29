@@ -3,6 +3,12 @@ import "server-only"
 import { cookies } from "next/headers"
 import { apiFetch } from "@/lib/api-client"
 import { required } from "@/lib/env"
+import {
+  deleteMockNotification,
+  getMockNotifications,
+  markAllMockNotificationsRead,
+  markMockNotificationRead,
+} from "@/server/db/mock/notifications"
 import type { AppNotification } from "@/types/notification"
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -19,28 +25,59 @@ function fromBackend(notification: BackendNotification): AppNotification {
 
 export async function listNotifications(): Promise<AppNotification[]> {
   const headers = await authHeaders()
-  if (!headers.Authorization) return []
-  const items = await apiFetch<BackendNotification[]>("/notifications", { headers })
-  return items.map(fromBackend)
+  if (!headers.Authorization) return getMockNotifications()
+  try {
+    const items = await apiFetch<BackendNotification[]>("/notifications", { headers })
+    return items.length > 0 ? items.map(fromBackend) : getMockNotifications()
+  } catch {
+    return getMockNotifications()
+  }
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  await apiFetch(`/notifications/${encodeURIComponent(id)}/read`, {
-    method: "PATCH",
-    headers: await authHeaders(),
-  })
+  const headers = await authHeaders()
+  if (!headers.Authorization) {
+    markMockNotificationRead(id)
+    return
+  }
+  try {
+    await apiFetch(`/notifications/${encodeURIComponent(id)}/read`, {
+      method: "PATCH",
+      headers,
+    })
+  } catch {
+    markMockNotificationRead(id)
+  }
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  await apiFetch("/notifications/read-all", {
-    method: "PATCH",
-    headers: await authHeaders(),
-  })
+  const headers = await authHeaders()
+  if (!headers.Authorization) {
+    markAllMockNotificationsRead()
+    return
+  }
+  try {
+    await apiFetch("/notifications/read-all", {
+      method: "PATCH",
+      headers,
+    })
+  } catch {
+    markAllMockNotificationsRead()
+  }
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  await apiFetch(`/notifications/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: await authHeaders(),
-  })
+  const headers = await authHeaders()
+  if (!headers.Authorization) {
+    deleteMockNotification(id)
+    return
+  }
+  try {
+    await apiFetch(`/notifications/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers,
+    })
+  } catch {
+    deleteMockNotification(id)
+  }
 }

@@ -1,3 +1,5 @@
+import { defaultCriteriaForType } from "@/lib/qualification-criteria"
+import type { QualificationCriteria } from "@/types/qualification-criteria"
 import type {
   TorPaymentMilestone,
   TorProcurementMethod,
@@ -26,6 +28,11 @@ export type ReviewQualification = Omit<
 > & {
   requirement: string
   torCriteria: string
+  /**
+   * Structured form of `torCriteria` for the rows the system can check itself.
+   * Manual requirements leave it undefined and are judged by a reviewer.
+   */
+  criteria?: QualificationCriteria
 }
 
 export type TorReviewStatus = "need-review" | "auto-approved" | "approved"
@@ -85,14 +92,37 @@ export function createEmptyMilestone(
   }
 }
 
-export function createEmptyQualification(): ReviewQualification {
+/**
+ * Client-side only id. The backend keys the Thai side of an existing row on it,
+ * so a row added here starts with no Thai counterpart — which is correct, since
+ * a reviewer typing a new requirement has only written one language.
+ */
+function newQualificationId() {
+  return `req-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** A requirement the system evaluates against the company profile. */
+export function createEmptyAutoQualification(): ReviewQualification {
   return {
-    // Client-side only. The backend keys the Thai side of an existing row on
-    // this id, so a row added here starts with no Thai counterpart — which is
-    // correct, since a reviewer typing a new requirement has only written English.
-    id: `req-${Math.random().toString(36).slice(2, 8)}`,
+    id: newQualificationId(),
+    requirement: "Registered Capital",
+    torCriteria: "",
+    autoCheckable: true,
+    criteria: defaultCriteriaForType("registered-capital"),
+  }
+}
+
+/** A requirement a reviewer has to judge by hand. */
+export function createEmptyManualQualification(): ReviewQualification {
+  return {
+    id: newQualificationId(),
     requirement: "",
     torCriteria: "",
     autoCheckable: false,
+    criteria: undefined,
   }
+}
+
+export function createEmptyQualification(): ReviewQualification {
+  return createEmptyManualQualification()
 }
