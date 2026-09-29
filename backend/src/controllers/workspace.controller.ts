@@ -50,3 +50,16 @@ export const removeCard = asyncHandler(async (req: Request, res: Response) => {
   if (!result) throw ApiError.notFound("Card not found")
   res.status(204).send()
 })
+
+export const removeCardByTorId = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) throw ApiError.unauthorized()
+  const { torId } = req.params
+  if (!torId) throw ApiError.badRequest("torId is required")
+
+  const result = await WorkspaceCard.findOneAndDelete({
+    ownerId: req.user.sub,
+    torId,
+  })
+  if (!result) throw ApiError.notFound("Card not found")
+  res.status(204).send()
+})

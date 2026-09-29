@@ -1,3 +1,4 @@
+import { defaultCriteriaForType } from "@/lib/qualification-criteria"
 import type {
   TorPaymentMilestone,
   TorProcurementMethod,
@@ -86,13 +87,28 @@ export function createEmptyMilestone(
 }
 
 export function createEmptyQualification(): ReviewQualification {
+  return createEmptyManualQualification()
+}
+
+export function createEmptyAutoQualification(): ReviewQualification {
   return {
     // Client-side only. The backend keys the Thai side of an existing row on
     // this id, so a row added here starts with no Thai counterpart — which is
     // correct, since a reviewer typing a new requirement has only written English.
     id: `req-${Math.random().toString(36).slice(2, 8)}`,
+    requirement: "Registered Capital",
+    torCriteria: "",
+    autoCheckable: true,
+    criteria: defaultCriteriaForType("registered-capital"),
+  }
+}
+
+export function createEmptyManualQualification(): ReviewQualification {
+  return {
+    id: `req-${Math.random().toString(36).slice(2, 8)}`,
     requirement: "",
     torCriteria: "",
     autoCheckable: false,
+    criteria: undefined,
   }
 }

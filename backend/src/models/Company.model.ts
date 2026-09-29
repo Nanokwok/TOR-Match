@@ -21,13 +21,19 @@ const pastProjectSchema = new Schema(
   { timestamps: false }
 )
 
+export const COMPANY_STATUSES = ["pending", "active", "suspended"] as const
+export type CompanyStatus = (typeof COMPANY_STATUSES)[number]
+
+export const COMPANY_SIZES = ["micro", "small", "medium", "large"] as const
+export type CompanySize = (typeof COMPANY_SIZES)[number]
+
 const companySchema = new Schema(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     companyNameThai: { type: String, default: "" },
     companyNameEnglish: { type: String, default: "" },
     taxId: { type: String, default: "" },
-    companySize: { type: String, enum: ["micro", "small", "medium", "large", ""], default: "" },
+    companySize: { type: String, enum: [...COMPANY_SIZES, ""], default: "" },
     contactEmail: { type: String, default: "" },
     phone: { type: String, default: "" },
     registeredCapitalThb: { type: String, default: "" },
@@ -37,6 +43,11 @@ const companySchema = new Schema(
       default: "not-registered",
     },
     notBlacklisted: { type: Boolean, default: true },
+    status: {
+      type: String,
+      enum: COMPANY_STATUSES,
+      index: true,
+    },
     certifications: { type: [certificationSchema], default: [] },
     pastProjects: { type: [pastProjectSchema], default: [] },
     techStack: { type: [String], default: [] },

@@ -1,22 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
-import {
-  // companyPlanLabels,
-  companySizeLabels,
-  companyStatusLabels,
-  type AdminCompanyDetail,
-  type AdminCompanyStatus,
-} from "@/server/db/mock/admin-companies"
+import { updateAdminCompanyStatusAction } from "@/actions/admin-companies"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import {
+  getCertificationLabel,
+  getSpecializationLabel,
+} from "@/lib/company-setup"
 import { formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import type { CertificationId, SpecializationId } from "@/types/company-setup"
+import {
+  companyStatusLabels,
+  formatCompanySize,
+  type AdminCompanyDetail,
+  type AdminCompanyStatus,
+} from "@/types/admin-company"
 
 type CompanyDetailViewProps = {
   company: AdminCompanyDetail
@@ -37,35 +43,31 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Asia/Bangkok",
-  }).format(new Date(value))
+function labelSpecialization(id: string) {
+  return getSpecializationLabel(id as SpecializationId)
+}
+
+function labelCertification(id: string) {
+  return getCertificationLabel(id as CertificationId)
 }
 
 export function CompanyDetailView({ company }: CompanyDetailViewProps) {
-  const [status, setStatus] = useState(company.status)
+  const router = useRouter()
   const [message, setMessage] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const status = company.status
 
-  function handleApprove() {
-    setStatus("active")
-    setMessage("Company approved (frontend only).")
-  }
-
-  function handleSuspend() {
-    setStatus("suspended")
-    setMessage("Company suspended (frontend only).")
-  }
-
-  function handleReactivate() {
-    setStatus("active")
-    setMessage("Company reactivated (frontend only).")
+  function applyStatus(next: AdminCompanyStatus, successMessage: string) {
+    setMessage(null)
+    startTransition(async () => {
+      const result = await updateAdminCompanyStatusAction(company.id, next)
+      if (!result.ok) {
+        setMessage(result.error)
+        return
+      }
+      setMessage(successMessage)
+      router.refresh()
+    })
   }
 
   return (
@@ -84,27 +86,41 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
           </Button>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-              {company.nameEnglish}
+              {company.nameEnglish || company.nameThai || "Company"}
             </h1>
             <Badge className={cn(statusStyles[status])}>
               {companyStatusLabels[status]}
             </Badge>
           </div>
           <p className="truncate text-sm text-muted-foreground">
-            {company.nameThai}
+            {company.nameThai || "—"}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {status === "pending" ? (
-            <Button onClick={handleApprove}>Approve</Button>
+            <Button
+              disabled={isPending}
+              onClick={() => applyStatus("active", "Company approved.")}
+            >
+              Approve
+            </Button>
           ) : null}
           {status === "active" ? (
-            <Button variant="outline" onClick={handleSuspend}>
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={() => applyStatus("suspended", "Company suspended.")}
+            >
               Suspend
             </Button>
           ) : null}
           {status === "suspended" ? (
-            <Button onClick={handleReactivate}>Reactivate</Button>
+            <Button
+              disabled={isPending}
+              onClick={() => applyStatus("active", "Company reactivated.")}
+            >
+              Reactivate
+            </Button>
           ) : null}
         </div>
       </div>
@@ -121,14 +137,16 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
             <CardTitle className="text-base">Company Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <DetailRow label="Tax ID" value={company.taxId} mono />
-            <DetailRow label="Contact Email" value={company.contactEmail} />
-            <DetailRow label="Phone" value={company.phone} />
-            <DetailRow label="Address" value={company.address} />
+            <DetailRow label="Tax ID" value={company.taxId || "—"} mono />
+            <DetailRow
+              label="Contact Email"
+              value={company.contactEmail || "—"}
+            />
+            <DetailRow label="Phone" value={company.phone || "—"} />
             <Separator />
             <DetailRow
               label="Company Size"
-              value={companySizeLabels[company.size]}
+              value={formatCompanySize(company.size)}
             />
             <DetailRow
               label="Registered Capital"
@@ -144,33 +162,26 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Account</CardTitle>
-            {/* <CardTitle className="text-base">Account & Plan</CardTitle> */}
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            {/* Subscription plan (Free / Pro / Enterprise) — hidden for now
-            <DetailRow
-              label="Subscription"
-              value={companyPlanLabels[company.plan]}
-            />
-            */}
             <DetailRow
               label="Team Members"
               value={String(company.memberCount)}
             />
             <DetailRow label="Joined" value={formatDate(company.joinedAt)} />
-            <DetailRow
-              label="Last Login"
-              value={formatDateTime(company.lastLoginAt)}
-            />
             <Separator />
             <div className="space-y-2">
               <p className="text-muted-foreground">Specializations</p>
               <div className="flex flex-wrap gap-1.5">
-                {company.specializations.map((item) => (
-                  <Badge key={item} variant="secondary">
-                    {item}
-                  </Badge>
-                ))}
+                {company.specializations.length > 0 ? (
+                  company.specializations.map((item) => (
+                    <Badge key={item} variant="secondary">
+                      {labelSpecialization(item)}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground">None</span>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -179,7 +190,7 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
                 {company.certifications.length > 0 ? (
                   company.certifications.map((item) => (
                     <Badge key={item} variant="outline">
-                      {item}
+                      {labelCertification(item)}
                     </Badge>
                   ))
                 ) : (

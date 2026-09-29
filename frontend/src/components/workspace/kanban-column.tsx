@@ -6,6 +6,7 @@ import { Plus } from "lucide-react"
 
 import { SortableWorkspaceTorCard } from "@/components/workspace/sortable-workspace-tor-card"
 import { WorkspaceTorCard } from "@/components/workspace/workspace-tor-card"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { workspaceActions } from "@/lib/workspace-actions"
 import { cn } from "@/lib/utils"
@@ -39,14 +40,18 @@ export function KanbanColumn({
         onRequestAddTor={onRequestAddTor}
       >
         <div className="flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2">
-          {cards.map((card) => (
-            <WorkspaceTorCard
-              key={card.torId}
-              card={card}
-              onOpenDetails={onOpenCardDetails}
-              onDelete={onDeleteCard}
-            />
-          ))}
+          {cards.length === 0 ? (
+            <KanbanColumnEmptyHint />
+          ) : (
+            cards.map((card) => (
+              <WorkspaceTorCard
+                key={card.torId}
+                card={card}
+                onOpenDetails={onOpenCardDetails}
+                onDelete={onDeleteCard}
+              />
+            ))
+          )}
         </div>
       </KanbanColumnShell>
     )
@@ -88,16 +93,32 @@ function DroppableKanbanColumn({
           isOver && "bg-accent"
         )}
       >
-        {cards.map((card) => (
-          <SortableWorkspaceTorCard
-            key={card.torId}
-            card={card}
-            onOpenDetails={onOpenCardDetails}
-            onDelete={onDeleteCard}
-          />
-        ))}
+        {cards.length === 0 ? (
+          <KanbanColumnEmptyHint />
+        ) : (
+          cards.map((card) => (
+            <SortableWorkspaceTorCard
+              key={card.torId}
+              card={card}
+              onOpenDetails={onOpenCardDetails}
+              onDelete={onDeleteCard}
+            />
+          ))
+        )}
       </div>
     </KanbanColumnShell>
+  )
+}
+
+function KanbanColumnEmptyHint() {
+  const { t } = useLocale()
+
+  return (
+    <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/30 px-3 py-8 text-center">
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        {t("workspace.empty.columnHint")}
+      </p>
+    </div>
   )
 }
 

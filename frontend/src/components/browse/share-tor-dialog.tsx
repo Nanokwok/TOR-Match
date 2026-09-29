@@ -69,8 +69,10 @@ export function ShareTorDialog({
   onOpenChange,
   tor,
 }: ShareTorDialogProps) {
-  const { locale } = useLocale()
+  const { locale, t } = useLocale()
   const [copied, setCopied] = useState(false)
+
+  const title = pickLocalized(tor.title, locale)
 
   const shareUrl = useMemo(() => {
     if (typeof window === "undefined") {
@@ -79,7 +81,13 @@ export function ShareTorDialog({
     return `${window.location.origin}/browse?tor=${encodeURIComponent(tor.id)}`
   }, [tor.id])
 
-  const shareText = `${tor.title} — ${tor.announcementNo}`
+  const qrSrc = useMemo(
+    () =>
+      `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(shareUrl)}`,
+    [shareUrl]
+  )
+
+  const shareText = `${title} — ${tor.announcementNo}`
 
   const socialLinks = [
     {
@@ -113,7 +121,7 @@ export function ShareTorDialog({
     {
       id: "email",
       label: "Email",
-      href: `mailto:?subject=${encodeURIComponent(`TOR: ${tor.title}`)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
+      href: `mailto:?subject=${encodeURIComponent(`TOR: ${title}`)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`,
       icon: Mail,
       className: "bg-muted text-foreground hover:bg-muted/80",
     },
@@ -123,7 +131,7 @@ export function ShareTorDialog({
     try {
       await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
+      window.setTimeout(() => setCopied(false), 2500)
     } catch {
       setCopied(false)
     }
@@ -133,9 +141,9 @@ export function ShareTorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="border-b border-border px-5 py-4">
-          <DialogTitle>Share TOR</DialogTitle>
+          <DialogTitle>{t("browse.share.title")}</DialogTitle>
           <DialogDescription className="line-clamp-2">
-            {pickLocalized(tor.title, locale)}
+            {title}
           </DialogDescription>
         </DialogHeader>
 
@@ -169,13 +177,13 @@ export function ShareTorDialog({
 
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">
-              Or copy link
+              {t("browse.share.copyLink")}
             </p>
             <div className="flex gap-2">
               <Input
                 readOnly
                 value={shareUrl}
-                className="h-10 bg-muted text-xs"
+                className="h-10 bg-muted font-mono text-xs"
                 onFocus={(event) => event.currentTarget.select()}
               />
               <Button
@@ -187,16 +195,35 @@ export function ShareTorDialog({
                 {copied ? (
                   <>
                     <Check className="size-4 text-emerald-600" />
-                    Copied
+                    {t("common.copied")}
                   </>
                 ) : (
                   <>
                     <Copy className="size-4" />
-                    Copy
+                    {t("browse.share.copy")}
                   </>
                 )}
               </Button>
             </div>
+            {copied ? (
+              <p className="break-all rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-900">
+                {t("browse.share.copiedUrl", { url: shareUrl })}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/40 p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- external QR API, no next/image remote config needed */}
+            <img
+              src={qrSrc}
+              alt={t("browse.share.qrAlt")}
+              width={112}
+              height={112}
+              className="size-28 shrink-0 rounded-md bg-white p-1"
+            />
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t("browse.share.qrHint")}
+            </p>
           </div>
         </div>
       </DialogContent>

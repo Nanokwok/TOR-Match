@@ -13,7 +13,7 @@ export type OverviewActivity = {
 }
 
 export const overviewStats = {
-  activeCompanies: "104",
+  activeCompanies: "—",
   torsNeedReview: "18",
   ocrPending: "14",
   // mrr: "฿248,000",
@@ -32,7 +32,7 @@ export const overviewTrend = [
 export const overviewQueue = [
   { label: "OCR queue", value: 14, href: "/admin/scraper-ocr" },
   { label: "Need TOR review", value: 18, href: "/admin/tor-review" },
-  { label: "Pending companies", value: 11, href: "/admin/companies" },
+  { label: "Pending companies", value: 0, href: "/admin/companies" },
   // { label: "Past-due invoices", value: 3, href: "/admin/subscriptions" },
 ] as const
 

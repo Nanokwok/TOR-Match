@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { moveWorkspaceCardAction, removeWorkspaceCardAction } from "@/actions/workspace"
 import { AddTorToColumnDialog } from "@/components/workspace/add-tor-to-column-dialog"
 import { WorkspaceCardDetailDialog } from "@/components/workspace/workspace-card-detail-dialog"
+import { WorkspaceEmptyState } from "@/components/workspace/workspace-empty-state"
 import { WorkspaceKanbanBoard } from "@/components/workspace/workspace-kanban-board"
 import {
   WorkspaceFilterBar,
@@ -26,14 +27,22 @@ const initialFilters: WorkspaceFiltersState = {
 
 type WorkspaceViewProps = {
   initialBoard: WorkspaceBoardResult
+  initialTorId?: string | null
+  initialTab?: "details" | "checklist"
 }
 
-export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
+export function WorkspaceView({
+  initialBoard,
+  initialTorId,
+  initialTab,
+}: WorkspaceViewProps) {
   const [filters, setFilters] = useState<WorkspaceFiltersState>(initialFilters)
   const [allCards, setAllCards] = useState(() =>
     flattenBoardColumns(initialBoard.columns)
   )
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(
+    initialTorId ?? null
+  )
   const [addColumnId, setAddColumnId] = useState<WorkspaceColumnId | null>(
     null
   )
@@ -49,7 +58,10 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
   )
 
   const selectedCard = useMemo(
-    () => allCards.find((card) => card.torId === selectedCardId) ?? null,
+    () =>
+      allCards.find(
+        (card) => card.torId === selectedCardId || card.id === selectedCardId
+      ) ?? null,
     [allCards, selectedCardId]
   )
 
@@ -87,16 +99,28 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
       />
 
       <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
-        <WorkspaceKanbanBoard
-          key={`${filters.keyword}|${filters.assigneeId}|${filters.priority}`}
-          cards={filteredCards}
-          allCards={allCards}
-          onCardsChange={setAllCards}
-          onMoveCard={handleMoveCard}
-          onOpenCardDetails={setSelectedCardId}
-          onDeleteCard={handleDeleteCard}
-          onRequestAddTor={setAddColumnId}
-        />
+        {allCards.length === 0 ? (
+          <WorkspaceEmptyState
+            variant="board"
+            onAddTor={() => setAddColumnId("bookmark")}
+          />
+        ) : filteredCards.length === 0 ? (
+          <WorkspaceEmptyState
+            variant="filters"
+            onClearFilters={() => setFilters(initialFilters)}
+          />
+        ) : (
+          <WorkspaceKanbanBoard
+            key={`${filters.keyword}|${filters.assigneeId}|${filters.priority}`}
+            cards={filteredCards}
+            allCards={allCards}
+            onCardsChange={setAllCards}
+            onMoveCard={handleMoveCard}
+            onOpenCardDetails={setSelectedCardId}
+            onDeleteCard={handleDeleteCard}
+            onRequestAddTor={setAddColumnId}
+          />
+        )}
       </div>
 
       <WorkspaceCardDetailDialog
@@ -107,6 +131,7 @@ export function WorkspaceView({ initialBoard }: WorkspaceViewProps) {
         card={selectedCard}
         members={initialBoard.members}
         onUpdateCard={handleUpdateCard}
+        initialTab={initialTab}
       />
 
       <AddTorToColumnDialog

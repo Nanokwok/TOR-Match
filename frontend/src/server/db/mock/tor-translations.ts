@@ -1,5 +1,6 @@
 import { localizedList, localizedText } from "@/types/localized"
 import type { Tor, TorPaymentMilestone, TorQualificationRequirement } from "@/types/tor"
+import type { QualificationCriteria } from "@/types/qualification-criteria"
 
 /**
  * The mock dataset is authored in English only; Thai content is layered on here
@@ -32,6 +33,7 @@ export type TorSeed = Omit<
   > & {
     requirement: string
     torCriteria: string
+    criteria?: QualificationCriteria
   })[]
 }
 

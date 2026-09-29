@@ -4,7 +4,9 @@ import { redirect } from "next/navigation"
 
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import {
+  clearAdminApiTokenCookie,
   clearAdminSessionCookie,
+  setAdminApiTokenCookie,
   setAdminSessionCookie,
 } from "@/lib/admin-session"
 
@@ -32,15 +34,16 @@ export async function adminLoginAction({
   password: string
 }): Promise<AdminAuthResult> {
   const trimmedEmail = email.trim().toLowerCase()
+  const trimmedPassword = password.trim()
 
-  if (!trimmedEmail || !password.trim()) {
+  if (!trimmedEmail || !trimmedPassword) {
     return { ok: false, error: "Email and password are required." }
   }
 
   try {
     const data = await apiFetch<AuthResponse>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email: trimmedEmail, password }),
+      body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
     })
 
     if (data.user.role !== "admin") {
@@ -53,10 +56,10 @@ export async function adminLoginAction({
     await setAdminSessionCookie({
       email: data.user.email,
       name: data.user.name,
-      token: data.token,
       issuedAt: now,
       lastActiveAt: now,
     })
+    await setAdminApiTokenCookie(data.token)
 
     return { ok: true }
   } catch (error) {
@@ -69,6 +72,7 @@ export async function adminLoginAction({
 }
 
 export async function adminLogoutAction() {
+  await clearAdminApiTokenCookie()
   await clearAdminSessionCookie()
   redirect("/admin/login")
 }

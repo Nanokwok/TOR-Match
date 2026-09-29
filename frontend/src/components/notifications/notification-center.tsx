@@ -198,10 +198,8 @@ export function NotificationCenter({
                   <NotificationCard
                     key={notification.id}
                     notification={notification}
-                    onMarkRead={(id) => {
-                      markAsRead(id)
-                      setOpen(false)
-                    }}
+                    onMarkRead={markAsRead}
+                    onNavigate={() => setOpen(false)}
                     onDelete={deleteNotification}
                   />
                 ))}
