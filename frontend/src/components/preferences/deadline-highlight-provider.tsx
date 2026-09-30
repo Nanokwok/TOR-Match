@@ -33,20 +33,20 @@ export function DeadlineHighlightProvider({
   const [highlightDeadlines, setHighlightDeadlinesState] =
     useState<boolean>(initialHighlightDeadlines)
 
+  // Synchronize state across tabs if changed elsewhere
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(HIGHLIGHT_DEADLINES_STORAGE_KEY)
-      if (stored !== null) {
-        const parsed = stored === "true"
-        if (parsed !== highlightDeadlines) {
-          setHighlightDeadlinesState(parsed)
-          writePreferenceCookie(HIGHLIGHT_DEADLINES_COOKIE, String(parsed))
-        }
+    function handleStorageChange(event: StorageEvent) {
+      if (
+        event.key === HIGHLIGHT_DEADLINES_STORAGE_KEY &&
+        event.newValue !== null
+      ) {
+        setHighlightDeadlinesState(event.newValue === "true")
       }
-    } catch {
-      // LocalStorage access might fail in private browsing
     }
-  }, [highlightDeadlines])
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
 
   const setHighlightDeadlines = useCallback((next: boolean) => {
     setHighlightDeadlinesState(next)

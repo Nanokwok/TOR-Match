@@ -3,12 +3,12 @@
 import { useState } from "react"
 import {
   Banknote,
-  Clock3,
   MoreVertical,
   Users,
 } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
+import { DeadlineBadge } from "@/components/common/deadline-badge"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { formatDaysLeft, formatThb } from "@/lib/format"
+import { formatThb } from "@/lib/format"
 import { pickLocalized } from "@/lib/localized-content"
 import { workspaceActions } from "@/lib/workspace-actions"
 import { cn } from "@/lib/utils"
@@ -72,11 +72,6 @@ export function WorkspaceTorCard({
   const priority = priorityStyles[card.priority]
   const [confirmOpen, setConfirmOpen] = useState(false)
   const title = pickLocalized(card.title, locale)
-  const daysLeftLabels = {
-    dueToday: t("workspace.dueToday"),
-    oneDayLeft: t("workspace.oneDayLeft"),
-    daysLeft: t("workspace.daysLeft"),
-  }
 
   function handleConfirmDelete() {
     onDelete?.(card.torId)
@@ -149,10 +144,7 @@ export function WorkspaceTorCard({
             <Banknote className="size-3.5 shrink-0 text-primary" />
             <span>{formatThb(card.budgetBaht, locale)}</span>
           </p>
-          <p className="flex items-center gap-1.5">
-            <Clock3 className="size-3.5 shrink-0 text-primary" />
-            <span>{formatDaysLeft(card.deadline, locale, daysLeftLabels)}</span>
-          </p>
+          <DeadlineBadge deadline={card.deadline} variant="inline" />
           <p className="flex items-center gap-1.5">
             <Users className="size-3.5 shrink-0 text-primary" />
             <span>{card.assigneeIds.length}</span>

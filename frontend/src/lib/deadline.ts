@@ -13,7 +13,7 @@ export type DeadlineStatus = {
   urgency: DeadlineUrgency
 }
 
-export function isValidDateString(dateStr: string | null | undefined): boolean {
+export function isValidDateString(dateStr: string | null | undefined): dateStr is string {
   if (!dateStr?.trim()) return false
   const date = new Date(dateStr)
   return !Number.isNaN(date.getTime())
