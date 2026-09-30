@@ -22,8 +22,18 @@ type BackendNotificationSettings = NotificationSettings & {
 }
 
 function fromBackend(settings: BackendNotificationSettings): NotificationSettings {
-  const { _id, userId, createdAt, updatedAt, ...rest } = settings
-  return rest
+  return {
+    inAppEnabled: settings.inAppEnabled,
+    emailEnabled: settings.emailEnabled,
+    emailRecipient: settings.emailRecipient,
+    events: settings.events,
+    instantEmailAlerts: settings.instantEmailAlerts,
+    dailyDigestEnabled: settings.dailyDigestEnabled,
+    dailyDigestTime: settings.dailyDigestTime,
+    weeklyDigestEnabled: settings.weeklyDigestEnabled,
+    weeklyDigestDay: settings.weeklyDigestDay,
+    weeklyDigestTime: settings.weeklyDigestTime,
+  }
 }
 
 export async function getNotificationSettings(): Promise<NotificationSettings> {

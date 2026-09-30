@@ -50,7 +50,6 @@ import type {
   TorProcurementStatus,
   TorProjectScale,
 } from "@/types/tor"
-import type { QualificationCriteria } from "@/types/qualification-criteria"
 import { QualificationCriteriaEditor } from "@/components/admin/qualification-criteria-editor"
 
 type TorReviewDetailViewProps = {
