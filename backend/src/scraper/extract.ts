@@ -16,6 +16,38 @@ import {
 import type { BmaProjectDetail } from "@/scraper/bma-client"
 
 /**
+ * What the announcement source already knows, handed to the model as ground
+ * truth so it does not have to re-read those fields out of the PDF.
+ *
+ * Kept source-agnostic: the BMA site supplies a rich detail page, while the
+ * CGD RSS feed supplies only a title and a project number. Either way the
+ * project number is required — it keys the draft in the database.
+ */
+export type ExtractionContext = {
+  projectNo: string
+  /** Rendered into the prompt as "label: value"; empty values become "-". */
+  metadata: Record<string, string | number | null | undefined>
+}
+
+/** Builds the context from a BMA detail page. */
+export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContext {
+  return {
+    projectNo: detail.projectNo,
+    metadata: {
+      "ชื่อโครงการ": detail.title,
+      "หน่วยงาน": detail.department,
+      "ส่วนราชการ": detail.government,
+      "ส่วนราชการย่อย": detail.subGovernment,
+      "ประเภทการจัดซื้อจัดจ้าง": detail.procurementType,
+      "ด้านตามลักษณะงาน": detail.workType,
+      "งบประมาณ (บาท)": detail.budgetBaht,
+      "ราคากลาง (บาท)": detail.medianPriceBaht,
+      "สถานะโครงการ": detail.projectStatus,
+    },
+  }
+}
+
+/**
  * Turns an announcement PDF into the structured TOR shape the app stores.
  *
  * Claude reads the PDF natively (document content block), which covers both
@@ -128,26 +160,22 @@ function qualificationId(announcementNo: string, requirementEn: string): string 
 }
 
 export async function extractTorFromPdf(
-  detail: BmaProjectDetail,
+  context: ExtractionContext,
   pdf: Buffer
 ): Promise<TorExtraction & { qualificationIds: string[] }> {
   if (pdf.byteLength > MAX_PDF_BYTES) {
     throw new Error(`PDF is ${(pdf.byteLength / 1024 / 1024).toFixed(1)}MB, above the ${MAX_PDF_BYTES / 1024 / 1024}MB limit`)
   }
 
-  // Page metadata is more reliable than the PDF for these fields, so hand it
+  // Source metadata is more reliable than the PDF for these fields, so hand it
   // over as ground truth rather than making the model re-read them.
   const pageContext = [
-    `เลขที่โครงการ: ${detail.projectNo}`,
-    `ชื่อโครงการ: ${detail.title}`,
-    `หน่วยงาน: ${detail.department}`,
-    `ส่วนราชการ: ${detail.government || "-"}`,
-    `ส่วนราชการย่อย: ${detail.subGovernment || "-"}`,
-    `ประเภทการจัดซื้อจัดจ้าง: ${detail.procurementType || "-"}`,
-    `ด้านตามลักษณะงาน: ${detail.workType || "-"}`,
-    `งบประมาณ (บาท): ${detail.budgetBaht ?? "-"}`,
-    `ราคากลาง (บาท): ${detail.medianPriceBaht ?? "-"}`,
-    `สถานะโครงการ: ${detail.projectStatus || "-"}`,
+    `เลขที่โครงการ: ${context.projectNo}`,
+    ...Object.entries(context.metadata).map(([label, value]) => {
+      const printable =
+        value === null || value === undefined || value === "" ? "-" : value
+      return `${label}: ${printable}`
+    }),
   ].join("\n")
 
   const response = await getClient().messages.parse({
@@ -184,7 +212,7 @@ export async function extractTorFromPdf(
   return {
     ...parsed,
     qualificationIds: parsed.qualificationRequirements.map((row) =>
-      qualificationId(detail.projectNo, row.requirement.en)
+      qualificationId(context.projectNo, row.requirement.en)
     ),
   }
 }

@@ -62,6 +62,15 @@ export const env = {
   classifierModel: process.env.CLASSIFIER_MODEL ?? "claude-haiku-4-5",
   bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
   /**
+   * The CGD e-GP RSS feed — the published channel for mirroring procurement
+   * announcements, and the source of the announcement PDFs.
+   */
+  egpRssUrl:
+    process.env.EGP_RSS_URL ??
+    "http://process3.gprocurement.go.th/EPROCRssFeedWeb/egpannouncerss.xml",
+  /** รหัสหน่วยงานภาครัฐ of the Bangkok Metropolitan Administration (4 digits). */
+  egpDeptId: process.env.EGP_DEPT_ID ?? "",
+  /**
    * Sent on every scraper request. egp2.bangkok.go.th's robots.txt allows
    * crawling its public pages, and identifying ourselves with a reachable
    * contact is the other half of that bargain — keep a real address here.

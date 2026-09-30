@@ -44,7 +44,7 @@ import {
   type BmaListing,
   type BmaProjectDetail,
 } from "@/scraper/bma-client"
-import { extractTorFromPdf } from "@/scraper/extract"
+import { contextFromBmaDetail, extractTorFromPdf } from "@/scraper/extract"
 import {
   classifyProject,
   metadataRejects,
@@ -343,7 +343,7 @@ async function ingest(
     const pdf = await downloadDocument(context, document.url)
     if (!pdf) throw new Error(`Could not download ${document.url}`)
 
-    const extraction = await extractTorFromPdf(detail, pdf)
+    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), pdf)
 
     job.set({ stage: "index", pages: countPdfPages(pdf) })
     await job.save()
