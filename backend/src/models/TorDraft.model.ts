@@ -1,4 +1,9 @@
 import { Schema, model, type InferSchemaType, type HydratedDocument } from "mongoose"
+import {
+  DEFAULT_ADMIN_SYSTEM_SETTINGS,
+  SYSTEM_SETTINGS_SINGLETON_KEY,
+  SystemSettings,
+} from "@/models/SystemSettings.model"
 import { torContentFields } from "@/models/tor-fields.schema"
 import { notifyCompaniesForTor } from "@/services/match-notification.service"
 import { missingRequiredEnglishField, publishDraftContent } from "@/services/tor-publish.service"
@@ -15,8 +20,14 @@ import { missingRequiredEnglishField, publishDraftContent } from "@/services/tor
 
 export const REVIEW_STATUSES = ["need-review", "auto-approved", "approved"] as const
 
-/** Mirrors AUTO_APPROVE_CONFIDENCE_THRESHOLD in the admin review UI. */
-export const AUTO_APPROVE_CONFIDENCE_THRESHOLD = 90
+/**
+ * Fallback used only for the frontend's confidence-badge display bucketing,
+ * not the actual auto-publish decision — that reads the live, admin-editable
+ * value from SystemSettings (see the post-save hook below). Sourced from the
+ * same default the settings collection seeds itself with, so there's one
+ * place this magic number is defined.
+ */
+export const AUTO_APPROVE_CONFIDENCE_THRESHOLD = DEFAULT_ADMIN_SYSTEM_SETTINGS.autoApproveThreshold
 
 const torDraftSchema = new Schema(
   {
@@ -56,11 +67,22 @@ torDraftSchema.pre("save", function (next) {
  * — `findOneAndUpdate`-style upserts don't run "save" middleware at all, so
  * an ingestion path must create drafts with `.save()` / `Model.create()` for
  * this to apply.
+ *
+ * The enabled flag and threshold are read live from SystemSettings (the
+ * same values /admin/settings edits) rather than a fixed constant, so an
+ * admin can tune or turn off auto-approval without a deploy.
  */
 torDraftSchema.post("save", async function (doc) {
   if (!doc.$locals.wasNew) return
   if (doc.publishedTorId) return
-  if (doc.aiConfidence < AUTO_APPROVE_CONFIDENCE_THRESHOLD) return
+
+  const settings = await SystemSettings.findOneAndUpdate(
+    { singletonKey: SYSTEM_SETTINGS_SINGLETON_KEY },
+    { $setOnInsert: { singletonKey: SYSTEM_SETTINGS_SINGLETON_KEY, ...DEFAULT_ADMIN_SYSTEM_SETTINGS } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )
+  if (!settings.autoApproveEnabled) return
+  if (doc.aiConfidence < settings.autoApproveThreshold) return
 
   const missingField = missingRequiredEnglishField(doc)
   if (missingField) {
