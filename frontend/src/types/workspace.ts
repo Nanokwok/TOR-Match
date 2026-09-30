@@ -21,6 +21,7 @@ export type WorkspaceCard = {
   priority: TorPriority
   column: WorkspaceColumnId
   assigneeIds: string[]
+  checklist?: WorkspaceChecklistItem[]
 }
 
 export type WorkspaceChecklistItem = {

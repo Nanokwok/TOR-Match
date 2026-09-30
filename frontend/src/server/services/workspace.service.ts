@@ -44,6 +44,12 @@ type BackendWorkspaceCard = {
   column: WorkspaceColumnId
   priority?: TorPriority
   assigneeIds?: Array<string | { toString(): string }>
+  checklist?: Array<{
+    _id?: string
+    id?: string
+    label: string
+    completed?: boolean
+  }>
 }
 
 type BackendBoardResponse = {
@@ -95,6 +101,11 @@ function mapBackendCard(raw: BackendWorkspaceCard): WorkspaceCard {
     priority: raw.priority ?? "MEDIUM",
     column: raw.column,
     assigneeIds: (raw.assigneeIds ?? []).map(String),
+    checklist: (raw.checklist ?? []).map((item) => ({
+      id: String(item.id || item._id),
+      label: item.label,
+      completed: Boolean(item.completed),
+    })),
   }
 }
 

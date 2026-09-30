@@ -3,6 +3,7 @@ import { Schema, model, type InferSchemaType, type HydratedDocument } from "mong
 /** Mirrors src/types/workspace.ts (WorkspaceCard) on the frontend, scoped per owning user. */
 const checklistItemSchema = new Schema(
   {
+    id: { type: String },
     label: { type: String, required: true },
     completed: { type: Boolean, default: false },
   },
@@ -20,7 +21,7 @@ const workspaceCardSchema = new Schema(
       index: true,
     },
     priority: { type: String, enum: ["HIGH", "MEDIUM", "LOW"], default: "MEDIUM" },
-    assigneeIds: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
+    assigneeIds: { type: [String], default: [] },
     checklist: { type: [checklistItemSchema], default: [] },
   },
   { timestamps: true }
