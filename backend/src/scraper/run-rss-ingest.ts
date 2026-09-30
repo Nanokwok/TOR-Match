@@ -25,12 +25,13 @@
  */
 import { connectDB, disconnectDB } from "@/config/db"
 import { env } from "@/config/env"
-import { ScrapeJob } from "@/models/ScrapeJob.model"
-import { SystemSettings, SYSTEM_SETTINGS_SINGLETON_KEY } from "@/models/SystemSettings.model"
 import { TorDraft } from "@/models/TorDraft.model"
-import { extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
-import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
-import { downloadTorDocuments } from "@/scraper/tor-documents"
+import type { ExtractionContext } from "@/scraper/extract"
+import {
+  autoApproveSettings,
+  extractAndStore,
+  type AutoApprove,
+} from "@/services/tor-extraction.service"
 import { hasFlag } from "@/utils/cli-flags"
 import {
   ANNOUNCE_TYPES,
@@ -57,17 +58,6 @@ function parseArgs(argv: string[]): Options {
     // project number does not change, and re-reading it costs a full extraction.
     force: hasFlag(argv, "force"),
     announceTypes: [ANNOUNCE_TYPES.draft, ANNOUNCE_TYPES.invitation],
-  }
-}
-
-/** The admin-configurable confidence threshold, or the shipped default. */
-async function autoApproveSettings(): Promise<{ enabled: boolean; threshold: number }> {
-  const settings = await SystemSettings.findOne({
-    singletonKey: SYSTEM_SETTINGS_SINGLETON_KEY,
-  })
-  return {
-    enabled: settings?.autoApproveEnabled ?? true,
-    threshold: settings?.autoApproveThreshold ?? 90,
   }
 }
 
@@ -98,103 +88,24 @@ function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionConte
 
 async function ingestNew(
   announcement: EgpAnnouncement,
-  threshold: { enabled: boolean; threshold: number }
+  threshold: AutoApprove
 ): Promise<void> {
-  const job = await ScrapeJob.create({
-    documentSource: announcement.projectNo,
-    sourceUrl: announcement.pdfUrl,
-    stage: "scrape",
-    status: "running",
-  })
-
   try {
-    job.set({ stage: "parse" })
-    await job.save()
-    const documents = await downloadTorDocuments(announcement.pdfUrl)
-
-    job.set({ stage: "index", pages: documents.length })
-    await job.save()
-    const extraction = await extractTorFromPdf(
-      contextFromAnnouncement(announcement),
-      documents
-    )
-
-    // Below the admin's threshold — or with auto-approval switched off — the
-    // draft waits for a human rather than reaching the published collection.
-    const autoApproved =
-      threshold.enabled && extraction.aiConfidence >= threshold.threshold
-
-    const draft = await TorDraft.findOneAndUpdate(
-      { announcementNo: announcement.projectNo },
-      {
-        $set: {
-          announcementNo: announcement.projectNo,
-          title: extraction.title,
-          department: extraction.department,
-          localOffice: extraction.localOffice,
-          summary: extraction.summary,
-          deliverables: extraction.deliverables,
-          budgetBaht: extraction.budgetBaht,
-          projectScale: extraction.projectScale,
-          durationDays: extraction.durationDays,
-          method: extraction.method,
-          status: extraction.status,
-          deadline: extraction.deadline,
-          announcementDate: extraction.announcementDate || announcement.publishedDate,
-          sourceUrl: announcement.pdfUrl,
-          pdfUrl: announcement.pdfUrl,
-          techTags: extraction.techTags,
-          listTags: extraction.listTags,
-          financials: {
-            totalBudgetBaht: extraction.budgetBaht,
-            medianPriceBaht: extraction.medianPriceBaht,
-            method: extraction.method,
-            milestones: extraction.milestones,
-          },
-          qualificationRequirements: extraction.qualificationRequirements.map(
-            (row, index) => ({
-              id: extraction.qualificationIds[index],
-              requirement: row.requirement,
-              torCriteria: row.torCriteria,
-              autoCheckable: row.autoCheckable,
-            })
-          ),
-          aiConfidence: extraction.aiConfidence,
-          reviewStatus: autoApproved ? "auto-approved" : "need-review",
-          sourceJobId: job._id,
-        },
-      },
-      { upsert: true, runValidators: true, new: true }
-    )
-
-    // An auto-approved draft is one nobody is going to look at, so leaving it
-    // in the drafts collection would strand it: /browse reads `tors`, and the
-    // TOR would never appear there. Publishing here is what makes the
-    // threshold on /admin/settings mean "skip the reviewer" rather than
-    // "label it and wait anyway".
-    let outcome = "needs review"
-    if (autoApproved && draft) {
-      const blocker = publishBlocker(draft)
-      if (blocker) {
-        outcome = `auto-approved but not publishable (${blocker})`
-      } else {
-        await publishDraft(draft)
-        outcome = "auto-approved and published"
-      }
-    }
-
-    job.set({ status: "success" })
-    await job.save()
+    const result = await extractAndStore({
+      announcementNo: announcement.projectNo,
+      pdfUrl: announcement.pdfUrl,
+      publishedDate: announcement.publishedDate,
+      context: contextFromAnnouncement(announcement),
+      threshold,
+    })
     console.log(
-      `[rss] ${announcement.projectNo} -> extracted from ${documents.length} doc(s) ` +
-        `(confidence ${extraction.aiConfidence}, ${outcome})`
+      `[rss] ${result.announcementNo} -> extracted from ${result.documents} doc(s) ` +
+        `(confidence ${result.aiConfidence}, ${result.outcome})`
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    job.set({ status: "failure", message })
-    await job.save()
     // A broken PDF or a refused extraction must not end the run — the next
     // announcement is independent, and the failure is visible in /admin.
+    const message = error instanceof Error ? error.message : String(error)
     console.warn(`[rss] ${announcement.projectNo} -> failed: ${message}`)
   }
 }

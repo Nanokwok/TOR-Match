@@ -97,9 +97,12 @@ export function defaultCriteriaForType(type: QualificationCriteria["type"]): Qua
       return { type: "company-size", op: ">=", size: "small" }
     case "specialization":
       return { type: "specialization", mode: "any", ids: [] }
+    // A manual requirement has no rule. Returning a capital rule here is how
+    // clauses like "ไม่เป็นบุคคลล้มละลาย" came to be displayed as
+    // "Registered Capital >= 0 THB" — a rule that passes every company alive.
     case "manual":
     default:
-      return { type: "registered-capital", op: ">=", amountThb: 0 }
+      return { type: "manual" }
   }
 }
 

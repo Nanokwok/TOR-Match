@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { AdminApiAuthError, adminApiFetch } from "@/lib/admin-api"
 import { ApiRequestError } from "@/lib/api-client"
+import type { QualificationCriteria } from "@/types/qualification-criteria"
 import type {
   TorReviewDetail,
   TorReviewListItem,
@@ -56,9 +57,11 @@ type BackendDraft = {
   }
   qualificationRequirements: {
     id: string
+    key?: QualificationCriteria["type"]
     requirement: LocalizedText
     torCriteria: LocalizedText
     autoCheckable: boolean
+    criteria?: QualificationCriteria
   }[]
 }
 
@@ -107,11 +110,16 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
       amountBaht: milestone.amountBaht,
       deliverable: milestone.deliverable.th,
     })),
+    // `criteria` rides along in both directions. Until it did, the criteria
+    // editor on this screen saved nothing: the rule a reviewer configured was
+    // dropped here and overwritten with the stored value on the way back.
     qualificationRequirements: draft.qualificationRequirements.map((row) => ({
       id: row.id,
+      key: row.key,
       requirement: row.requirement.th,
       torCriteria: row.torCriteria.th,
       autoCheckable: row.autoCheckable,
+      criteria: row.criteria,
     })),
     pdfUrl: draft.pdfUrl,
   }

@@ -380,14 +380,9 @@ async function ingest(
             method: extraction.method,
             milestones: extraction.milestones,
           },
-          qualificationRequirements: extraction.qualificationRequirements.map(
-            (row, index) => ({
-              id: extraction.qualificationIds[index],
-              requirement: row.requirement,
-              torCriteria: row.torCriteria,
-              autoCheckable: row.autoCheckable,
-            })
-          ),
+          // Already carries id, key and criteria — assigned together during
+          // repair so no call site can zip parallel arrays differently.
+          qualificationRequirements: extraction.qualificationRequirements,
           aiConfidence: extraction.aiConfidence,
           reviewStatus:
             extraction.aiConfidence >= AUTO_APPROVE_CONFIDENCE_THRESHOLD

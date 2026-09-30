@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto"
-
 // `resolution-mode` because @google/genai is ESM-only: under CommonJS
 // resolution TypeScript would otherwise refuse the type-only import.
 import type { GoogleGenAI } from "@google/genai" with { "resolution-mode": "import" }
@@ -9,12 +7,17 @@ import type { GoogleGenAI } from "@google/genai" with { "resolution-mode": "impo
 import * as z from "zod/v4"
 
 import { env } from "@/config/env"
+import { CERTIFICATION_IDS, QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import {
   PROCUREMENT_METHODS,
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import type { BmaProjectDetail } from "@/scraper/bma-client"
+import {
+  repairQualifications,
+  type StoredQualification,
+} from "@/scraper/qualification-repair"
 import type { TorDocument } from "@/scraper/tor-documents"
 
 /**
@@ -101,11 +104,20 @@ const extractionSchema = z.object({
   ),
   qualificationRequirements: z.array(
     z.object({
+      key: z
+        .enum(QUALIFICATION_KEYS)
+        .describe('Which shared requirement type this is. Use "manual" when none fits.'),
       requirement: localizedText.describe("What the bidder must have, e.g. registered capital."),
-      torCriteria: localizedText.describe("The threshold the TOR sets for it."),
-      autoCheckable: z
-        .boolean()
-        .describe("True only if a company profile field could verify this without human judgement."),
+      torCriteria: localizedText.describe("The threshold the TOR sets for it, quoted from the document."),
+      thresholdThb: z
+        .number()
+        .describe("The baht figure this clause states, exactly as written. 0 if it states none."),
+      certificationIds: z
+        .array(z.enum(CERTIFICATION_IDS))
+        .describe('Empty unless key is "certification".'),
+      certificationMode: z
+        .enum(["any", "all"])
+        .describe('Whether all listed certificates are required or any one. "any" if unclear.'),
     })
   ),
   aiConfidence: z
@@ -124,7 +136,19 @@ Rules:
 - "method" must reflect the stated procurement method: ประกวดราคาอิเล็กทรอนิกส์/e-bidding -> "e-bidding", ตลาดอิเล็กทรอนิกส์/e-market -> "e-market", คัดเลือก -> "selective", เฉพาะเจาะจง -> "specific", ตกลงราคา/ราคาคงที่ -> "price-agreement".
 - "projectScale" follows the budget: under 5M baht SMALL, 5-20M MEDIUM, 20-100M LARGE, above 100M ENTERPRISE.
 - Payment milestone amounts should reconcile with percent x total budget.
-- Set aiConfidence honestly. A scanned document you struggled to read, or one missing the qualification section, deserves a low score — it routes the draft to a human.`
+- Set aiConfidence honestly. A scanned document you struggled to read, or one missing the qualification section, deserves a low score — it routes the draft to a human.
+
+Qualifications — one row per distinct clause. Never merge two certificates, or two past-performance clauses, into one row.
+Pick "key" from this list by what the clause is asking for:
+- "registered-capital" — ทุนจดทะเบียน. Put the baht figure in thresholdThb.
+- "past-contract" — ผลงาน/ประสบการณ์ with a contract value. Put the baht figure in thresholdThb. A ผลงาน clause about the TYPE of work with no figure is "manual".
+- "certification" — a certificate the company holds: ISO, IEC, CMMI, ใบรับรองระบบ. List them in certificationIds; a standard not on the allowed list goes in torCriteria text with certificationIds left empty.
+- "egp-registered" — ลงทะเบียนในระบบ e-GP / ผู้ค้าอิเล็กทรอนิกส์.
+- "not-blacklisted" — ไม่เป็นผู้ทิ้งงาน.
+- "company-size" — ขนาดกิจการ / วิสาหกิจขนาดกลางและขนาดย่อม.
+- "specialization" — a named field of expertise the bidder must work in.
+- "manual" — everything else. Use it for มูลค่าสุทธิของกิจการ, ระยะเวลาการประกอบธุรกิจ, ผู้มีอาชีพขาย/รับจ้าง, นิติบุคคล, ไม่เป็นบุคคลล้มละลาย, มีความสามารถตามกฎหมาย. These are real requirements — still fill requirement and torCriteria; the bidder confirms them.
+- thresholdThb is the figure the clause states, with no unit conversion and no inference from the project budget. If the clause states no figure, use 0 — never guess one.`
 
 let client: GoogleGenAI | null = null
 
@@ -156,24 +180,12 @@ async function getClient(): Promise<GoogleGenAI> {
   return client
 }
 
-/**
- * A stable id for a qualification row.
- *
- * Company profile matches reference these (CompanyProfileMatch.requirementId),
- * so they must not change when the same announcement is scraped again — which
- * rules out asking the model to invent them.
- */
-function qualificationId(announcementNo: string, requirementEn: string): string {
-  const digest = createHash("sha1")
-    .update(`${announcementNo}::${requirementEn.trim().toLowerCase()}`)
-    .digest("hex")
-  return `req-${digest.slice(0, 10)}`
-}
-
 export async function extractTorFromPdf(
   context: ExtractionContext,
   documents: TorDocument[]
-): Promise<TorExtraction & { qualificationIds: string[] }> {
+): Promise<Omit<TorExtraction, "qualificationRequirements"> & {
+  qualificationRequirements: StoredQualification[]
+}> {
   if (documents.length === 0) {
     throw new Error("No documents to extract from")
   }
@@ -223,7 +235,10 @@ export async function extractTorFromPdf(
     ],
     config: {
       systemInstruction: SYSTEM_PROMPT,
-      maxOutputTokens: 16000,
+      // A full tender document runs to 25-30 qualification clauses, each
+      // carrying both locales of two sentences plus its rule — which overran
+      // the previous 16000 and truncated the JSON mid-object.
+      maxOutputTokens: 40000,
       responseMimeType: "application/json",
       // The same zod schema the result is validated against, so the constraint
       // the model is given and the contract the caller relies on cannot drift.
@@ -249,8 +264,9 @@ export async function extractTorFromPdf(
 
   return {
     ...parsed,
-    qualificationIds: parsed.qualificationRequirements.map((row) =>
-      qualificationId(context.projectNo, row.requirement.en)
-    ),
+    // Verified against the document before it is trusted: the model's key is
+    // second-guessed by the Thai term lists, and its threshold is re-read out
+    // of the clause. Anything the two disagree on becomes a manual row.
+    qualificationRequirements: repairQualifications(parsed.qualificationRequirements),
   }
 }

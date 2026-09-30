@@ -298,7 +298,7 @@ function TorDetailContent({
           </TabsContent>
 
           <TabsContent value="qualification" className="mt-0">
-            {qualificationCheck ? <TorQualificationPanel check={qualificationCheck} /> : <p>{t("browse.qualificationUnavailable")}</p>}
+            {qualificationCheck ? <TorQualificationPanel torId={tor.id} check={qualificationCheck} /> : <p>{t("browse.qualificationUnavailable")}</p>}
           </TabsContent>
 
           <TabsContent value="financials" className="mt-0">

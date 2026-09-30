@@ -8,7 +8,9 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
+import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -29,9 +31,16 @@ const milestoneSchema = z.object({
 
 const qualificationSchema = z.object({
   id: z.string().min(1),
+  key: z.enum(QUALIFICATION_KEYS).optional(),
   requirement: z.string(),
   torCriteria: z.string(),
   autoCheckable: z.boolean().optional(),
+  /**
+   * Validated against the criteria union below rather than here, so a reviewer
+   * gets one clear message about the rule instead of a discriminated-union
+   * parse error spanning eight branches.
+   */
+  criteria: z.unknown().optional(),
 })
 
 const updateDraftSchema = z.object({
@@ -125,13 +134,21 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
     },
     qualificationRequirements: input.qualificationRequirements.map((row) => {
       const existing = existingQualifications.get(row.id)
+      // An omitted field preserves what is stored, an explicit one overwrites —
+      // the same rule mergeLocalized follows. Until this carried `criteria`,
+      // the review screen's criteria editor saved nothing at all: every rule a
+      // reviewer configured was overwritten with the stored value on save.
+      const criteria = row.criteria ?? existing?.criteria
+      const parsed = qualificationCriteriaSchema.safeParse(criteria)
       return {
         id: row.id,
+        // `key` and `criteria.type` are one concept, so a configured rule names
+        // its own key and cannot disagree with it.
+        key: parsed.success ? parsed.data.type : (row.key ?? existing?.key ?? "manual"),
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
-        autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
-        // The review form doesn't edit matching criteria; keep what's stored.
-        criteria: existing?.criteria,
+        autoCheckable: parsed.success ? parsed.data.type !== "manual" : false,
+        criteria,
       }
     }),
   }
