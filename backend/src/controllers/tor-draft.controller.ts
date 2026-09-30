@@ -1,7 +1,6 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { Tor } from "@/models/Tor.model"
 import { TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
 import {
   PROCUREMENT_METHODS,
@@ -9,6 +8,7 @@ import {
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import { notifyCompaniesForTor } from "@/services/match-notification.service"
+import { missingRequiredEnglishField, publishDraftContent } from "@/services/tor-publish.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -168,51 +168,16 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  // A blank English value would drop the TOR out of the department and
-  // local-office filter lists, which de-duplicate on `.en` — catch it here
-  // rather than letting it disappear from browse after publishing.
-  for (const field of ["title", "department", "localOffice", "summary"] as const) {
-    if (!draft[field]?.en?.trim()) {
-      throw ApiError.badRequest(`Cannot publish: ${field} is missing its English value`)
-    }
+  const missingField = missingRequiredEnglishField(draft)
+  if (missingField) {
+    throw ApiError.badRequest(`Cannot publish: ${missingField} is missing its English value`)
   }
 
-  // Copied field by field on purpose: the draft carries review bookkeeping
-  // (aiConfidence, reviewStatus, ...) that must never reach the published
-  // collection, and an allowlist keeps a future draft-only field from
-  // leaking there by default.
-  const content = {
-    announcementNo: draft.announcementNo,
-    title: draft.title,
-    department: draft.department,
-    localOffice: draft.localOffice,
-    budgetBaht: draft.budgetBaht,
-    projectScale: draft.projectScale,
-    durationDays: draft.durationDays,
-    method: draft.method,
-    status: draft.status,
-    deadline: draft.deadline,
-    announcementDate: draft.announcementDate,
-    sourceUrl: draft.sourceUrl,
-    summary: draft.summary,
-    deliverables: draft.deliverables,
-    techTags: draft.techTags,
-    listTags: draft.listTags,
-    financials: draft.financials,
-    qualificationRequirements: draft.qualificationRequirements,
-  }
-
-  // Same upsert-by-announcementNo the seed uses, so re-publishing a corrected
-  // draft updates the live TOR instead of duplicating it.
-  const published = await Tor.findOneAndUpdate(
-    { announcementNo: draft.announcementNo },
-    { $set: content },
-    { new: true, upsert: true, runValidators: true }
-  )
+  const published = await publishDraftContent(draft)
 
   draft.set({
     reviewStatus: "approved",
-    publishedTorId: published?._id ?? null,
+    publishedTorId: published._id,
     publishedAt: new Date(),
   })
   await draft.save()
@@ -221,11 +186,9 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   // after this response can't race ahead of the write — same reasoning as
   // the company-save trigger in company.controller.ts. A notification bug
   // must still never fail the publish itself, hence the catch.
-  if (published) {
-    await notifyCompaniesForTor(published).catch((error) => {
-      console.error("notifyCompaniesForTor failed", error)
-    })
-  }
+  await notifyCompaniesForTor(published).catch((error) => {
+    console.error("notifyCompaniesForTor failed", error)
+  })
 
   res.status(200).json({ draft, tor: published })
 })
