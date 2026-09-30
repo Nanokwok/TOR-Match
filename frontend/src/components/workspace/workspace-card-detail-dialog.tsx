@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Banknote,
   Check,
@@ -8,9 +8,13 @@ import {
   FileText,
   FolderOpen,
   ListChecks,
+  Loader2,
+  Save,
   Search,
   X,
 } from "lucide-react";
+
+import { useCardDetailDraft } from "@/components/workspace/use-card-detail-draft";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +40,6 @@ import type { TorPriority } from "@/types/tor";
 import type {
   TeamMember,
   WorkspaceCard,
-  WorkspaceChecklistItem,
   WorkspaceColumnId,
 } from "@/types/workspace";
 
@@ -52,7 +55,8 @@ type WorkspaceCardDetailDialogProps = {
   onOpenChange: (open: boolean) => void;
   card: WorkspaceCard | null;
   members: TeamMember[];
-  onUpdateCard: (card: WorkspaceCard) => void;
+  onCardChange?: (card: WorkspaceCard) => void;
+  onUpdateCard: (card: WorkspaceCard) => Promise<void> | void;
   initialTab?: "details" | "checklist";
 };
 
@@ -61,6 +65,7 @@ export function WorkspaceCardDetailDialog({
   onOpenChange,
   card,
   members,
+  onCardChange,
   onUpdateCard,
   initialTab = "details",
 }: WorkspaceCardDetailDialogProps) {
@@ -71,6 +76,7 @@ export function WorkspaceCardDetailDialog({
           key={card.torId}
           card={card}
           members={members}
+          onCardChange={onCardChange}
           onUpdateCard={onUpdateCard}
           onClose={() => onOpenChange(false)}
           initialTab={initialTab}
@@ -83,7 +89,8 @@ export function WorkspaceCardDetailDialog({
 type WorkspaceCardDetailBodyProps = {
   card: WorkspaceCard;
   members: TeamMember[];
-  onUpdateCard: (card: WorkspaceCard) => void;
+  onCardChange?: (card: WorkspaceCard) => void;
+  onUpdateCard: (card: WorkspaceCard) => Promise<void> | void;
   onClose: () => void;
   initialTab?: "details" | "checklist";
 };
@@ -91,19 +98,54 @@ type WorkspaceCardDetailBodyProps = {
 function WorkspaceCardDetailBody({
   card,
   members,
+  onCardChange,
   onUpdateCard,
   onClose,
   initialTab = "details",
 }: WorkspaceCardDetailBodyProps) {
   const { locale, t } = useLocale();
-  const [draft, setDraft] = useState(card);
-  const [checklist, setChecklist] = useState<WorkspaceChecklistItem[]>(() =>
-    createDefaultChecklist(card.torId, t),
+
+  const defaultChecklist = useMemo(
+    () => createDefaultChecklist(card.torId, t),
+    [card.torId, t]
   );
+
+  const {
+    draft,
+    checklist,
+    isDirty,
+    isSaving,
+    saveStatus,
+    setColumn,
+    setPriority,
+    toggleAssignee,
+    removeAssignee,
+    toggleChecklistItem,
+    addChecklistItem,
+    saveNow,
+    flushSave,
+  } = useCardDetailDraft({
+    card,
+    onCardChange,
+    onSave: onUpdateCard,
+    initialChecklist: defaultChecklist,
+  });
+
   const [newChecklistLabel, setNewChecklistLabel] = useState("");
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [newAssigneeName, setNewAssigneeName] = useState("");
   const [assigneeMenuOpen, setAssigneeMenuOpen] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      void flushSave();
+    };
+  }, [flushSave]);
+
+  function handleClose() {
+    onClose();
+    void flushSave();
+  }
 
   const title = pickLocalized(draft.title, locale);
   const department = pickLocalized(draft.department, locale);
@@ -122,9 +164,17 @@ function WorkspaceCardDetailBody({
 
   const assignees = useMemo(() => {
     return draft.assigneeIds
-      .map((id) => members.find((member) => member.id === id))
+      .map((id) => {
+        const found = members.find((member) => member.id === id);
+        if (found) return found;
+        if (id.startsWith("custom-")) {
+          const name = id.replace(/^custom-/, "").split("-").slice(0, -1).join(" ");
+          return { id, name, initials: name.slice(0, 2).toUpperCase() };
+        }
+        return { id, name: id, initials: id.slice(0, 2).toUpperCase() };
+      })
       .filter(Boolean) as TeamMember[];
-  }, [draft, members]);
+  }, [draft.assigneeIds, members]);
 
   const filteredMembers = useMemo(() => {
     const q = assigneeSearch.trim().toLowerCase();
@@ -133,53 +183,18 @@ function WorkspaceCardDetailBody({
     );
   }, [assigneeSearch, members]);
 
-  function patchDraft(next: Partial<WorkspaceCard>) {
-    const updated = { ...draft, ...next };
-    setDraft(updated);
-    onUpdateCard(updated);
-  }
-
-  function removeAssignee(memberId: string) {
-    patchDraft({
-      assigneeIds: draft.assigneeIds.filter((id) => id !== memberId),
-    });
-  }
-
-  function toggleAssignee(memberId: string) {
-    const isAssigned = draft.assigneeIds.includes(memberId);
-    patchDraft({
-      assigneeIds: isAssigned
-        ? draft.assigneeIds.filter((id) => id !== memberId)
-        : [...draft.assigneeIds, memberId],
-    });
-  }
-
   function addCustomAssignee() {
     const name = newAssigneeName.trim();
     if (!name) return;
-    workspaceActions.addCustomAssignee(name);
+    const customId = `custom-${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+    toggleAssignee(customId);
     setNewAssigneeName("");
   }
 
-  function toggleChecklistItem(itemId: string, completed: boolean) {
-    setChecklist((previous) =>
-      previous.map((item) =>
-        item.id === itemId ? { ...item, completed } : item,
-      ),
-    );
-  }
-
-  function addChecklistItem() {
+  function handleAddChecklistItem() {
     const label = newChecklistLabel.trim();
     if (!label) return;
-    setChecklist((previous) => [
-      ...previous,
-      {
-        id: `${draft.torId}-cl-${Date.now()}`,
-        label,
-        completed: false,
-      },
-    ]);
+    addChecklistItem(label);
     setNewChecklistLabel("");
   }
 
@@ -211,15 +226,40 @@ function WorkspaceCardDetailBody({
                 {formatDaysLeft(draft.deadline, locale, daysLeftLabels)}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-8 shrink-0 text-muted-foreground"
-              onClick={onClose}
-              aria-label={t("workspace.cardDetail.close")}
-            >
-              <X className="size-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={isDirty ? "default" : "outline"}
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                disabled={isSaving}
+                onClick={() => void saveNow()}
+              >
+                {isSaving ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : saveStatus === "saved" && !isDirty ? (
+                  <Check className="size-3.5 text-emerald-500" />
+                ) : (
+                  <Save className="size-3.5" />
+                )}
+                <span>
+                  {isSaving
+                    ? "Saving..."
+                    : saveStatus === "saved" && !isDirty
+                      ? "Saved"
+                      : t("common.save")}
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-8 shrink-0 text-muted-foreground"
+                onClick={handleClose}
+                aria-label={t("workspace.cardDetail.close")}
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -267,7 +307,9 @@ function WorkspaceCardDetailBody({
                 <Select
                   value={draft.priority}
                   onValueChange={(value) => {
-                    if (value) patchDraft({ priority: value as TorPriority });
+                    if (value && value !== draft.priority) {
+                      setPriority(value as TorPriority);
+                    }
                   }}
                 >
                   <SelectTrigger
@@ -291,8 +333,9 @@ function WorkspaceCardDetailBody({
                 <Select
                   value={draft.column}
                   onValueChange={(value) => {
-                    if (value)
-                      patchDraft({ column: value as WorkspaceColumnId });
+                    if (value && value !== draft.column) {
+                      setColumn(value as WorkspaceColumnId);
+                    }
                   }}
                 >
                   <SelectTrigger id="workspace-status" className="h-10 w-full">
@@ -416,14 +459,14 @@ function WorkspaceCardDetailBody({
                 placeholder={t("workspace.cardDetail.checklistPlaceholder")}
                 className="h-10"
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") addChecklistItem();
+                  if (event.key === "Enter") handleAddChecklistItem();
                 }}
               />
               <Button
                 type="button"
                 variant="outline"
                 className="h-10 shrink-0"
-                onClick={addChecklistItem}
+                onClick={handleAddChecklistItem}
               >
                 {t("workspace.cardDetail.addChecklist")}
               </Button>

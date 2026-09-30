@@ -68,9 +68,15 @@ export const removeCardByTorId = asyncHandler(async (req: Request, res: Response
 export const updateCard = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
   const { id } = req.params
-  const { priority, assigneeIds, checklist } = req.body ?? {}
+  const { column, priority, assigneeIds, checklist } = req.body ?? {}
 
   const update: Record<string, unknown> = {}
+  if (column !== undefined) {
+    if (!COLUMNS.includes(column)) {
+      throw ApiError.badRequest("Invalid column")
+    }
+    update.column = column
+  }
   if (priority !== undefined) {
     if (!["HIGH", "MEDIUM", "LOW"].includes(priority)) {
       throw ApiError.badRequest("Invalid priority")
@@ -96,10 +102,10 @@ export const updateCard = asyncHandler(async (req: Request, res: Response) => {
     )
   }
 
-  const isObjectId = isValidObjectId(id)
-  const filter = isObjectId
-    ? { ownerId: req.user.sub, $or: [{ _id: id }, { torId: id }] }
-    : { ownerId: req.user.sub, torId: id }
+  if (!isValidObjectId(id)) {
+    throw ApiError.badRequest("Invalid card or TOR ID")
+  }
+  const filter = { ownerId: req.user.sub, $or: [{ _id: id }, { torId: id }] }
 
   const card = await WorkspaceCard.findOneAndUpdate(
     filter,

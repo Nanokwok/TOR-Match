@@ -380,6 +380,7 @@ export async function bookmarkTor(
 }
 
 export type UpdateWorkspaceCardInput = {
+  column?: WorkspaceColumnId
   priority?: TorPriority
   assigneeIds?: string[]
   checklist?: WorkspaceChecklistItem[]
@@ -400,6 +401,7 @@ export async function updateWorkspaceCard(
     if (!target) return { ok: false, error: "Card not found" }
     const updated: WorkspaceCard = {
       ...target,
+      ...(input.column !== undefined ? { column: input.column } : {}),
       ...(input.priority !== undefined ? { priority: input.priority } : {}),
       ...(input.assigneeIds !== undefined ? { assigneeIds: input.assigneeIds } : {}),
       ...(input.checklist !== undefined ? { checklist: input.checklist } : {}),

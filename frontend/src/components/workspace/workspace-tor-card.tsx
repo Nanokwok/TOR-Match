@@ -4,6 +4,7 @@ import { useState } from "react"
 import {
   Banknote,
   Clock3,
+  ListChecks,
   MoreVertical,
   Users,
 } from "lucide-react"
@@ -144,19 +145,28 @@ export function WorkspaceTorCard({
           {title}
         </h3>
 
-        <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
-          <p className="flex items-center gap-1.5">
+        <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5 min-w-0">
             <Banknote className="size-3.5 shrink-0 text-primary" />
-            <span>{formatThb(card.budgetBaht, locale)}</span>
+            <span className="truncate">{formatThb(card.budgetBaht, locale)}</span>
           </p>
-          <p className="flex items-center gap-1.5">
+          <p className="flex items-center gap-1.5 min-w-0">
             <Clock3 className="size-3.5 shrink-0 text-primary" />
-            <span>{formatDaysLeft(card.deadline, locale, daysLeftLabels)}</span>
+            <span className="truncate">{formatDaysLeft(card.deadline, locale, daysLeftLabels)}</span>
           </p>
-          <p className="flex items-center gap-1.5">
+          <p className="flex items-center gap-1.5 min-w-0">
             <Users className="size-3.5 shrink-0 text-primary" />
-            <span>{card.assigneeIds.length}</span>
+            <span className="truncate">{card.assigneeIds.length}</span>
           </p>
+          {card.checklist && card.checklist.length > 0 ? (
+            <p className="flex items-center gap-1.5 min-w-0">
+              <ListChecks className="size-3.5 shrink-0 text-primary" />
+              <span className="truncate">
+                {card.checklist.filter((item) => item.completed).length}/
+                {card.checklist.length}
+              </span>
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-3 flex justify-end">

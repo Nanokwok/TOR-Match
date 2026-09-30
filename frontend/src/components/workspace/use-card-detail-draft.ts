@@ -2,18 +2,24 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { TorPriority } from "@/types/tor"
-import type { WorkspaceCard, WorkspaceChecklistItem } from "@/types/workspace"
+import type {
+  WorkspaceCard,
+  WorkspaceChecklistItem,
+  WorkspaceColumnId,
+} from "@/types/workspace"
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error"
 
 type UseCardDetailDraftProps = {
   card: WorkspaceCard
+  onCardChange?: (updated: WorkspaceCard) => void
   onSave: (updated: WorkspaceCard) => Promise<void> | void
   initialChecklist?: WorkspaceChecklistItem[]
 }
 
 export function useCardDetailDraft({
   card,
+  onCardChange,
   onSave,
   initialChecklist,
 }: UseCardDetailDraftProps) {
@@ -31,53 +37,84 @@ export function useCardDetailDraft({
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
 
+  const mountedRef = useRef(true)
   const draftRef = useRef<WorkspaceCard>(draft)
   const isDirtyRef = useRef(false)
+  const onCardChangeRef = useRef(onCardChange)
+  const onSaveRef = useRef(onSave)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     draftRef.current = draft
     isDirtyRef.current = isDirty
-  }, [draft, isDirty])
+    onCardChangeRef.current = onCardChange
+    onSaveRef.current = onSave
+  }, [draft, isDirty, onCardChange, onSave])
 
-  const save = useCallback(
-    async (targetCard: WorkspaceCard) => {
+  const save = useCallback(async (targetCard: WorkspaceCard) => {
+    if (mountedRef.current) {
       setIsSaving(true)
       setSaveStatus("saving")
-      try {
-        await onSave(targetCard)
+    }
+    try {
+      await onSaveRef.current(targetCard)
+      isDirtyRef.current = false
+      if (mountedRef.current) {
         setIsDirty(false)
-        isDirtyRef.current = false
         setSaveStatus("saved")
-      } catch (error) {
-        console.error("Failed to save workspace card:", error)
+      }
+    } catch (error) {
+      console.error("Failed to save workspace card:", error)
+      if (mountedRef.current) {
         setSaveStatus("error")
-      } finally {
+      }
+    } finally {
+      if (mountedRef.current) {
         setIsSaving(false)
       }
-    },
-    [onSave]
-  )
+    }
+  }, [])
 
   const patch = useCallback(
-    (updater: (current: WorkspaceCard) => WorkspaceCard, autoPersist = true) => {
+    (updater: (current: WorkspaceCard) => WorkspaceCard) => {
       setDraft((current) => {
         const next = updater(current)
         draftRef.current = next
-        setIsDirty(true)
-        isDirtyRef.current = true
 
-        if (autoPersist) {
-          void save(next)
-        }
+        queueMicrotask(() => {
+          onCardChangeRef.current?.(next)
+        })
+
         return next
       })
+      setIsDirty(true)
+      isDirtyRef.current = true
     },
-    [save]
+    []
+  )
+
+  const setColumn = useCallback(
+    (column: WorkspaceColumnId) => {
+      patch((current) => {
+        if (current.column === column) return current
+        return { ...current, column }
+      })
+    },
+    [patch]
   )
 
   const setPriority = useCallback(
     (priority: TorPriority) => {
-      patch((current) => ({ ...current, priority }))
+      patch((current) => {
+        if (current.priority === priority) return current
+        return { ...current, priority }
+      })
     },
     [patch]
   )
@@ -156,12 +193,24 @@ export function useCardDetailDraft({
     }
   }, [save])
 
+  // Debounced background auto-save (500ms after last change) - non-blocking UX
+  useEffect(() => {
+    if (!isDirty) return
+    const timer = setTimeout(() => {
+      if (isDirtyRef.current) {
+        void flushSave()
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [draft, isDirty, flushSave])
+
   return {
     draft,
     checklist: draft.checklist ?? [],
     isDirty,
     isSaving,
     saveStatus,
+    setColumn,
     setPriority,
     toggleAssignee,
     removeAssignee,
