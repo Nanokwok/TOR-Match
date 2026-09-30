@@ -115,7 +115,7 @@ export const extractionSchema = z.object({
 
 export type TorExtraction = z.infer<typeof extractionSchema>
 
-const SYSTEM_PROMPT = `You extract structured data from Thai government procurement announcements (TOR) for Bangkok Metropolitan Administration.
+export const SYSTEM_PROMPT = `You extract structured data from Thai government procurement announcements (TOR) for Bangkok Metropolitan Administration.
 
 Rules:
 - Populate BOTH locales on every localized field. The source is Thai: copy the Thai into "th" and write a faithful English translation into "en". Never leave "en" empty — downstream filtering keys on it.

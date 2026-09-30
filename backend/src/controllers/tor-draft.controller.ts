@@ -2,15 +2,15 @@ import type { Request, Response } from "express"
 import { z } from "zod"
 
 import { ScrapeJob } from "@/models/ScrapeJob.model"
-import { Tor } from "@/models/Tor.model"
 import { AUTO_APPROVE_CONFIDENCE_THRESHOLD, TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
 import {
   PROCUREMENT_METHODS,
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import { localizedKey } from "@/models/localized.schema"
 import { notifyCompaniesForTor } from "@/services/match-notification.service"
+import { missingRequiredField, publishDraftContent } from "@/services/tor-publish.service"
+import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -34,6 +34,11 @@ const qualificationSchema = z.object({
   requirement: z.string(),
   torCriteria: z.string(),
   autoCheckable: z.boolean().optional(),
+  // Optional: the review form's criteria editor sends this once it maps its
+  // richer client-side type down to this shape (see the frontend's
+  // toBackendCriteria). Omitted or invalid falls back to whatever the draft
+  // already had — see draftUpdateFrom below.
+  criteria: qualificationCriteriaSchema.optional(),
 })
 
 const updateDraftSchema = z.object({
@@ -132,8 +137,10 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
         autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
-        // The review form doesn't edit matching criteria; keep what's stored.
-        criteria: existing?.criteria,
+        // Falls back to whatever extraction computed when the form didn't
+        // send one (or sent something that failed validation upstream),
+        // rather than silently wiping it on every edit.
+        criteria: row.criteria ?? existing?.criteria,
       }
     }),
   }
@@ -177,52 +184,16 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  // TORs publish with whatever the scraper found — summary, deadline and the
-  // rest may be empty and render as "not specified". Only a title and a
-  // department are required: without them a TOR is a blank card that no
-  // department filter can reach.
-  for (const field of ["title", "department"] as const) {
-    if (!localizedKey(draft[field])) {
-      throw ApiError.badRequest(`Cannot publish: ${field} is empty`)
-    }
+  const missingField = missingRequiredField(draft)
+  if (missingField) {
+    throw ApiError.badRequest(`Cannot publish: ${missingField} is empty`)
   }
 
-  // Copied field by field on purpose: the draft carries review bookkeeping
-  // (aiConfidence, sourceJobId, ...) that must never reach the published
-  // collection, and an allowlist keeps a future draft-only field from
-  // leaking there by default.
-  const content = {
-    announcementNo: draft.announcementNo,
-    title: draft.title,
-    department: draft.department,
-    localOffice: draft.localOffice,
-    budgetBaht: draft.budgetBaht,
-    projectScale: draft.projectScale,
-    durationDays: draft.durationDays,
-    method: draft.method,
-    status: draft.status,
-    deadline: draft.deadline,
-    announcementDate: draft.announcementDate,
-    sourceUrl: draft.sourceUrl,
-    summary: draft.summary,
-    deliverables: draft.deliverables,
-    techTags: draft.techTags,
-    listTags: draft.listTags,
-    financials: draft.financials,
-    qualificationRequirements: draft.qualificationRequirements,
-  }
-
-  // Same upsert-by-announcementNo the seed uses, so re-publishing a corrected
-  // draft updates the live TOR instead of duplicating it.
-  const published = await Tor.findOneAndUpdate(
-    { announcementNo: draft.announcementNo },
-    { $set: content },
-    { new: true, upsert: true, runValidators: true }
-  )
+  const published = await publishDraftContent(draft)
 
   draft.set({
     reviewStatus: "approved",
-    publishedTorId: published?._id ?? null,
+    publishedTorId: published._id,
     publishedAt: new Date(),
   })
   await draft.save()
@@ -231,11 +202,9 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   // after this response can't race ahead of the write — same reasoning as
   // the company-save trigger in company.controller.ts. A notification bug
   // must still never fail the publish itself, hence the catch.
-  if (published) {
-    await notifyCompaniesForTor(published).catch((error) => {
-      console.error("notifyCompaniesForTor failed", error)
-    })
-  }
+  await notifyCompaniesForTor(published).catch((error) => {
+    console.error("notifyCompaniesForTor failed", error)
+  })
 
   res.status(200).json({ draft, tor: published })
 })

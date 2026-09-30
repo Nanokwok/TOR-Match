@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache"
 
 import { AdminApiAuthError, adminApiFetch } from "@/lib/admin-api"
 import { ApiRequestError } from "@/lib/api-client"
+import { fromBackendCriteria, toBackendCriteria } from "@/lib/qualification-criteria"
+import type { BackendQualificationCriteria } from "@/types/qualification-criteria"
 import type {
   TorReviewDetail,
   TorReviewListItem,
@@ -59,6 +61,7 @@ type BackendDraft = {
     requirement: LocalizedText
     torCriteria: LocalizedText
     autoCheckable: boolean
+    criteria?: BackendQualificationCriteria
   }[]
 }
 
@@ -112,6 +115,7 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
       requirement: row.requirement.th,
       torCriteria: row.torCriteria.th,
       autoCheckable: row.autoCheckable,
+      criteria: fromBackendCriteria(row.criteria),
     })),
     pdfUrl: draft.pdfUrl,
   }
@@ -142,7 +146,10 @@ function toBackendUpdate(detail: TorReviewDetail) {
     announcementDate: detail.announcementDate,
     sourceUrl: detail.sourceUrl,
     milestones: detail.milestones,
-    qualificationRequirements: detail.qualificationRequirements,
+    qualificationRequirements: detail.qualificationRequirements.map((row) => ({
+      ...row,
+      criteria: toBackendCriteria(row.criteria),
+    })),
   }
 }
 
