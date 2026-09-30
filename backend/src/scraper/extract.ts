@@ -13,7 +13,20 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import type { BmaProjectDetail } from "@/scraper/bma-client"
+
+/** Announcement metadata handed in alongside the PDF, from whatever ingestion source produced it. */
+export type TorAnnouncementMetadata = {
+  projectNo: string
+  title: string
+  department: string
+  government: string
+  subGovernment: string
+  procurementType: string
+  workType: string
+  budgetBaht: number | null
+  medianPriceBaht: number | null
+  projectStatus: string
+}
 
 /**
  * Turns an announcement PDF into the structured TOR shape the app stores.
@@ -160,7 +173,7 @@ function qualificationId(announcementNo: string, requirementEn: string): string 
 }
 
 export async function extractTorFromPdf(
-  detail: BmaProjectDetail,
+  detail: TorAnnouncementMetadata,
   pdf: Buffer
 ): Promise<TorExtraction & { qualificationIds: string[] }> {
   if (pdf.byteLength > MAX_PDF_BYTES) {
@@ -184,7 +197,12 @@ export async function extractTorFromPdf(
 
   const response = await getClient().messages.parse({
     model: env.extractionModel,
-    max_tokens: 16000,
+    // A real TOR's bilingual milestones + qualification requirements can run
+    // long; 16000 was tight enough that a truncated response (see the
+    // stop_reason check below) could still satisfy the schema by falling
+    // back to every field's zero-value default, and get accepted as if the
+    // extraction had genuinely found nothing.
+    max_tokens: 32000,
     system: SYSTEM_PROMPT,
     output_config: { format: zodOutputFormat(extractionSchema) },
     messages: [
@@ -206,7 +224,22 @@ export async function extractTorFromPdf(
         ],
       },
     ],
+  }, {
+    // The SDK refuses a non-streaming call above ~21k max_tokens unless a
+    // timeout is passed explicitly (it can't otherwise guarantee the request
+    // won't outlive a 10-minute default). This is a background ingestion
+    // job, not a live request, so a longer timeout is fine.
+    timeout: 20 * 60 * 1000,
   })
+
+  if (response.stop_reason === "max_tokens") {
+    // Every field in this schema has a zero-value default (""/0/[]), so a
+    // response cut off mid-generation still parses successfully — it just
+    // silently comes back mostly empty instead of failing loudly.
+    throw new Error(
+      "Extraction was truncated before finishing (hit max_tokens) — treating as a failure rather than accepting a partial result"
+    )
+  }
 
   const parsed = response.parsed_output
   if (!parsed) {

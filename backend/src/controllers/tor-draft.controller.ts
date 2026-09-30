@@ -1,9 +1,8 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { ScrapeJob } from "@/models/ScrapeJob.model"
 import { Tor } from "@/models/Tor.model"
-import { AUTO_APPROVE_CONFIDENCE_THRESHOLD, TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
+import { TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
 import {
   PROCUREMENT_METHODS,
   PROCUREMENT_STATUSES,
@@ -179,7 +178,7 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   }
 
   // Copied field by field on purpose: the draft carries review bookkeeping
-  // (aiConfidence, sourceJobId, ...) that must never reach the published
+  // (aiConfidence, reviewStatus, ...) that must never reach the published
   // collection, and an allowlist keeps a future draft-only field from
   // leaking there by default.
   const content = {
@@ -229,19 +228,4 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   }
 
   res.status(200).json({ draft, tor: published })
-})
-
-export const listScrapeJobs = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await ScrapeJob.find().sort({ createdAt: -1 }).limit(200)
-
-  const [pending, failed] = await Promise.all([
-    ScrapeJob.countDocuments({ status: "running" }),
-    ScrapeJob.countDocuments({ status: "failure" }),
-  ])
-
-  res.status(200).json({
-    items,
-    total: items.length,
-    stats: { pending, failed, autoApproveThreshold: AUTO_APPROVE_CONFIDENCE_THRESHOLD },
-  })
 })

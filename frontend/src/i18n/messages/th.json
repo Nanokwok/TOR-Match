@@ -401,7 +401,6 @@
   },
   "admin": {
     "overview": "ภาพรวม",
-    "scraperOcr": "Scraper & OCR",
     "torReview": "ตรวจสอบ TOR",
     "companies": "บริษัท",
     "subscriptions": "การสมัครสมาชิก",

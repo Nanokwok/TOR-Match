@@ -401,7 +401,6 @@
   },
   "admin": {
     "overview": "Overview",
-    "scraperOcr": "Scraper & OCR",
     "torReview": "TOR Review",
     "companies": "Companies",
     "subscriptions": "Subscriptions",
