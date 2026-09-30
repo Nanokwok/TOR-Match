@@ -73,8 +73,11 @@ export const torContentFields = {
   durationDays: { type: Number, required: true },
   method: { type: String, enum: PROCUREMENT_METHODS, required: true },
   status: { type: String, enum: PROCUREMENT_STATUSES, default: "open", index: true },
-  deadline: { type: String, required: true },
-  announcementDate: { type: String, required: true },
+  // Empty when the source doesn't state one: a scraped announcement page has
+  // no bid deadline, and TORs are published with whatever was scraped. The
+  // UI renders an empty date as "not specified".
+  deadline: { type: String, default: "" },
+  announcementDate: { type: String, default: "" },
   sourceUrl: { type: String, default: "" },
   summary: { type: localizedTextSchema, required: true },
   deliverables: { type: localizedListSchema, default: () => ({}) },

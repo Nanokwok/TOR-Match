@@ -121,8 +121,11 @@ export function BrowseView({
   function handleFiltersChange(next: BrowseFiltersState) {
     const detailChanged =
       JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
+    // A switch reads as instant; waiting for Enter in the search box made
+    // turning it off look like it did nothing.
+    const eligibleOnlyChanged = next.eligibleOnly !== filters.eligibleOnly
     setFilters(next)
-    if (detailChanged) {
+    if (detailChanged || eligibleOnlyChanged) {
       runSearch(next)
     }
   }

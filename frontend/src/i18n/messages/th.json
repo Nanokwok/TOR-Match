@@ -1,5 +1,6 @@
 {
   "common": {
+    "notSpecified": "ไม่ระบุ",
     "search": "ค้นหา",
     "all": "ทั้งหมด",
     "filters": "ตัวกรอง",
@@ -122,6 +123,9 @@
     "ctaSubtitle": "เริ่มค้นหาฟรี หรือตรวจสอบคุณสมบัติจากโปรไฟล์บริษัท"
   },
   "browse": {
+    "localOffice": "หน่วยงานย่อย / เขต",
+    "budget": "งบประมาณ",
+    "announcementDate": "วันที่ประกาศ",
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
     "eligibleOnly": "เฉพาะที่ผ่านเกณฑ์อัตโนมัติ",
     "budgetRange": "ช่วงงบประมาณ",
@@ -401,6 +405,7 @@
   },
   "admin": {
     "overview": "ภาพรวม",
+    "scraperOcr": "Scraper & OCR",
     "torReview": "ตรวจสอบ TOR",
     "companies": "บริษัท",
     "subscriptions": "การสมัครสมาชิก",

@@ -3,8 +3,11 @@
 import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 import {
+  Activity,
   Bookmark,
+  Building2,
   CalendarDays,
+  CalendarPlus,
   CircleDollarSign,
   Clock3,
   Copy,
@@ -14,6 +17,7 @@ import {
   ListChecks,
   Scale,
   Share2,
+  Wallet,
 } from "lucide-react";
 
 import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
@@ -23,9 +27,12 @@ import { useLocale } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { browseActions } from "@/lib/browse-actions";
-import { formatTorDeadline } from "@/lib/format"
-import { projectScaleLabel, procurementMethodLabel } from "@/lib/browse-labels";
+import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
+import {
+  procurementMethodLabel,
+  procurementStatusLabel,
+  projectScaleLabel,
+} from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
 import { cn } from "@/lib/utils";
 import type { Tor } from "@/types/tor";
@@ -66,6 +73,7 @@ function TorDetailContent({
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
   const qualificationCheck = tor.qualification;
+  const sourceHref = safeExternalUrl(tor.sourceUrl);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
@@ -127,16 +135,61 @@ function TorDetailContent({
           </div>
         </div>
 
+        <div className="flex flex-row gap-4 w-full">
+          <div className="w-[300px] md:w-[325px] lg:w-[350px] shrink-0">
+            <MetaItem
+              icon={Building2}
+              label={t("browse.localOffice")}
+              value={localized.localOffice || t("common.notSpecified")}
+            />
+          </div>
+
+          <div className="flex flex-1 flex-row gap-4">
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={Wallet}
+                label={t("browse.budget")}
+                value={formatBaht(tor.budgetBaht, locale)}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={CalendarPlus}
+                label={t("browse.announcementDate")}
+                value={formatShortDate(tor.announcementDate, locale)}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <MetaItem
+                icon={Activity}
+                label={t("browse.procurementStatus")}
+                value={procurementStatusLabel(tor.status, t)}
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            className="h-10 flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-            onClick={() =>
-              browseActions.viewOriginalSource(tor.id, tor.sourceUrl)
-            }
-          >
-            <ExternalLink data-icon="inline-start" />
-            {t("browse.viewSource")}
-          </Button>
+          {sourceHref ? (
+            <Button
+              className="h-10 flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              nativeButton={false}
+              render={
+                <a href={sourceHref} target="_blank" rel="noopener noreferrer" />
+              }
+            >
+              <ExternalLink data-icon="inline-start" />
+              {t("browse.viewSource")}
+            </Button>
+          ) : (
+            <Button
+              className="h-10 flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled
+            >
+              <ExternalLink data-icon="inline-start" />
+              {t("browse.viewSource")}
+            </Button>
+          )}
           <Button
             variant="outline"
             className={cn(
@@ -204,7 +257,7 @@ function TorDetailContent({
                 {t("common.summary")}
               </h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {localized.summary}
+                {localized.summary || t("common.notSpecified")}
               </p>
             </section>
 
@@ -212,6 +265,11 @@ function TorDetailContent({
               <h3 className="text-sm font-semibold text-foreground">
                 {t("browse.keyDeliverables")}
               </h3>
+              {localized.deliverables.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("common.notSpecified")}
+                </p>
+              ) : null}
               <ol className="space-y-2">
                 {localized.deliverables.map((item, index) => (
                   <li
@@ -306,4 +364,20 @@ function MetaItem({
       </div>
     </div>
   );
+}
+
+/**
+ * The source URL is stored data (scraped, or typed by an admin), so only
+ * http(s) links are rendered — anything else, e.g. `javascript:`, would run
+ * in the user's session when clicked.
+ */
+function safeExternalUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }

@@ -6,6 +6,8 @@ import {
   listTorReviewsAction,
 } from "@/actions/admin-tor-review"
 import { TorReviewDetailView } from "@/components/admin/tor-review-detail-view"
+import { apiFetch } from "@/lib/api-client"
+import type { LocalizedText } from "@/types/localized"
 
 type TorReviewDetailPageProps = {
   params: Promise<{ id: string }>
@@ -31,13 +33,20 @@ export default async function AdminTorReviewDetailPage({
   const tor = await getTorReviewAction(id)
   if (!tor) notFound()
 
-  // The department dropdown offers the values already in the queue, so a
-  // reviewer normalising a department name can pick an existing spelling.
+  // Suggestions only — the field stays free text. Offering existing Thai
+  // spellings keeps the browse filter from splitting one department in two.
+  const [published, queue] = await Promise.all([
+    apiFetch<LocalizedText[]>("/tors/departments", { auth: false }).catch(() => []),
+    listTorReviewsAction(),
+  ])
   const departments = [
-    ...new Set(
-      (await listTorReviewsAction()).map((item) => item.department).filter(Boolean)
-    ),
-  ].sort()
+    ...new Set([
+      ...published.map((item) => item.th || item.en),
+      ...queue.map((item) => item.department),
+    ]),
+  ]
+    .filter(Boolean)
+    .sort()
 
   return <TorReviewDetailView tor={tor} departments={departments} />
 }

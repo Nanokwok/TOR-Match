@@ -41,9 +41,9 @@ export const env = {
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
 
   /**
-   * Deliberately not `required()`: only TOR extraction needs these, and making
-   * the API server (and CI) fail to boot without them would punish everyone
-   * who never runs it. Extraction checks them at its own start.
+   * Deliberately not `required()`: only the scraper/extraction pipeline needs
+   * these, and making the API server (and CI) fail to boot without them would
+   * punish everyone who never runs it. The scraper checks them at its own start.
    *
    * Claude is reached through Google Vertex AI, so there is no Anthropic API
    * key — auth is GCP Application Default Credentials
@@ -54,6 +54,21 @@ export const env = {
   vertexRegion: process.env.VERTEX_REGION ?? "global",
   /** Overridable: which Claude models a Vertex project can call varies by project and region. */
   extractionModel: process.env.EXTRACTION_MODEL ?? "claude-opus-5",
+  /**
+   * Screens listings for software work before any PDF is read. It judges a
+   * title and a few metadata fields, not a document, so the cheapest model is
+   * the right one — the saving comes from the extraction calls it prevents.
+   */
+  classifierModel: process.env.CLASSIFIER_MODEL ?? "claude-haiku-4-5",
+  bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
+  /**
+   * Sent on every scraper request. egp2.bangkok.go.th's robots.txt allows
+   * crawling its public pages, and identifying ourselves with a reachable
+   * contact is the other half of that bargain — keep a real address here.
+   */
+  scraperUserAgent:
+    process.env.SCRAPER_USER_AGENT ??
+    "TORMatchBot/0.1 (+https://github.com/Nanokwok/TOR-Match)",
 }
 
 export const isProduction = env.nodeEnv === "production"

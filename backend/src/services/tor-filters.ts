@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { localizedKey } from "@/models/localized.schema"
+
 export const detailFiltersSchema = z.object({
   projectScales: z.array(z.enum(["SMALL", "MEDIUM", "LARGE", "ENTERPRISE"])).default([]),
   durationPresets: z.array(z.enum(["under-3m", "3-6m", "6-12m", "1y-plus"])).default([]),
@@ -83,6 +85,12 @@ export function matchesDetailFilters(
   const deadline = new Date(tor.deadline)
   const now = new Date()
 
+  // No stated deadline can't satisfy a deadline filter. Without this, every
+  // comparison against an Invalid Date is false and the TOR slips through.
+  if (detail.deadlinePreset !== "any" && Number.isNaN(deadline.getTime())) {
+    return false
+  }
+
   if (detail.deadlinePreset === "7-days") {
     const limit = new Date(now)
     limit.setDate(limit.getDate() + 7)
@@ -109,7 +117,7 @@ export function matchesDetailFilters(
 
   if (
     detail.localOffices.length > 0 &&
-    !detail.localOffices.includes(tor.localOffice.en)
+    !detail.localOffices.includes(localizedKey(tor.localOffice))
   ) {
     return false
   }

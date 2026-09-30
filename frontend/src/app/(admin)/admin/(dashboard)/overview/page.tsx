@@ -40,6 +40,7 @@ export default async function AdminOverviewPage() {
       stats={{
         activeCompanies,
         torsNeedReview: overviewStats.torsNeedReview,
+        ocrPending: overviewStats.ocrPending,
       }}
       trend={overviewTrend}
       queue={queue}

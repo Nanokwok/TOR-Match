@@ -1,5 +1,6 @@
 {
   "common": {
+    "notSpecified": "Not specified",
     "search": "Search",
     "all": "All",
     "filters": "Filters",
@@ -122,6 +123,9 @@
     "ctaSubtitle": "Start with a free search, or check eligibility against your company profile."
   },
   "browse": {
+    "localOffice": "Local office",
+    "budget": "Budget",
+    "announcementDate": "Announced",
     "searchPlaceholder": "Search your keyword...",
     "eligibleOnly": "Automated criteria met only",
     "budgetRange": "Budget Range",
@@ -401,6 +405,7 @@
   },
   "admin": {
     "overview": "Overview",
+    "scraperOcr": "Scraper & OCR",
     "torReview": "TOR Review",
     "companies": "Companies",
     "subscriptions": "Subscriptions",
