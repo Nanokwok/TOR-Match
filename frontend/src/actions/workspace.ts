@@ -8,6 +8,8 @@ import {
   moveWorkspaceCard,
   removeWorkspaceCard,
   searchTorsForWorkspace,
+  updateWorkspaceCard,
+  type UpdateWorkspaceCardInput,
 } from "@/server/services/workspace.service"
 import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace"
 
@@ -44,4 +46,11 @@ export async function removeWorkspaceCardAction(torId: string) {
 
 export async function bookmarkTorAction(torId: string, bookmarked: boolean) {
   return bookmarkTor(torId, bookmarked)
+}
+
+export async function updateWorkspaceCardAction(
+  torId: string,
+  input: UpdateWorkspaceCardInput
+) {
+  return updateWorkspaceCard(torId, input)
 }

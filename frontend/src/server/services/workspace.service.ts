@@ -1,6 +1,6 @@
 import { ApiRequestError, apiFetch, getAuthToken } from "@/lib/api-client"
 import { localizedText } from "@/types/localized"
-import { getMockTeamMembers } from "@/server/db/mock/workspace"
+import { getMockTeamMembers, getMockWorkspaceCards, setMockWorkspaceCards } from "@/server/db/mock/workspace"
 import {
   filterWorkspaceCards,
 } from "@/lib/workspace-board"
@@ -9,6 +9,7 @@ import type { Tor, TorListResult, TorPriority } from "@/types/tor"
 import type {
   WorkspaceBoardResult,
   WorkspaceCard,
+  WorkspaceChecklistItem,
   WorkspaceColumnId,
   WorkspaceQuery,
 } from "@/types/workspace"
@@ -374,6 +375,69 @@ export async function bookmarkTor(
       return { ok: false, error: error.message }
     }
     console.error("bookmarkTor failed", error)
+    return { ok: false, error: "Something went wrong. Please try again." }
+  }
+}
+
+export type UpdateWorkspaceCardInput = {
+  priority?: TorPriority
+  assigneeIds?: string[]
+  checklist?: WorkspaceChecklistItem[]
+}
+
+export async function updateWorkspaceCard(
+  torId: string,
+  input: UpdateWorkspaceCardInput
+): Promise<
+  | { ok: true; card: WorkspaceCard; cards: WorkspaceCard[] }
+  | { ok: false; error: string }
+> {
+  const token = await getAuthToken()
+  if (!token) {
+    // Fallback in-memory update for unauthenticated/demo mode
+    const mockCards = getMockWorkspaceCards()
+    const target = mockCards.find((c) => c.torId === torId || c.id === torId)
+    if (!target) return { ok: false, error: "Card not found" }
+    const updated: WorkspaceCard = {
+      ...target,
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.assigneeIds !== undefined ? { assigneeIds: input.assigneeIds } : {}),
+      ...(input.checklist !== undefined ? { checklist: input.checklist } : {}),
+    }
+    const nextCards = mockCards.map((c) =>
+      c.torId === target.torId ? updated : c
+    )
+    setMockWorkspaceCards(nextCards)
+    return { ok: true, card: updated, cards: nextCards }
+  }
+
+  try {
+    const cards = await fetchBoardCards()
+    const card = cards.find((item) => item.torId === torId || item.id === torId)
+    if (!card) {
+      return { ok: false, error: "Card not found" }
+    }
+
+    await apiFetch(`/workspace/cards/${card.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    })
+
+    const updatedCards = await fetchBoardCards()
+    const updatedCard = updatedCards.find(
+      (item) => item.torId === card.torId || item.id === card.id
+    )
+
+    if (!updatedCard) {
+      return { ok: false, error: "Failed to reload updated card" }
+    }
+
+    return { ok: true, card: updatedCard, cards: updatedCards }
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      return { ok: false, error: error.message }
+    }
+    console.error("updateWorkspaceCard failed", error)
     return { ok: false, error: "Something went wrong. Please try again." }
   }
 }
