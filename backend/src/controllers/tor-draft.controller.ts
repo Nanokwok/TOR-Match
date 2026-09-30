@@ -9,6 +9,7 @@ import {
 } from "@/models/tor-fields.schema"
 import { notifyCompaniesForTor } from "@/services/match-notification.service"
 import { missingRequiredEnglishField, publishDraftContent } from "@/services/tor-publish.service"
+import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -31,6 +32,11 @@ const qualificationSchema = z.object({
   requirement: z.string(),
   torCriteria: z.string(),
   autoCheckable: z.boolean().optional(),
+  // Optional: the review form's criteria editor sends this once it maps its
+  // richer client-side type down to this shape (see the frontend's
+  // toBackendCriteria). Omitted or invalid falls back to whatever the draft
+  // already had — see draftUpdateFrom below.
+  criteria: qualificationCriteriaSchema.optional(),
 })
 
 const updateDraftSchema = z.object({
@@ -124,9 +130,10 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
         autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
-        // Not exposed on the review form — preserve whatever extraction
-        // computed rather than silently wiping it on every edit.
-        criteria: existing?.criteria,
+        // Falls back to whatever extraction computed when the form didn't
+        // send one (or sent something that failed validation upstream),
+        // rather than silently wiping it on every edit.
+        criteria: row.criteria ?? existing?.criteria,
       }
     }),
   }
