@@ -20,10 +20,11 @@ import { env } from "@/config/env"
  *  - §4.8 the feed is only served between 17:01 and 08:29 ICT.
  */
 
-/** §4.8 — the window during which the feed answers at all. */
-export const FEED_OPEN_HOUR = 17
-export const FEED_CLOSE_HOUR = 8
-export const FEED_CLOSE_MINUTE = 29
+/**
+ * The window during which the feed answers (Asia/Bangkok), per the CGD manual
+ * §4.8. It crosses midnight, so it reads as "from 17:01" or "until 08:29".
+ */
+const FEED_WINDOW = { fromMinute: 17 * 60 + 1, toMinute: 8 * 60 + 29 } as const
 
 /** Announcement types (`anounceType`), table in §3.1.2. */
 export const ANNOUNCE_TYPES = {
@@ -90,13 +91,27 @@ export type EgpAnnouncement = {
 }
 
 /**
- * Only `view-pdf-file` links are the announcement document.
+ * Whether a feed link points at the document itself rather than a web page.
  *
- * Some items link to the e-GP search page instead (an older announcement
- * format). Those carry no PDF, so extraction would receive an HTML page.
+ * e-GP serves documents from two services, one per announcement type:
+ *   - `egp-template-service/.../view-pdf-file` — the rendered announcement (D0)
+ *   - `egp-upload-service/.../downloadFile…`   — the uploaded tender document (B0)
+ *
+ * Older items instead link to the e-GP search page, which carries no document;
+ * extraction would receive an HTML page and bill a request to read it.
  */
-function isPdfLink(url: string): boolean {
-  return url.includes("view-pdf-file") || url.toLowerCase().endsWith(".pdf")
+const DOCUMENT_PATH_MARKERS = [
+  "view-pdf-file",
+  "downloadfile",
+  "egp-upload-service",
+]
+
+function isDocumentLink(url: string): boolean {
+  const lower = url.toLowerCase()
+  return (
+    DOCUMENT_PATH_MARKERS.some((marker) => lower.includes(marker)) ||
+    lower.endsWith(".pdf")
+  )
 }
 
 export type EgpFeedResult = {
@@ -110,17 +125,27 @@ export type EgpFeedResult = {
   truncated: boolean
 }
 
-/** Whether the feed is currently inside its serving window (§4.8). */
+/** Whether the feed is currently inside one of its serving windows. */
 export function isFeedOpen(now = new Date()): boolean {
-  // The window is stated in Thai local time; normalise regardless of host TZ.
-  const bangkok = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }))
-  const hour = bangkok.getHours()
-  const minute = bangkok.getMinutes()
+  // Windows are stated in Thai local time; read the clock in that zone rather
+  // than the host's, so a machine set to another timezone still decides right.
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now)
 
-  if (hour >= FEED_OPEN_HOUR) return true
-  if (hour < FEED_CLOSE_HOUR) return true
-  return hour === FEED_CLOSE_HOUR && minute <= FEED_CLOSE_MINUTE
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0)
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0)
+  const nowMinute = hour * 60 + minute
+
+  // Wraps past midnight, so either side of the boundary counts as open.
+  return nowMinute >= FEED_WINDOW.fromMinute || nowMinute <= FEED_WINDOW.toMinute
 }
+
+/** Human-readable serving window, for log messages. */
+export const FEED_WINDOW_LABEL = "17:01-08:29 ICT"
 
 export function buildFeedUrl(query: EgpFeedQuery): string {
   const url = new URL(env.egpRssUrl)
@@ -200,8 +225,8 @@ export function parseFeed(xml: string): EgpFeedResult {
       }
     })
     // An item with no project number cannot be keyed against the database,
-    // and one whose link is not the PDF cannot be extracted.
-    .filter((item) => item.projectNo && isPdfLink(item.pdfUrl))
+    // and one whose link is not the document itself cannot be extracted.
+    .filter((item) => item.projectNo && isDocumentLink(item.pdfUrl))
 
   const countByDay = Number(channel.countbyday ?? 0) || 0
 

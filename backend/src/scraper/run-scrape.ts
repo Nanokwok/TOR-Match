@@ -343,7 +343,9 @@ async function ingest(
     const pdf = await downloadDocument(context, document.url)
     if (!pdf) throw new Error(`Could not download ${document.url}`)
 
-    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), pdf)
+    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), [
+      { name: document.label || "announcement.pdf", pdf },
+    ])
 
     job.set({ stage: "index", pages: countPdfPages(pdf) })
     await job.save()

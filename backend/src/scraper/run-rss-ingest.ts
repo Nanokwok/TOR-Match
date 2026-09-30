@@ -1,10 +1,12 @@
 /**
  * Ingests Bangkok procurement announcements from the CGD e-GP RSS feed.
  *
- *   npm run ingest                 # both announcement types
- *   npm run ingest -- --dry-run    # show what would happen, touch nothing
- *   npm run ingest -- --all        # keep non-software announcements too
- *   npm run ingest -- --force      # re-extract even announcements already stored
+ *   npm run ingest                   # both announcement types
+ *   npm run ingest "--" --dry-run    # show what would happen, touch nothing
+ *   npm run ingest "--" --all        # keep non-software announcements too
+ *   npm run ingest "--" --force      # re-extract announcements already stored
+ *
+ * The separator is quoted because PowerShell eats a bare `--`; see hasFlag.
  *
  * The flow, cheapest step first so nothing expensive runs on an announcement
  * that will be discarded:
@@ -13,9 +15,10 @@
  *     -> software filter, on the title alone          — free
  *     -> already in the database?
  *          yes -> update what changed, no AI          — free
- *          no  -> download PDF -> Claude extraction   — the paid step
- *     -> auto-approve or park for review, using the threshold
- *        an admin set in /admin/settings
+ *          no  -> download PDF -> Gemini extraction   — the paid step
+ *     -> at or above the confidence threshold an admin set in
+ *        /admin/settings, publish straight to /browse; below it, park the
+ *        draft in /admin for a reviewer
  *
  * Unlike run-scrape.ts this never touches egp2.bangkok.go.th: the feed hands
  * over a direct PDF link, so no browser and no robots.txt exception is needed.
@@ -26,8 +29,12 @@ import { ScrapeJob } from "@/models/ScrapeJob.model"
 import { SystemSettings, SYSTEM_SETTINGS_SINGLETON_KEY } from "@/models/SystemSettings.model"
 import { TorDraft } from "@/models/TorDraft.model"
 import { extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
+import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
+import { downloadTorDocuments } from "@/scraper/tor-documents"
+import { hasFlag } from "@/utils/cli-flags"
 import {
   ANNOUNCE_TYPES,
+  FEED_WINDOW_LABEL,
   fetchAnnouncements,
   isFeedOpen,
   type AnnounceType,
@@ -44,11 +51,11 @@ type Options = {
 
 function parseArgs(argv: string[]): Options {
   return {
-    dryRun: argv.includes("--dry-run"),
-    allCategories: argv.includes("--all"),
+    dryRun: hasFlag(argv, "dry-run"),
+    allCategories: hasFlag(argv, "all"),
     // An announcement already extracted is not re-read: the PDF behind a
     // project number does not change, and re-reading it costs a full extraction.
-    force: argv.includes("--force"),
+    force: hasFlag(argv, "force"),
     announceTypes: [ANNOUNCE_TYPES.draft, ANNOUNCE_TYPES.invitation],
   }
 }
@@ -74,24 +81,6 @@ function changedFields(
     changes.pdfUrl = announcement.pdfUrl
   }
   return changes
-}
-
-async function downloadPdf(url: string): Promise<Buffer> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": env.scraperUserAgent },
-    signal: AbortSignal.timeout(120_000),
-  })
-  if (!response.ok) {
-    throw new Error(`PDF download returned HTTP ${response.status}`)
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer())
-  // A missing document often answers 200 with an HTML error page; extraction
-  // would then bill a full request to read an error message.
-  if (buffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
-    throw new Error("Downloaded file is not a PDF")
-  }
-  return buffer
 }
 
 function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionContext {
@@ -121,18 +110,21 @@ async function ingestNew(
   try {
     job.set({ stage: "parse" })
     await job.save()
-    const pdf = await downloadPdf(announcement.pdfUrl)
+    const documents = await downloadTorDocuments(announcement.pdfUrl)
 
-    job.set({ stage: "index" })
+    job.set({ stage: "index", pages: documents.length })
     await job.save()
-    const extraction = await extractTorFromPdf(contextFromAnnouncement(announcement), pdf)
+    const extraction = await extractTorFromPdf(
+      contextFromAnnouncement(announcement),
+      documents
+    )
 
     // Below the admin's threshold — or with auto-approval switched off — the
     // draft waits for a human rather than reaching the published collection.
     const autoApproved =
       threshold.enabled && extraction.aiConfidence >= threshold.threshold
 
-    await TorDraft.findOneAndUpdate(
+    const draft = await TorDraft.findOneAndUpdate(
       { announcementNo: announcement.projectNo },
       {
         $set: {
@@ -172,13 +164,30 @@ async function ingestNew(
           sourceJobId: job._id,
         },
       },
-      { upsert: true, runValidators: true }
+      { upsert: true, runValidators: true, new: true }
     )
+
+    // An auto-approved draft is one nobody is going to look at, so leaving it
+    // in the drafts collection would strand it: /browse reads `tors`, and the
+    // TOR would never appear there. Publishing here is what makes the
+    // threshold on /admin/settings mean "skip the reviewer" rather than
+    // "label it and wait anyway".
+    let outcome = "needs review"
+    if (autoApproved && draft) {
+      const blocker = publishBlocker(draft)
+      if (blocker) {
+        outcome = `auto-approved but not publishable (${blocker})`
+      } else {
+        await publishDraft(draft)
+        outcome = "auto-approved and published"
+      }
+    }
 
     job.set({ status: "success" })
     await job.save()
     console.log(
-      `[rss] ${announcement.projectNo} -> extracted (confidence ${extraction.aiConfidence}, ${autoApproved ? "auto-approved" : "needs review"})`
+      `[rss] ${announcement.projectNo} -> extracted from ${documents.length} doc(s) ` +
+        `(confidence ${extraction.aiConfidence}, ${outcome})`
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -198,18 +207,27 @@ async function main() {
   }
   if (!isFeedOpen()) {
     console.warn(
-      "[rss] the e-GP feed only answers between 17:01 and 08:29 ICT — continuing anyway, expect an empty result"
+      `[rss] the e-GP feed only answers during ${FEED_WINDOW_LABEL} — continuing anyway, expect an empty result`
     )
   }
 
   await connectDB()
 
+  // Ordered worst-to-best so a later, richer document overwrites an earlier one.
+  //
+  // A project can appear under both types, and the documents differ in what
+  // they contain: D0 (ประกาศเชิญชวน) is a two-page notice that points at the
+  // tender document for the bidder requirements, while B0 (ร่างเอกสารประกวดราคา)
+  // is that document. Extraction is only as good as the PDF it reads, so the
+  // draft wins wherever both exist.
+  const byPreference = [ANNOUNCE_TYPES.invitation, ANNOUNCE_TYPES.draft].filter(
+    (type) => options.announceTypes.includes(type)
+  )
+
   const seen = new Map<string, EgpAnnouncement>()
-  for (const announceType of options.announceTypes) {
+  for (const announceType of byPreference) {
     const items = await fetchAnnouncements({ deptId: env.egpDeptId, announceType })
     console.log(`[rss] ${announceType}: ${items.length} announcements`)
-    // The same project appears under both the draft and the invitation type;
-    // the later fetch wins, which is the more advanced stage.
     for (const item of items) seen.set(item.projectNo, item)
   }
 

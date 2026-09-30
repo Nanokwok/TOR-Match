@@ -2,14 +2,13 @@ import type { Request, Response } from "express"
 import { z } from "zod"
 
 import { ScrapeJob } from "@/models/ScrapeJob.model"
-import { Tor } from "@/models/Tor.model"
 import { AUTO_APPROVE_CONFIDENCE_THRESHOLD, TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
 import {
   PROCUREMENT_METHODS,
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import { localizedKey } from "@/models/localized.schema"
+import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -176,55 +175,10 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  // TORs publish with whatever the scraper found — summary, deadline and the
-  // rest may be empty and render as "not specified". Only a title and a
-  // department are required: without them a TOR is a blank card that no
-  // department filter can reach.
-  for (const field of ["title", "department"] as const) {
-    if (!localizedKey(draft[field])) {
-      throw ApiError.badRequest(`Cannot publish: ${field} is empty`)
-    }
-  }
+  const blocker = publishBlocker(draft)
+  if (blocker) throw ApiError.badRequest(`Cannot publish: ${blocker}`)
 
-  // Copied field by field on purpose: the draft carries review bookkeeping
-  // (aiConfidence, sourceJobId, ...) that must never reach the published
-  // collection, and an allowlist keeps a future draft-only field from
-  // leaking there by default.
-  const content = {
-    announcementNo: draft.announcementNo,
-    title: draft.title,
-    department: draft.department,
-    localOffice: draft.localOffice,
-    budgetBaht: draft.budgetBaht,
-    projectScale: draft.projectScale,
-    durationDays: draft.durationDays,
-    method: draft.method,
-    status: draft.status,
-    deadline: draft.deadline,
-    announcementDate: draft.announcementDate,
-    sourceUrl: draft.sourceUrl,
-    summary: draft.summary,
-    deliverables: draft.deliverables,
-    techTags: draft.techTags,
-    listTags: draft.listTags,
-    financials: draft.financials,
-    qualificationRequirements: draft.qualificationRequirements,
-  }
-
-  // Same upsert-by-announcementNo the seed uses, so re-publishing a corrected
-  // draft updates the live TOR instead of duplicating it.
-  const published = await Tor.findOneAndUpdate(
-    { announcementNo: draft.announcementNo },
-    { $set: content },
-    { new: true, upsert: true, runValidators: true }
-  )
-
-  draft.set({
-    reviewStatus: "approved",
-    publishedTorId: published?._id ?? null,
-    publishedAt: new Date(),
-  })
-  await draft.save()
+  const published = await publishDraft(draft)
 
   res.status(200).json({ draft, tor: published })
 })

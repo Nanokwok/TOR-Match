@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto"
 
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod"
-import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
-// The SDK's zod helper is built against zod v4, which the installed zod 3.25
-// ships alongside v3 under this subpath. The rest of the backend validates
-// with the v3 API (`import { z } from "zod"`); only this schema needs v4.
+// `resolution-mode` because @google/genai is ESM-only: under CommonJS
+// resolution TypeScript would otherwise refuse the type-only import.
+import type { GoogleGenAI } from "@google/genai" with { "resolution-mode": "import" }
+// zod 3.25 ships v4 alongside v3 under this subpath. The rest of the backend
+// validates with the v3 API (`import { z } from "zod"`); this file needs v4
+// for `toJSONSchema`, which renders the schema Gemini is constrained to.
 import * as z from "zod/v4"
 
 import { env } from "@/config/env"
@@ -14,6 +15,7 @@ import {
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import type { BmaProjectDetail } from "@/scraper/bma-client"
+import type { TorDocument } from "@/scraper/tor-documents"
 
 /**
  * What the announcement source already knows, handed to the model as ground
@@ -50,9 +52,13 @@ export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContex
 /**
  * Turns an announcement PDF into the structured TOR shape the app stores.
  *
- * Claude reads the PDF natively (document content block), which covers both
+ * Gemini reads the PDF natively (inline document part), which covers both
  * text-layer and scanned documents — that is why this pipeline has no separate
  * OCR pass.
+ *
+ * Gemini rather than Claude because Vertex serves Anthropic models at a zero
+ * quota that Google only lifts for accounts with a corporate domain and an
+ * assigned sales representative; Google's own models need no such approval.
  */
 
 /** The API caps a request at 32MB and base64 inflates by ~4/3. */
@@ -120,17 +126,16 @@ Rules:
 - Payment milestone amounts should reconcile with percent x total budget.
 - Set aiConfidence honestly. A scanned document you struggled to read, or one missing the qualification section, deserves a low score — it routes the draft to a human.`
 
-let client: AnthropicVertex | null = null
+let client: GoogleGenAI | null = null
 
 /**
- * Claude via Google Vertex AI.
+ * Gemini through Vertex AI.
  *
  * There is no API key: the SDK authenticates with GCP Application Default
  * Credentials, so a developer runs `gcloud auth application-default login`
  * once (or sets GOOGLE_APPLICATION_CREDENTIALS to a service-account file).
- * The model must also be enabled for the project in Vertex Model Garden.
  */
-function getClient(): AnthropicVertex {
+async function getClient(): Promise<GoogleGenAI> {
   if (!env.vertexProjectId) {
     throw new Error(
       "VERTEX_PROJECT_ID (or GOOGLE_CLOUD_PROJECT) must be set to run extraction.\n" +
@@ -138,10 +143,16 @@ function getClient(): AnthropicVertex {
         "  gcloud auth application-default login"
     )
   }
-  client ??= new AnthropicVertex({
-    projectId: env.vertexProjectId,
-    region: env.vertexRegion,
-  })
+  if (!client) {
+    // Imported dynamically: @google/genai ships as ESM, and this backend
+    // compiles to CommonJS, where a static import would not resolve.
+    const { GoogleGenAI } = await import("@google/genai")
+    client = new GoogleGenAI({
+      vertexai: true,
+      project: env.vertexProjectId,
+      location: env.vertexRegion,
+    })
+  }
   return client
 }
 
@@ -161,10 +172,17 @@ function qualificationId(announcementNo: string, requirementEn: string): string 
 
 export async function extractTorFromPdf(
   context: ExtractionContext,
-  pdf: Buffer
+  documents: TorDocument[]
 ): Promise<TorExtraction & { qualificationIds: string[] }> {
-  if (pdf.byteLength > MAX_PDF_BYTES) {
-    throw new Error(`PDF is ${(pdf.byteLength / 1024 / 1024).toFixed(1)}MB, above the ${MAX_PDF_BYTES / 1024 / 1024}MB limit`)
+  if (documents.length === 0) {
+    throw new Error("No documents to extract from")
+  }
+
+  const totalBytes = documents.reduce((sum, d) => sum + d.pdf.byteLength, 0)
+  if (totalBytes > MAX_PDF_BYTES) {
+    throw new Error(
+      `Documents total ${(totalBytes / 1024 / 1024).toFixed(1)}MB, above the ${MAX_PDF_BYTES / 1024 / 1024}MB limit`
+    )
   }
 
   // Source metadata is more reliable than the PDF for these fields, so hand it
@@ -178,36 +196,56 @@ export async function extractTorFromPdf(
     }),
   ].join("\n")
 
-  const response = await getClient().messages.parse({
+  const ai = await getClient()
+  const response = await ai.models.generateContent({
     model: env.extractionModel,
-    max_tokens: 16000,
-    system: SYSTEM_PROMPT,
-    output_config: { format: zodOutputFormat(extractionSchema) },
-    messages: [
+    contents: [
       {
         role: "user",
-        content: [
-          {
-            type: "document",
-            source: {
-              type: "base64",
-              media_type: "application/pdf",
-              data: pdf.toString("base64"),
+        parts: [
+          // Ranked best-first by the caller, so the tender document — the only
+          // one carrying real bidder qualifications — is read before the
+          // announcement that merely refers to it.
+          ...documents.map((document) => ({
+            inlineData: {
+              mimeType: "application/pdf",
+              data: document.pdf.toString("base64"),
             },
-          },
+          })),
           {
-            type: "text",
-            text: `Announcement page metadata (authoritative — prefer it over the PDF where they disagree):\n\n${pageContext}\n\nExtract this TOR.`,
+            text:
+              `Announcement metadata (authoritative — prefer it over the documents where they disagree):\n\n${pageContext}\n\n` +
+              `Documents attached, in order: ${documents.map((d) => d.name).join(", ")}.\n\n` +
+              `Extract this TOR.`,
           },
         ],
       },
     ],
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      maxOutputTokens: 16000,
+      responseMimeType: "application/json",
+      // The same zod schema the result is validated against, so the constraint
+      // the model is given and the contract the caller relies on cannot drift.
+      responseJsonSchema: z.toJSONSchema(extractionSchema),
+    },
   })
 
-  const parsed = response.parsed_output
-  if (!parsed) {
-    throw new Error("Extraction returned no parseable output")
+  // A response cut short by maxOutputTokens leaves truncated JSON, which would
+  // otherwise surface as a confusing parse error deep in the pipeline.
+  if (response.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+    throw new Error("Extraction hit the output token limit before finishing")
   }
+
+  const text = response.text
+  if (!text) {
+    throw new Error("Extraction returned no output")
+  }
+
+  // Validated rather than cast: `responseJsonSchema` constrains the model but
+  // the SDK does not check the result, and a draft built from an unvalidated
+  // shape would fail later against the Mongoose schema instead of here.
+  const parsed = extractionSchema.parse(JSON.parse(text))
 
   return {
     ...parsed,
