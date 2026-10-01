@@ -76,6 +76,38 @@ export function withinBudget(documents: TorDocument[]): TorDocument[] {
   return kept
 }
 
+/**
+ * Fetches several links as one document set, best first.
+ *
+ * An announcement can be published twice — as a B0 draft archive and as a D0
+ * invitation — and the two state different things, so the extraction reads both
+ * in one request rather than paying for two. The budget is re-applied across
+ * the whole set, which a per-link download cannot do.
+ *
+ * A link that fails is skipped rather than failing the set: losing the
+ * invitation costs a deadline, while losing the tender document costs every
+ * qualification, and neither is a reason to discard the other.
+ */
+export async function downloadAllTorDocuments(
+  urls: readonly string[]
+): Promise<TorDocument[]> {
+  const collected: TorDocument[] = []
+  const failures: string[] = []
+
+  for (const url of urls) {
+    try {
+      collected.push(...(await downloadTorDocuments(url)))
+    } catch (error) {
+      failures.push(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  if (!collected.length) {
+    throw new Error(`No document could be read (${failures.join("; ") || "no links given"})`)
+  }
+  return withinBudget(collected)
+}
+
 export async function downloadTorDocuments(url: string): Promise<TorDocument[]> {
   const response = await fetch(url, {
     headers: { "User-Agent": env.scraperUserAgent },

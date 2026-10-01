@@ -26,6 +26,15 @@
 import { connectDB, disconnectDB } from "@/config/db"
 import { env } from "@/config/env"
 import { TorDraft } from "@/models/TorDraft.model"
+import {
+  changedFields,
+  groupByProject,
+  needsInvitation,
+  primary,
+  primaryDocument,
+  type AnnouncementSources,
+} from "@/scraper/announcement-sources"
+import { resolveDetailUrls } from "@/scraper/bma-detail-link"
 import type { ExtractionContext } from "@/scraper/extract"
 import {
   autoApproveSettings,
@@ -61,18 +70,6 @@ function parseArgs(argv: string[]): Options {
   }
 }
 
-/** The PDF link is the one thing a re-published announcement tends to change. */
-function changedFields(
-  draft: { pdfUrl?: string; sourceUrl?: string },
-  announcement: EgpAnnouncement
-): Record<string, string> {
-  const changes: Record<string, string> = {}
-  if (announcement.pdfUrl && draft.pdfUrl !== announcement.pdfUrl) {
-    changes.pdfUrl = announcement.pdfUrl
-  }
-  return changes
-}
-
 function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionContext {
   return {
     projectNo: announcement.projectNo,
@@ -87,26 +84,43 @@ function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionConte
 }
 
 async function ingestNew(
-  announcement: EgpAnnouncement,
-  threshold: AutoApprove
+  entry: AnnouncementSources,
+  threshold: AutoApprove,
+  /**
+   * The document a previous run already found for this project.
+   *
+   * Load-bearing when the invitation turns up after the draft: by then the B0
+   * has usually aged out of the seven-day feed, so this run only sees the D0.
+   * Reading that alone would trade a tender document's worth of qualifications
+   * for a deadline. The stored link still resolves, so both are read.
+   */
+  storedDocumentUrl?: string,
+  /** The announcement's page on the agency's site, when one was resolved. */
+  detailUrl?: string
 ): Promise<void> {
+  const lead = primary(entry)
+  // The tender document is read first because it carries the qualifications;
+  // the invitation follows for the deadline. One request reads both.
   try {
     const result = await extractAndStore({
-      announcementNo: announcement.projectNo,
-      pdfUrl: announcement.pdfUrl,
-      publishedDate: announcement.publishedDate,
-      context: contextFromAnnouncement(announcement),
+      announcementNo: entry.projectNo,
+      pdfUrl: entry.draft?.pdfUrl ?? storedDocumentUrl ?? primaryDocument(entry).pdfUrl,
+      invitationUrl: entry.invitation?.pdfUrl,
+      detailUrl,
+      publishedDate: lead.publishedDate,
+      context: contextFromAnnouncement(lead),
       threshold,
     })
+    const types = [entry.draft && "B0", entry.invitation && "D0"].filter(Boolean).join("+")
     console.log(
-      `[rss] ${result.announcementNo} -> extracted from ${result.documents} doc(s) ` +
+      `[rss] ${result.announcementNo} -> ${types}, extracted from ${result.documents} doc(s) ` +
         `(confidence ${result.aiConfidence}, ${result.outcome})`
     )
   } catch (error) {
     // A broken PDF or a refused extraction must not end the run — the next
     // announcement is independent, and the failure is visible in /admin.
     const message = error instanceof Error ? error.message : String(error)
-    console.warn(`[rss] ${announcement.projectNo} -> failed: ${message}`)
+    console.warn(`[rss] ${entry.projectNo} -> failed: ${message}`)
   }
 }
 
@@ -124,60 +138,76 @@ async function main() {
 
   await connectDB()
 
-  // Ordered worst-to-best so a later, richer document overwrites an earlier one.
-  //
-  // A project can appear under both types, and the documents differ in what
-  // they contain: D0 (ประกาศเชิญชวน) is a two-page notice that points at the
-  // tender document for the bidder requirements, while B0 (ร่างเอกสารประกวดราคา)
-  // is that document. Extraction is only as good as the PDF it reads, so the
-  // draft wins wherever both exist.
-  const byPreference = [ANNOUNCE_TYPES.invitation, ANNOUNCE_TYPES.draft].filter(
-    (type) => options.announceTypes.includes(type)
-  )
-
-  const seen = new Map<string, EgpAnnouncement>()
-  for (const announceType of byPreference) {
+  // Both types are kept, not merged into one. A project can be published as
+  // both, and they carry different things: B0 (ร่างเอกสารประกวดราคา) is the
+  // tender document and holds the bidder qualifications but, being a draft,
+  // states no closing date; D0 (ประกาศเชิญชวน) is the two-page notice that
+  // defers the qualifications and does give the deadline. Collapsing them threw
+  // one of those away whichever won.
+  const byType = new Map<AnnounceType, EgpAnnouncement[]>()
+  for (const announceType of options.announceTypes) {
     const items = await fetchAnnouncements({ deptId: env.egpDeptId, announceType })
     console.log(`[rss] ${announceType}: ${items.length} announcements`)
-    for (const item of items) seen.set(item.projectNo, item)
+    byType.set(announceType, items)
   }
 
-  const candidates = options.allCategories
-    ? [...seen.values()]
-    : [...seen.values()].filter((item) =>
-        titleSuggestsSoftware({
-          detailUrl: "",
-          projectNo: item.projectNo,
-          title: item.title,
-          department: "",
-          budgetBaht: 0,
-        })
-      )
+  const sources = groupByProject(byType)
+  const overlapping = [...sources.values()].filter((s) => s.draft && s.invitation)
+
+  const candidates = [...sources.values()].filter((entry) => {
+    if (options.allCategories) return true
+    const title = primary(entry).title
+    return titleSuggestsSoftware({
+      detailUrl: "",
+      projectNo: entry.projectNo,
+      title,
+      department: "",
+      budgetBaht: 0,
+    })
+  })
 
   console.log(
-    `[rss] ${seen.size} unique announcements, ${candidates.length} pass the software filter`
+    `[rss] ${sources.size} unique announcements (${overlapping.length} published as both), ` +
+      `${candidates.length} pass the software filter`
   )
 
   const existing = await TorDraft.find(
-    { announcementNo: { $in: candidates.map((item) => item.projectNo) } },
-    { announcementNo: 1, pdfUrl: 1 }
+    { announcementNo: { $in: candidates.map((entry) => entry.projectNo) } },
+    { announcementNo: 1, pdfUrl: 1, invitationUrl: 1, deadline: 1 }
   )
   const byAnnouncementNo = new Map(
     existing.map((draft) => [draft.announcementNo, draft])
   )
 
-  const fresh = candidates.filter(
-    (item) => options.force || !byAnnouncementNo.has(item.projectNo)
+  // A TOR is built on the tender document, and only ever on that.
+  //
+  // An invitation on its own yields one or two generic lines —
+  // "คุณสมบัติให้เป็นไปตามเอกสารประกวดราคา" — because it defers the
+  // qualifications to a document we would not have. Publishing that produces a
+  // TOR nothing can be matched against, next to TORs carrying twenty real
+  // requirements. So an announcement enters only through its B0; an invitation
+  // is what later fills in the deadline for one already here.
+  const wanted = candidates.filter(
+    (entry) => entry.draft || byAnnouncementNo.has(entry.projectNo)
   )
-  const known = candidates.filter(
-    (item) => !options.force && byAnnouncementNo.has(item.projectNo)
-  )
+  const skipped = candidates.length - wanted.length
+  if (skipped) {
+    console.log(`[rss] skipped ${skipped} invitation-only announcement(s) — no tender document`)
+  }
+
+  const fresh = wanted.filter((entry) => {
+    const draft = byAnnouncementNo.get(entry.projectNo)
+    return options.force || !draft || needsInvitation(draft, entry)
+  })
+  const known = wanted.filter((entry) => !fresh.includes(entry))
 
   if (options.dryRun) {
     console.log(`\n[dry-run] ${fresh.length} to extract, ${known.length} already stored\n`)
-    for (const item of candidates) {
-      const mark = byAnnouncementNo.has(item.projectNo) ? "known" : "NEW  "
-      console.log(`  [${mark}] ${item.projectNo}  ${item.title.slice(0, 62)}`)
+    for (const entry of wanted) {
+      const draft = byAnnouncementNo.get(entry.projectNo)
+      const mark = !draft ? "NEW  " : needsInvitation(draft, entry) ? "D0+  " : "known"
+      const types = [entry.draft && "B0", entry.invitation && "D0"].filter(Boolean).join("+")
+      console.log(`  [${mark}] ${entry.projectNo}  ${types.padEnd(5)} ${primary(entry).title.slice(0, 56)}`)
     }
     await disconnectDB()
     return
@@ -185,16 +215,16 @@ async function main() {
 
   // Known announcements: refresh what the feed can tell us, no AI involved.
   let updated = 0
-  for (const item of known) {
-    const draft = byAnnouncementNo.get(item.projectNo)
+  for (const entry of known) {
+    const draft = byAnnouncementNo.get(entry.projectNo)
     if (!draft) continue
 
-    const changes = changedFields(draft, item)
+    const changes = changedFields(draft, entry)
     if (Object.keys(changes).length === 0) continue
 
     await TorDraft.updateOne({ _id: draft._id }, { $set: changes })
     updated += 1
-    console.log(`[rss] ${item.projectNo} -> updated ${Object.keys(changes).join(", ")}`)
+    console.log(`[rss] ${entry.projectNo} -> updated ${Object.keys(changes).join(", ")}`)
   }
 
   const threshold = await autoApproveSettings()
@@ -202,8 +232,19 @@ async function main() {
     `[rss] auto-approve ${threshold.enabled ? `at >= ${threshold.threshold}` : "disabled"}`
   )
 
-  for (const item of fresh) {
-    await ingestNew(item, threshold)
+  // Looked up once for the whole batch: the feed gives only file links, so this
+  // is the only way the TOR page can send a bidder somewhere they can read the
+  // announcement themselves.
+  const detailUrls = await resolveDetailUrls(fresh.map((entry) => entry.projectNo))
+  console.log(`[rss] resolved ${detailUrls.size}/${fresh.length} announcement pages`)
+
+  for (const entry of fresh) {
+    await ingestNew(
+      entry,
+      threshold,
+      byAnnouncementNo.get(entry.projectNo)?.pdfUrl,
+      detailUrls.get(entry.projectNo)
+    )
   }
 
   console.log(

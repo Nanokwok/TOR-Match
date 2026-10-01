@@ -2,7 +2,8 @@ import { ScrapeJob } from "@/models/ScrapeJob.model"
 import { SystemSettings, SYSTEM_SETTINGS_SINGLETON_KEY } from "@/models/SystemSettings.model"
 import { TorDraft } from "@/models/TorDraft.model"
 import { extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
-import { downloadTorDocuments } from "@/scraper/tor-documents"
+import { sourceUrlFor } from "@/scraper/announcement-sources"
+import { downloadAllTorDocuments } from "@/scraper/tor-documents"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 
 /**
@@ -43,17 +44,33 @@ export type ExtractionOutcome = {
  */
 export async function extractAndStore(params: {
   announcementNo: string
+  /**
+   * The document the extraction reads, best first. More than one when the
+   * announcement was published as both a B0 archive and a D0 invitation: the
+   * qualifications come from the first, the deadline from the second.
+   */
   pdfUrl: string
+  /** The D0 ประกาศเชิญชวน, read for its deadline when the feed offered one. */
+  invitationUrl?: string
+  /**
+   * The website carrying this announcement, where a person can read the
+   * documents themselves. Not a file link: that is what `pdfUrl` is for.
+   */
+  detailUrl?: string
   /** Falls back to this when the documents state no announcement date. */
   publishedDate: string
   context: ExtractionContext
   threshold: AutoApprove
 }): Promise<ExtractionOutcome> {
-  const { announcementNo, pdfUrl, publishedDate, context, threshold } = params
+  const { announcementNo, pdfUrl, invitationUrl, detailUrl, publishedDate, context, threshold } = params
+
+  const links = [...new Set([pdfUrl, invitationUrl].filter((url): url is string => Boolean(url)))]
+  // Where a person is sent, which is not where the pipeline reads.
+  const sourceUrl = sourceUrlFor({ detailUrl, pdfUrl })
 
   const job = await ScrapeJob.create({
     documentSource: announcementNo,
-    sourceUrl: pdfUrl,
+    sourceUrl,
     stage: "scrape",
     status: "running",
   })
@@ -61,7 +78,7 @@ export async function extractAndStore(params: {
   try {
     job.set({ stage: "parse" })
     await job.save()
-    const documents = await downloadTorDocuments(pdfUrl)
+    const documents = await downloadAllTorDocuments(links)
 
     job.set({ stage: "index", pages: documents.length })
     await job.save()
@@ -88,8 +105,10 @@ export async function extractAndStore(params: {
           status: extraction.status,
           deadline: extraction.deadline,
           announcementDate: extraction.announcementDate || publishedDate,
-          sourceUrl: pdfUrl,
+          sourceUrl,
           pdfUrl,
+          invitationUrl: invitationUrl ?? "",
+          detailUrl: detailUrl ?? "",
           techTags: extraction.techTags,
           listTags: extraction.listTags,
           financials: {

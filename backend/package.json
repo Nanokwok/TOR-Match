@@ -13,6 +13,8 @@
     "ingest": "tsx src/scraper/run-rss-ingest.ts",
     "publish:approved": "tsx src/scraper/run-publish-approved.ts",
     "backfill:keys": "tsx src/scraper/run-backfill-keys.ts",
+    "backfill:links": "tsx src/scraper/run-backfill-links.ts",
+    "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",
     "scrape": "tsx src/scraper/run-scrape.ts",

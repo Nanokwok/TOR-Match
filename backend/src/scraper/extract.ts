@@ -133,6 +133,7 @@ Rules:
 - Populate BOTH locales on every localized field. The source is Thai: copy the Thai into "th" and write a faithful English translation into "en". Never leave "en" empty — downstream filtering keys on it.
 - Extract only what the document and the supplied page metadata actually state. Do not invent budgets, dates, or requirements. If something is absent, use an empty string, an empty array, or 0.
 - Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00.
+- The bid deadline is stated only in the invitation (ประกาศเชิญชวน), as "กำหนดยื่นข้อเสนอ … ในวันที่ … เวลา …". A draft tender document (ร่างเอกสารประกวดราคา) has no closing date — if only the draft is attached, leave "deadline" empty rather than inferring one.
 - "method" must reflect the stated procurement method: ประกวดราคาอิเล็กทรอนิกส์/e-bidding -> "e-bidding", ตลาดอิเล็กทรอนิกส์/e-market -> "e-market", คัดเลือก -> "selective", เฉพาะเจาะจง -> "specific", ตกลงราคา/ราคาคงที่ -> "price-agreement".
 - "projectScale" follows the budget: under 5M baht SMALL, 5-20M MEDIUM, 20-100M LARGE, above 100M ENTERPRISE.
 - Payment milestone amounts should reconcile with percent x total budget.
@@ -235,6 +236,13 @@ export async function extractTorFromPdf(
     ],
     config: {
       systemInstruction: SYSTEM_PROMPT,
+      // Extraction is transcription, not writing: the same document should
+      // give the same answer every time. Left at the default of 1.0, one
+      // tender document yielded 16, then 20, then 21, then 9 qualification
+      // rows across re-runs — the model re-deciding each time how finely to
+      // split the clauses. That churns requirement ids, which stored
+      // self-check answers are filed under.
+      temperature: 0,
       // A full tender document runs to 25-30 qualification clauses, each
       // carrying both locales of two sentences plus its rule — which overran
       // the previous 16000 and truncated the JSON mid-object.
