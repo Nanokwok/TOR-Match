@@ -58,8 +58,12 @@ export function formatDuration(days: number, locale: Locale = "en") {
   return `${dayCount} ${dayUnit} (${months} ${monthUnit})`
 }
 
-export function formatTorDeadline(isoDate: string, locale: Locale = "en") {
-  if (!isValidDate(isoDate)) return notSpecified(locale)
+export function formatTorDeadline(
+  isoDate: string,
+  locale: Locale = "en",
+  fallback?: string
+) {
+  if (!isValidDate(isoDate)) return fallback ?? notSpecified(locale)
   const date = new Date(isoDate)
   const intl = localeToIntl(locale)
   const datePart = new Intl.DateTimeFormat(intl, {

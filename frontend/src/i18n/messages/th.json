@@ -153,6 +153,7 @@
       "qrHint": "สแกนด้วยมือถือเพื่อเปิด TOR นี้บนมือถือ"
     },
     "submissionDeadline": "กำหนดยื่นข้อเสนอ",
+    "submissionDeadlinePendingNotice": "ฉบับนี้ยังไม่ได้อยู่ในขั้นประกาศเชิญชวน บุ๊กมาร์กไว้แล้วเราจะแจ้งเตือนเมื่อมีประกาศเชิญชวน",
     "projectScale": "ขนาดโครงการ",
     "duration": "ระยะเวลา",
     "method": "วิธีการ",
@@ -178,7 +179,14 @@
       "unsavedChanges": "ยังไม่ได้บันทึก",
       "readyToBid": "ครบทุกข้อกำหนดแล้ว",
       "save": "บันทึกคำตอบ",
-      "saving": "กำลังบันทึก…"
+      "saving": "กำลังบันทึก…",
+      "readMore": "อ่านต่อ",
+      "showLess": "ย่อกลับ",
+      "exit": "ออก",
+      "discardChangesTitle": "คุณมีข้อมูลที่ยังไม่ได้บันทึก",
+      "discardChangesDescription": "คุณได้ทำการเลือกรายการคุณสมบัติไว้ ต้องการละทิ้งการเปลี่ยนแปลงและออกจากหน้านี้ใช่หรือไม่?",
+      "keepEditing": "แก้ไขต่อ",
+      "discardAndExit": "ออกจากหน้านี้"
     },
     "financials": "การเงิน",
     "keyDeliverables": "ขอบเขตงานหลัก",
@@ -224,7 +232,10 @@
       "day": "วัน",
       "milestone": "งวด",
       "deliverable": "ผลงาน",
-      "days": "{count} วัน"
+      "days": "{count} วัน",
+      "readMore": "อ่านต่อ",
+      "showLess": "ย่อกลับ",
+      "totalMilestones": "ทั้งหมด {count} งวด"
     },
     "moreFiltersModal": {
       "title": "ตัวกรองเพิ่มเติม",
@@ -284,6 +295,7 @@
       "addPeople": "เพิ่มสมาชิก",
       "checklistPlaceholder": "เช็คลิสต์",
       "addChecklist": "เพิ่มเช็คลิสต์",
+      "emptyChecklist": "ยังไม่มีเช็คลิสต์งานภายใน สามารถเพิ่มได้จากช่องด้านบน",
       "seeFullTor": "ดู TOR เต็ม →",
       "removeAssignee": "ลบ {name}",
       "close": "ปิด"

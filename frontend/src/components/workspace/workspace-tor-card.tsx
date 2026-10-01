@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Banknote,
   Clock3,
@@ -59,7 +60,7 @@ type WorkspaceTorCardProps = {
   card: WorkspaceCard
   className?: string
   onOpenDetails?: (torId: string) => void
-  onDelete?: (torId: string) => void
+  onDelete?: (torId: string, cardId?: string) => void
 }
 
 export function WorkspaceTorCard({
@@ -68,6 +69,7 @@ export function WorkspaceTorCard({
   onOpenDetails,
   onDelete,
 }: WorkspaceTorCardProps) {
+  const router = useRouter()
   const { locale, t } = useLocale()
   const priority = priorityStyles[card.priority]
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -79,7 +81,7 @@ export function WorkspaceTorCard({
   }
 
   function handleConfirmDelete() {
-    onDelete?.(card.torId)
+    onDelete?.(card.torId, card.id)
     setConfirmOpen(false)
   }
 
@@ -165,7 +167,7 @@ export function WorkspaceTorCard({
             className="h-auto p-0 text-xs text-primary"
             onClick={(event) => {
               event.stopPropagation()
-              workspaceActions.seeFullTor(card.torId)
+              router.push(`/browse?tor=${encodeURIComponent(card.torId)}`)
             }}
             onPointerDown={(event) => event.stopPropagation()}
           >

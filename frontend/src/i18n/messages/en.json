@@ -153,6 +153,7 @@
       "qrHint": "Scan with a phone to open this TOR on mobile."
     },
     "submissionDeadline": "Submission Deadline",
+    "submissionDeadlinePendingNotice": "This announcement is not yet in the invitation to tender stage. Bookmark it to get notified when the invitation is published.",
     "projectScale": "Project Scale",
     "duration": "Duration",
     "method": "Method",
@@ -178,7 +179,14 @@
       "unsavedChanges": "Unsaved changes",
       "readyToBid": "All requirements accounted for",
       "save": "Save answers",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "readMore": "Read more",
+      "showLess": "Show less",
+      "exit": "Exit",
+      "discardChangesTitle": "Unsaved Changes",
+      "discardChangesDescription": "You have unsaved changes in your qualification check. Do you want to discard them and exit?",
+      "keepEditing": "Keep Editing",
+      "discardAndExit": "Discard & Exit"
     },
     "financials": "Financials",
     "keyDeliverables": "Key Deliverables",
@@ -224,7 +232,10 @@
       "day": "Day",
       "milestone": "Milestone",
       "deliverable": "Deliverable",
-      "days": "{count} Days"
+      "days": "{count} Days",
+      "readMore": "Read more",
+      "showLess": "Show less",
+      "totalMilestones": "{count} milestones total"
     },
     "moreFiltersModal": {
       "title": "More Filters",
@@ -284,6 +295,7 @@
       "addPeople": "Add people",
       "checklistPlaceholder": "Checklist",
       "addChecklist": "Add Checklist",
+      "emptyChecklist": "No internal checklist items yet. Add one using the input above.",
       "seeFullTor": "See full TOR →",
       "removeAssignee": "Remove {name}",
       "close": "Close"

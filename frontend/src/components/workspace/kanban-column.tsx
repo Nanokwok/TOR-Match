@@ -17,7 +17,7 @@ type KanbanColumnProps = {
   label: string
   cards: WorkspaceCard[]
   onOpenCardDetails?: (torId: string) => void
-  onDeleteCard?: (torId: string) => void
+  onDeleteCard?: (torId: string, cardId?: string) => void
   onRequestAddTor?: (columnId: WorkspaceColumnId) => void
   disableDnd?: boolean
 }
@@ -45,7 +45,7 @@ export function KanbanColumn({
           ) : (
             cards.map((card) => (
               <WorkspaceTorCard
-                key={card.torId}
+                key={card.id || card.torId}
                 card={card}
                 onOpenDetails={onOpenCardDetails}
                 onDelete={onDeleteCard}
@@ -98,7 +98,7 @@ function DroppableKanbanColumn({
         ) : (
           cards.map((card) => (
             <SortableWorkspaceTorCard
-              key={card.torId}
+              key={card.id || card.torId}
               card={card}
               onOpenDetails={onOpenCardDetails}
               onDelete={onDeleteCard}

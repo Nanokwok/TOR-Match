@@ -44,6 +44,7 @@ type BackendWorkspaceCard = {
   column: WorkspaceColumnId
   priority?: TorPriority
   assigneeIds?: Array<string | { toString(): string }>
+  checklist?: Array<{ _id?: string; id?: string; label: string; completed?: boolean }>
 }
 
 type BackendBoardResponse = {
@@ -79,10 +80,16 @@ function groupByColumn(
   return grouped
 }
 
-function mapBackendCard(raw: BackendWorkspaceCard): WorkspaceCard {
+function mapBackendCard(raw: BackendWorkspaceCard): WorkspaceCard | null {
+  if (!raw.torId || raw.torId === "null" || raw.torId === "undefined") {
+    return null
+  }
   const tor =
     typeof raw.torId === "object" && raw.torId !== null ? raw.torId : null
   const torId = tor ? String(tor._id) : String(raw.torId)
+  if (!torId || torId === "null" || torId === "undefined") {
+    return null
+  }
 
   return {
     id: String(raw._id),
@@ -95,13 +102,20 @@ function mapBackendCard(raw: BackendWorkspaceCard): WorkspaceCard {
     priority: raw.priority ?? "MEDIUM",
     column: raw.column,
     assigneeIds: (raw.assigneeIds ?? []).map(String),
+    checklist: (raw.checklist ?? []).map((item) => ({
+      id: String(item._id || item.id || Math.random()),
+      label: item.label,
+      completed: Boolean(item.completed),
+    })),
   }
 }
 
 async function fetchBoardCards(): Promise<WorkspaceCard[]> {
   const data = await apiFetch<BackendBoardResponse>("/workspace/board")
   return WORKSPACE_COLUMNS.flatMap((column) =>
-    (data.columns[column.id] ?? []).map(mapBackendCard)
+    (data.columns[column.id] ?? [])
+      .map(mapBackendCard)
+      .filter((card): card is WorkspaceCard => card !== null)
   )
 }
 
@@ -284,7 +298,8 @@ export async function addTorToWorkspace(
 }
 
 export async function removeWorkspaceCard(
-  torId: string
+  torId: string,
+  cardId?: string
 ): Promise<
   | { ok: true; cards: WorkspaceCard[] }
   | { ok: false; error: string }
@@ -295,20 +310,38 @@ export async function removeWorkspaceCard(
   }
 
   try {
-    const backendTorId = (await resolveBackendTorId(torId)) ?? torId
     const cards = await fetchBoardCards()
-    const card = cards.find((item) => item.torId === backendTorId)
-    if (!card) {
-      return { ok: false, error: "Card not found" }
+    const targetCard = cards.find(
+      (item) =>
+        (cardId && item.id === cardId) ||
+        (torId && torId !== "null" && torId !== "undefined" && item.torId === torId)
+    )
+    const effectiveCardId = cardId || targetCard?.id
+
+    if (effectiveCardId) {
+      await apiFetch(`/workspace/cards/${effectiveCardId}`, {
+        method: "DELETE",
+      })
+      return {
+        ok: true,
+        cards: cards.filter((item) => item.id !== effectiveCardId),
+      }
     }
 
-    await apiFetch(`/workspace/cards/by-tor/${backendTorId}`, {
-      method: "DELETE",
-    })
-    return {
-      ok: true,
-      cards: cards.filter((item) => item.torId !== backendTorId),
+    if (torId && torId !== "null" && torId !== "undefined") {
+      const backendTorId = (await resolveBackendTorId(torId)) ?? torId
+      if (backendTorId && backendTorId !== "null" && backendTorId !== "undefined") {
+        await apiFetch(`/workspace/cards/by-tor/${backendTorId}`, {
+          method: "DELETE",
+        })
+      }
+      return {
+        ok: true,
+        cards: cards.filter((item) => item.torId !== backendTorId),
+      }
     }
+
+    return { ok: true, cards }
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return { ok: false, error: error.message }
@@ -364,6 +397,28 @@ export async function bookmarkTor(
     }
     console.error("bookmarkTor failed", error)
     return { ok: false, error: "Something went wrong. Please try again." }
+  }
+}
+
+export async function updateWorkspaceCard(
+  cardId: string,
+  updates: Partial<Pick<WorkspaceCard, "priority" | "column" | "assigneeIds" | "checklist">>
+) {
+  const token = await getAuthToken()
+  if (!token) return { ok: false, error: "Unauthorized" }
+
+  try {
+    const updated = await apiFetch<BackendWorkspaceCard>(`/workspace/cards/${cardId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    })
+    return { ok: true, card: mapBackendCard(updated) }
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      return { ok: false, error: error.message }
+    }
+    console.error("updateWorkspaceCard failed", error)
+    return { ok: false, error: "Failed to update card" }
   }
 }
 

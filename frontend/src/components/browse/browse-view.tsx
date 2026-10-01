@@ -14,6 +14,14 @@ import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
 import {
   pinTorToFront,
@@ -58,6 +66,9 @@ export function BrowseView({
   const [notFoundDismissed, setNotFoundDismissed] = useState(false)
   const [ineligibleHintDismissed, setIneligibleHintDismissed] = useState(false)
   const [bookmarkError, setBookmarkError] = useState<string | null>(null)
+  const [isDetailDirty, setIsDetailDirty] = useState(false)
+  const [pendingTorId, setPendingTorId] = useState<string | null>(null)
+  const [showSwitchTorModal, setShowSwitchTorModal] = useState(false)
 
   const linkedTorId =
     initialDeepLink?.found === true ? initialDeepLink.requestedId : null
@@ -84,10 +95,29 @@ export function BrowseView({
       !ineligibleHintDismissed
   )
 
-  function selectTor(id: string) {
+  function doSelectTor(id: string) {
     setSelectedId(id)
     const tor = items.find((item) => item.id === id) ?? anchorTor
     if (tor?.id === id) setAnchorTor(tor)
+  }
+
+  function selectTor(id: string) {
+    if (id === selectedId) return
+    if (isDetailDirty) {
+      setPendingTorId(id)
+      setShowSwitchTorModal(true)
+      return
+    }
+    doSelectTor(id)
+  }
+
+  function handleConfirmSwitchTor() {
+    setShowSwitchTorModal(false)
+    setIsDetailDirty(false)
+    if (pendingTorId) {
+      doSelectTor(pendingTorId)
+      setPendingTorId(null)
+    }
   }
 
   function runSearch(nextFilters: BrowseFiltersState) {
@@ -240,9 +270,42 @@ export function BrowseView({
           <TorDetail
             tor={selectedTor}
             onToggleBookmark={handleToggleBookmark}
+            onDirtyChange={setIsDetailDirty}
           />
         </section>
       </div>
+
+      <Dialog open={showSwitchTorModal} onOpenChange={setShowSwitchTorModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {t("browse.qualificationPanel.discardChangesTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("browse.qualificationPanel.discardChangesDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowSwitchTorModal(false)
+                setPendingTorId(null)
+              }}
+            >
+              {t("browse.qualificationPanel.keepEditing")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmSwitchTor}
+            >
+              {t("browse.qualificationPanel.discardAndExit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

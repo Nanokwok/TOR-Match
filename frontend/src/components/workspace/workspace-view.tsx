@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react"
 
-import { moveWorkspaceCardAction, removeWorkspaceCardAction } from "@/actions/workspace"
+import {
+  moveWorkspaceCardAction,
+  removeWorkspaceCardAction,
+  updateWorkspaceCardAction,
+} from "@/actions/workspace"
 import { AddTorToColumnDialog } from "@/components/workspace/add-tor-to-column-dialog"
 import { WorkspaceCardDetailDialog } from "@/components/workspace/workspace-card-detail-dialog"
 import { WorkspaceEmptyState } from "@/components/workspace/workspace-empty-state"
@@ -75,18 +79,34 @@ export function WorkspaceView({
 
   function handleUpdateCard(updated: WorkspaceCard) {
     setAllCards((previous) =>
-      previous.map((card) => (card.torId === updated.torId ? updated : card))
+      previous.map((card) =>
+        card.id === updated.id || card.torId === updated.torId ? updated : card
+      )
     )
+    void updateWorkspaceCardAction(updated.id, {
+      priority: updated.priority,
+      column: updated.column,
+      assigneeIds: updated.assigneeIds,
+      checklist: updated.checklist,
+    })
   }
 
   function handleTorAdded(_card: WorkspaceCard, cards: WorkspaceCard[]) {
     setAllCards(cards)
   }
 
-  function handleDeleteCard(torId: string) {
-    setAllCards((previous) => previous.filter((card) => card.torId !== torId))
-    setSelectedCardId((current) => (current === torId ? null : current))
-    void removeWorkspaceCardAction(torId)
+  function handleDeleteCard(torId: string, cardId?: string) {
+    setAllCards((previous) =>
+      previous.filter((card) => {
+        if (cardId && card.id === cardId) return false
+        if (torId && torId !== "null" && card.torId === torId) return false
+        return true
+      })
+    )
+    setSelectedCardId((current) =>
+      current === torId || (cardId && current === cardId) ? null : current
+    )
+    void removeWorkspaceCardAction(torId, cardId)
   }
 
   return (

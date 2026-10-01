@@ -223,7 +223,7 @@ function evaluate(criteria: QualificationCriteria, company: CompanyInput | null,
       return result(company.egpStatus === criteria.requiredStatus ? "passed" : "failed", reason("An e-GP vendor registration is required.", "ต้องลงทะเบียนเป็นผู้ค้า e-GP"), company.egpStatus)
     case "not-blacklisted":
       if (typeof company.notBlacklisted !== "boolean") return result("insufficient-data", reason("Blacklist declaration is missing.", "ยังไม่มีข้อมูลยืนยันสถานะบัญชีดำ"))
-      return result(company.notBlacklisted ? "passed" : "failed", reason("Based on the company's saved declaration; no external registry verification.", "อ้างอิงคำรับรองที่บริษัทบันทึก ยังไม่ได้ตรวจทะเบียนภายนอก"), String(company.notBlacklisted))
+      return result(company.notBlacklisted ? "passed" : "failed", reason("Based on the company's saved declaration; no external registry verification.", "อ้างอิงคำรับรองที่บริษัทบันทึก ยังไม่ได้ตรวจทะเบียนภายนอก"), null)
     case "company-size": {
       const index = COMPANY_SIZE_ORDER.indexOf(company.companySize as (typeof COMPANY_SIZE_ORDER)[number])
       if (index < 0) return result("insufficient-data", reason("Company size is missing.", "ยังไม่ได้ระบุขนาดกิจการ"))

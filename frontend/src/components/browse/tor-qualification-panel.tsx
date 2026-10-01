@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Settings } from "lucide-react"
 
@@ -8,6 +8,14 @@ import { saveSelfCheckAction } from "@/actions/self-check"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import type { TorQualificationCheck, TorQualificationRow } from "@/types/tor"
 import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
@@ -15,6 +23,7 @@ import { cn } from "@/lib/utils"
 type TorQualificationPanelProps = {
   torId: string
   check: TorQualificationCheck
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 type QualificationRow = TorQualificationRow
@@ -36,64 +45,65 @@ function SelfAssessmentCell({
   row,
   checked,
   onCheckedChange,
+  onNavigate,
 }: {
   row: QualificationRow
   checked: boolean
   onCheckedChange: (checked: boolean) => void
+  onNavigate: (url: string) => void
 }) {
-  const router = useRouter()
   const { t, locale } = useLocale()
 
   return (
     <div className="space-y-2">
-      {/* The profile could answer this kind of requirement — it just has
-          nothing in the field yet. Filling it in beats self-certifying, so
-          offer that first and keep the checkbox as the fallback. */}
       {row.profileField && !row.profileField.filled ? (
-        <p className="text-xs text-muted-foreground">
-          {t("browse.qualificationPanel.missingProfileField").replace(
-            "{field}",
-            pickLocalized(row.profileField.label, locale)
-          )}{" "}
+        <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs text-muted-foreground">
+          <span>
+            {t("browse.qualificationPanel.missingProfileField").replace(
+              "{field}",
+              pickLocalized(row.profileField.label, locale)
+            )}
+          </span>
           <Button
             variant="link"
-            className="h-auto p-0 text-xs text-primary"
+            className="h-auto p-0 text-xs font-medium text-primary shrink-0"
             onClick={() =>
-              // To the step that holds the field. Not to the field itself:
-              // several of them are groups (certifications, past projects)
-              // with no single input to land on.
-              router.push(`/company-setup?edit=1&step=${row.profileField!.wizardStep}`)
+              onNavigate(`/company-setup?edit=1&step=${row.profileField!.wizardStep}`)
             }
           >
             {t("browse.qualificationPanel.addToProfile")}
           </Button>
-        </p>
+        </div>
       ) : null}
 
       {row.selfCheckStale ? (
-        <p className="text-xs font-medium text-amber-600">
+        <p className="rounded bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
           {t("browse.qualificationPanel.staleAnswer")}
         </p>
       ) : null}
 
-      <label className="flex cursor-pointer items-start gap-2.5">
+      <label
+        className={cn(
+          "flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition-all select-none",
+          checked
+            ? "border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/20"
+            : "border-border bg-card hover:bg-muted/40"
+        )}
+      >
         <Checkbox
           checked={checked}
           onCheckedChange={(value) => onCheckedChange(value === true)}
-          className="mt-0.5"
           aria-label={t("browse.qualificationPanel.weComply")}
         />
         <span
           className={cn(
-            "text-sm leading-snug",
+            "text-xs font-medium leading-none",
             checked
-              ? "font-medium text-emerald-600 dark:text-emerald-400"
-              : "text-muted-foreground"
+              ? "text-emerald-700 dark:text-emerald-400"
+              : "text-foreground"
           )}
         >
-          {checked
-            ? `✓ ${t("browse.qualificationPanel.weComply")}`
-            : t("browse.qualificationPanel.weComply")}
+          {t("browse.qualificationPanel.weComply")}
         </span>
       </label>
     </div>
@@ -106,14 +116,15 @@ function ProfileCell({
   showSetupPrompt,
   selfAssessed,
   onSelfAssessChange,
+  onNavigate,
 }: {
   row: QualificationRow
   profileSetup: boolean
   showSetupPrompt?: boolean
   selfAssessed: boolean
   onSelfAssessChange: (checked: boolean) => void
+  onNavigate: (url: string) => void
 }) {
-  const router = useRouter()
   const { t, locale } = useLocale()
 
   if (row.selfCheckable) {
@@ -122,6 +133,7 @@ function ProfileCell({
         row={row}
         checked={selfAssessed}
         onCheckedChange={onSelfAssessChange}
+        onNavigate={onNavigate}
       />
     )
   }
@@ -132,15 +144,16 @@ function ProfileCell({
     }
 
     return (
-      <div className="flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg bg-muted/70 px-4 py-6 text-center">
-        <Settings className="size-7 text-muted-foreground" />
-        <p className="max-w-[220px] text-sm text-muted-foreground">
+      <div className="flex min-h-36 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-muted/50 px-4 py-6 text-center">
+        <Settings className="size-6 text-muted-foreground" />
+        <p className="max-w-[220px] text-xs text-muted-foreground leading-relaxed">
           {t("browse.qualificationPanel.setupPrompt")}
         </p>
         <Button
-          variant="link"
-          className="h-auto p-0 text-primary"
-          onClick={() => router.push("/company-profile")}
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs font-medium text-primary hover:text-primary"
+          onClick={() => onNavigate("/company-profile")}
         >
           {t("browse.qualificationPanel.companySetup")}
         </Button>
@@ -148,13 +161,162 @@ function ProfileCell({
     )
   }
 
+  let statusBadge = (
+    <span className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+      {t(`browse.qualificationStatus.${row.status}`)}
+    </span>
+  )
+
+  if (row.status === "passed") {
+    statusBadge = (
+      <span className="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+        {t("browse.qualificationStatus.passed")}
+      </span>
+    )
+  } else if (row.status === "failed") {
+    statusBadge = (
+      <span className="inline-flex items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+        {t("browse.qualificationStatus.failed")}
+      </span>
+    )
+  }
+
+  const isBooleanValue =
+    row.companyValue?.trim().toLowerCase() === "true" ||
+    row.companyValue?.trim().toLowerCase() === "false"
+
   return (
-    <div className="space-y-1">
-      <p className={cn("font-medium", row.status === "passed" ? "text-emerald-600" : row.status === "failed" ? "text-red-600" : "text-amber-600")}>
-        {t(`browse.qualificationStatus.${row.status}`)}
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        {statusBadge}
+        {row.companyValue && !isBooleanValue ? (
+          <span className="text-xs font-semibold text-foreground">
+            {row.companyValue}
+          </span>
+        ) : null}
+      </div>
+      {row.reason ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {pickLocalized(row.reason, locale)}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function CriteriaCell({
+  text,
+  readMoreLabel,
+  showLessLabel,
+}: {
+  text: string
+  readMoreLabel: string
+  showLessLabel: string
+}) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+  const [truncatedText, setTruncatedText] = useState("")
+  const measureRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    const el = measureRef.current
+    if (!el) return
+
+    const compute = () => {
+      // 1. Measure if the full text exceeds 2 lines
+      el.textContent = text
+      const computed = window.getComputedStyle(el)
+      const lineHeight = parseFloat(computed.lineHeight) || 20
+      const max2LinesHeight = lineHeight * 2 + 2
+
+      if (el.scrollHeight <= max2LinesHeight) {
+        setIsOverflowing(false)
+        setTruncatedText(text)
+        return
+      }
+
+      setIsOverflowing(true)
+
+      // 2. Binary search for cutoff point so `truncated + "… " + readMoreLabel` fits on line 2
+      let low = 0
+      let high = text.length
+      let best = 0
+      const suffix = "… " + readMoreLabel
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2)
+        el.textContent = text.slice(0, mid) + suffix
+        if (el.scrollHeight <= max2LinesHeight) {
+          best = mid
+          low = mid + 1
+        } else {
+          high = mid - 1
+        }
+      }
+
+      setTruncatedText(text.slice(0, best).trimEnd())
+      el.textContent = ""
+    }
+
+    compute()
+
+    const observer = new ResizeObserver(() => {
+      compute()
+    })
+    observer.observe(el)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [text, readMoreLabel])
+
+  if (!isOverflowing) {
+    return (
+      <div className="relative">
+        <p className="leading-relaxed text-muted-foreground">{text}</p>
+        <p
+          ref={measureRef}
+          aria-hidden
+          className="pointer-events-none invisible absolute inset-x-0 top-0 leading-relaxed text-muted-foreground"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative">
+      <p className="leading-relaxed text-muted-foreground">
+        {isExpanded ? (
+          <>
+            {text}{" "}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(false)}
+              className="inline cursor-pointer font-medium text-primary hover:underline focus-visible:outline-none"
+            >
+              {showLessLabel}
+            </button>
+          </>
+        ) : (
+          <>
+            {truncatedText}…{" "}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              className="inline cursor-pointer font-medium text-primary hover:underline focus-visible:outline-none"
+            >
+              {readMoreLabel}
+            </button>
+          </>
+        )}
       </p>
-      {row.companyValue ? <p>{row.companyValue}</p> : null}
-      <p className="text-xs text-muted-foreground">{pickLocalized(row.reason, locale)}</p>
+
+      {/* Hidden measurement target with identical width & font styles */}
+      <p
+        ref={measureRef}
+        aria-hidden
+        className="pointer-events-none invisible absolute inset-x-0 top-0 leading-relaxed text-muted-foreground"
+      />
     </div>
   )
 }
@@ -165,30 +327,37 @@ function RequirementRows({
   showSetupPrompt = false,
   selfAssessedById,
   onSelfAssessChange,
+  onNavigate,
 }: {
   rows: QualificationRow[]
   profileSetup: boolean
   showSetupPrompt?: boolean
   selfAssessedById: Record<string, boolean>
   onSelfAssessChange: (requirementId: string, checked: boolean) => void
+  onNavigate: (url: string) => void
 }) {
-  const { locale } = useLocale()
+  const { locale, t } = useLocale()
 
   return rows.map((row, index) => (
     <tr key={row.requirementId} className="border-t border-border bg-card">
-      <td className="px-4 py-3 font-medium text-foreground">
+      <td className="px-4 py-3.5 font-medium text-foreground align-top">
         {pickLocalized(row.requirement, locale)}
       </td>
-      <td className="px-4 py-3 text-muted-foreground">
-        {pickLocalized(row.torCriteria, locale)}
+      <td className="px-4 py-3.5 align-top">
+        <CriteriaCell
+          text={pickLocalized(row.torCriteria, locale)}
+          readMoreLabel={t("browse.qualificationPanel.readMore")}
+          showLessLabel={t("browse.qualificationPanel.showLess")}
+        />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5 align-top">
         <ProfileCell
           row={row}
           profileSetup={profileSetup}
           showSetupPrompt={showSetupPrompt && index === 0}
           selfAssessed={selfAssessedById[row.requirementId] === true}
           onSelfAssessChange={(checked) => onSelfAssessChange(row.requirementId, checked)}
+          onNavigate={onNavigate}
         />
       </td>
     </tr>
@@ -206,7 +375,12 @@ function answersFrom(check: TorQualificationCheck): Record<string, boolean> {
   return initial
 }
 
-export function TorQualificationPanel({ torId, check: initialCheck }: TorQualificationPanelProps) {
+export function TorQualificationPanel({
+  torId,
+  check: initialCheck,
+  onDirtyChange,
+}: TorQualificationPanelProps) {
+  const router = useRouter()
   const { t } = useLocale()
   const [shownCheck, setShownCheck] = useState(initialCheck)
   const [check, setCheck] = useState(initialCheck)
@@ -214,6 +388,8 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
   const [saved, setSaved] = useState(() => answersFrom(initialCheck))
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [showDiscardModal, setShowDiscardModal] = useState(false)
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
 
   // The panel stays mounted while the reader moves between TORs, so a new check
   // has to replace the draft rather than being merged into it. Adjusted during
@@ -235,8 +411,46 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
 
   const isDirty = JSON.stringify(answers) !== JSON.stringify(saved)
 
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
+
+  useEffect(() => {
+    return () => {
+      onDirtyChange?.(false)
+    }
+  }, [onDirtyChange])
+
+  useEffect(() => {
+    if (!isDirty) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isDirty])
+
   function handleSelfAssessChange(requirementId: string, checked: boolean) {
     setAnswers((previous) => ({ ...previous, [requirementId]: checked }))
+  }
+
+  function handleNavigate(url: string) {
+    if (isDirty) {
+      setPendingAction(() => () => router.push(url))
+      setShowDiscardModal(true)
+    } else {
+      router.push(url)
+    }
+  }
+
+  function handleConfirmDiscard() {
+    setShowDiscardModal(false)
+    setAnswers(saved)
+    if (pendingAction) {
+      const act = pendingAction
+      setPendingAction(null)
+      act()
+    }
   }
 
   function handleSave() {
@@ -257,7 +471,7 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-lg border border-border">
       <div className="space-y-1 border-b border-border bg-muted/50 p-4 text-sm">
         <p>
           {t("browse.qualificationPanel.scopeNote")}
@@ -271,16 +485,16 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
           </p>
         ) : null}
       </div>
-      <table className="w-full border-collapse text-left text-sm">
+      <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
         <thead>
           <tr className="bg-primary text-primary-foreground">
-            <th className="px-4 py-3 font-medium">
+            <th className="w-[25%] px-4 py-3 font-medium">
               {t("browse.qualificationPanel.requirement")}
             </th>
-            <th className="px-4 py-3 font-medium">
+            <th className="w-[55%] px-4 py-3 font-medium">
               {t("browse.qualificationPanel.torCriteria")}
             </th>
-            <th className="px-4 py-3 font-medium">
+            <th className="w-[20%] px-4 py-3 font-medium">
               {t("browse.qualificationPanel.companyProfile")}
             </th>
           </tr>
@@ -297,6 +511,7 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
                 showSetupPrompt={!check.profileSetup}
                 selfAssessedById={answers}
                 onSelfAssessChange={handleSelfAssessChange}
+                onNavigate={handleNavigate}
               />
             </>
           ) : null}
@@ -311,6 +526,7 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
                 profileSetup={check.profileSetup}
                 selfAssessedById={answers}
                 onSelfAssessChange={handleSelfAssessChange}
+                onNavigate={handleNavigate}
               />
             </>
           ) : null}
@@ -337,6 +553,38 @@ export function TorQualificationPanel({ torId, check: initialCheck }: TorQualifi
           </Button>
         </div>
       ) : null}
+
+      <Dialog open={showDiscardModal} onOpenChange={setShowDiscardModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {t("browse.qualificationPanel.discardChangesTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("browse.qualificationPanel.discardChangesDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowDiscardModal(false)
+                setPendingAction(null)
+              }}
+            >
+              {t("browse.qualificationPanel.keepEditing")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDiscard}
+            >
+              {t("browse.qualificationPanel.discardAndExit")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
