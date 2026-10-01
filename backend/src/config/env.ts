@@ -39,6 +39,21 @@ export const env = {
   jwtSecret: requiredSecret("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
+
+  /**
+   * Deliberately not `required()`: only TOR extraction needs these, and making
+   * the API server (and CI) fail to boot without them would punish everyone
+   * who never runs it. Extraction checks them at its own start.
+   *
+   * Claude is reached through Google Vertex AI, so there is no Anthropic API
+   * key — auth is GCP Application Default Credentials
+   * (`gcloud auth application-default login`, or a service account).
+   */
+  vertexProjectId: process.env.VERTEX_PROJECT_ID ?? process.env.GOOGLE_CLOUD_PROJECT ?? "",
+  /** "global" is the recommended endpoint; a specific region also works. */
+  vertexRegion: process.env.VERTEX_REGION ?? "global",
+  /** Overridable: which Claude models a Vertex project can call varies by project and region. */
+  extractionModel: process.env.EXTRACTION_MODEL ?? "claude-opus-5",
 }
 
 export const isProduction = env.nodeEnv === "production"

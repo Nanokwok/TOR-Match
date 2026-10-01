@@ -7,10 +7,9 @@ import { Info, Search } from "lucide-react"
 import {
   AUTO_APPROVE_CONFIDENCE_THRESHOLD,
   confidenceLevel,
-  torReviewDepartments,
   type TorReviewListItem,
   type TorReviewStatus,
-} from "@/server/db/mock/admin-tor-review"
+} from "@/types/tor-review"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,6 +70,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
   const [confidence, setConfidence] = useState("all")
   const [page, setPage] = useState(1)
   const pageSize = 5
+
+  // Derived from the queue rather than a fixed list: the departments worth
+  // filtering by are exactly the ones with drafts waiting.
+  const departments = useMemo(
+    () => [...new Set(items.map((item) => item.department).filter(Boolean))].sort(),
+    [items]
+  )
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -149,7 +155,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All departments</SelectItem>
-            {torReviewDepartments.map((name) => (
+            {departments.map((name) => (
               <SelectItem key={name} value={name}>
                 {name}
               </SelectItem>

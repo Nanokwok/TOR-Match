@@ -1,5 +1,4 @@
 export type OverviewActivityType =
-  | "ocr"
   | "review"
   | "company"
   | "subscription"
@@ -15,7 +14,6 @@ export type OverviewActivity = {
 export const overviewStats = {
   activeCompanies: "—",
   torsNeedReview: "18",
-  ocrPending: "14",
   // mrr: "฿248,000",
 } as const
 
@@ -30,20 +28,12 @@ export const overviewTrend = [
 ] as const
 
 export const overviewQueue = [
-  { label: "OCR queue", value: 14, href: "/admin/scraper-ocr" },
   { label: "Need TOR review", value: 18, href: "/admin/tor-review" },
   { label: "Pending companies", value: 0, href: "/admin/companies" },
   // { label: "Past-due invoices", value: 3, href: "/admin/subscriptions" },
 ] as const
 
 export const overviewActivity: OverviewActivity[] = [
-  {
-    id: "act-1",
-    type: "ocr",
-    title: "OCR job 0341 failed",
-    detail: "BMA-PW-69-07-2210.pdf — parse error on page 12",
-    at: "2026-08-11T09:42:00+07:00",
-  },
   {
     id: "act-2",
     type: "review",
