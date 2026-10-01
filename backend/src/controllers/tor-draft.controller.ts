@@ -8,8 +8,8 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import { notifyCompaniesForTor } from "@/services/match-notification.service"
-import { missingRequiredField, publishDraftContent } from "@/services/tor-publish.service"
+import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
+import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
@@ -31,14 +31,16 @@ const milestoneSchema = z.object({
 
 const qualificationSchema = z.object({
   id: z.string().min(1),
+  key: z.enum(QUALIFICATION_KEYS).optional(),
   requirement: z.string(),
   torCriteria: z.string(),
   autoCheckable: z.boolean().optional(),
-  // Optional: the review form's criteria editor sends this once it maps its
-  // richer client-side type down to this shape (see the frontend's
-  // toBackendCriteria). Omitted or invalid falls back to whatever the draft
-  // already had — see draftUpdateFrom below.
-  criteria: qualificationCriteriaSchema.optional(),
+  /**
+   * Validated against the criteria union below rather than here, so a reviewer
+   * gets one clear message about the rule instead of a discriminated-union
+   * parse error spanning eight branches.
+   */
+  criteria: z.unknown().optional(),
 })
 
 const updateDraftSchema = z.object({
@@ -132,15 +134,21 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
     },
     qualificationRequirements: input.qualificationRequirements.map((row) => {
       const existing = existingQualifications.get(row.id)
+      // An omitted field preserves what is stored, an explicit one overwrites —
+      // the same rule mergeLocalized follows. Until this carried `criteria`,
+      // the review screen's criteria editor saved nothing at all: every rule a
+      // reviewer configured was overwritten with the stored value on save.
+      const criteria = row.criteria ?? existing?.criteria
+      const parsed = qualificationCriteriaSchema.safeParse(criteria)
       return {
         id: row.id,
+        // `key` and `criteria.type` are one concept, so a configured rule names
+        // its own key and cannot disagree with it.
+        key: parsed.success ? parsed.data.type : (row.key ?? existing?.key ?? "manual"),
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
-        autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
-        // Falls back to whatever extraction computed when the form didn't
-        // send one (or sent something that failed validation upstream),
-        // rather than silently wiping it on every edit.
-        criteria: row.criteria ?? existing?.criteria,
+        autoCheckable: parsed.success ? parsed.data.type !== "manual" : false,
+        criteria,
       }
     }),
   }
@@ -184,27 +192,10 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  const missingField = missingRequiredField(draft)
-  if (missingField) {
-    throw ApiError.badRequest(`Cannot publish: ${missingField} is empty`)
-  }
+  const blocker = publishBlocker(draft)
+  if (blocker) throw ApiError.badRequest(`Cannot publish: ${blocker}`)
 
-  const published = await publishDraftContent(draft)
-
-  draft.set({
-    reviewStatus: "approved",
-    publishedTorId: published._id,
-    publishedAt: new Date(),
-  })
-  await draft.save()
-
-  // Awaited (not fire-and-forget) so a client refetching notifications right
-  // after this response can't race ahead of the write — same reasoning as
-  // the company-save trigger in company.controller.ts. A notification bug
-  // must still never fail the publish itself, hence the catch.
-  await notifyCompaniesForTor(published).catch((error) => {
-    console.error("notifyCompaniesForTor failed", error)
-  })
+  const published = await publishDraft(draft)
 
   res.status(200).json({ draft, tor: published })
 })

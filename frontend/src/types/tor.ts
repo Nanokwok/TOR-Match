@@ -43,6 +43,8 @@ export type TorFinancials = {
 
 export type TorQualificationRequirement = {
   id: string
+  /** Shared vocabulary slug; always equal to `criteria.type`. */
+  key?: QualificationCriteria["type"]
   requirement: LocalizedText
   torCriteria: LocalizedText
   autoCheckable: boolean
@@ -77,22 +79,47 @@ export type Tor = {
 
 export type QualificationStatus = "passed" | "failed" | "insufficient-data" | "manual-review"
 
+/** The company-profile field that would answer a requirement. */
+export type QualificationProfileField = {
+  name: string
+  label: LocalizedText
+  wizardStep: string
+  /** False when the profile has nothing usable in it for this announcement. */
+  filled: boolean
+}
+
+export type TorQualificationRow = {
+  requirementId: string
+  key: QualificationCriteria["type"]
+  keyLabel: LocalizedText
+  requirement: LocalizedText
+  torCriteria: LocalizedText
+  companyValue: string | null
+  passed: boolean | null
+  status: QualificationStatus
+  reason: LocalizedText
+  autoCheckable: boolean
+  /** True when the bidder is the one who has to answer this. */
+  selfCheckable: boolean
+  selfCheckAnswer: boolean | null
+  /** An answer was stored, but against a version of the requirement that has since changed. */
+  selfCheckStale: boolean
+  criteriaFingerprint: string
+  profileField: QualificationProfileField | null
+}
+
 export type TorQualificationCheck = {
   profileSetup: boolean
+  /** Every automated criterion passed. Never affected by the bidder's own answers. */
   eligible: boolean
+  /** Every requirement accounted for, whether verified by us or confirmed by the bidder. */
+  readyToBid: boolean
   status: QualificationStatus
   requiresManualReview: boolean
+  /** How many requirements the profile has no answer for. */
+  missingProfileFields: number
   evaluatedAt: string
-  rows: {
-    requirementId: string
-    requirement: LocalizedText
-    torCriteria: LocalizedText
-    companyValue: string | null
-    passed: boolean | null
-    status: QualificationStatus
-    reason: LocalizedText
-    autoCheckable: boolean
-  }[]
+  rows: TorQualificationRow[]
 }
 
 export type TorDetailFilters = {

@@ -5,8 +5,7 @@ import {
   SystemSettings,
 } from "@/models/SystemSettings.model"
 import { torContentFields } from "@/models/tor-fields.schema"
-import { notifyCompaniesForTor } from "@/services/match-notification.service"
-import { missingRequiredField, publishDraftContent } from "@/services/tor-publish.service"
+import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 
 /**
  * A scraped TOR awaiting human review.
@@ -85,25 +84,20 @@ torDraftSchema.post("save", async function (doc) {
   if (!settings.autoApproveEnabled) return
   if (doc.aiConfidence < settings.autoApproveThreshold) return
 
-  const missingField = missingRequiredField(doc)
-  if (missingField) {
+  const blocker = publishBlocker(doc)
+  if (blocker) {
     console.warn(
-      `[tor-draft] ${doc.announcementNo} scored ${doc.aiConfidence} but is missing "${missingField}" — leaving for manual review instead of auto-publishing`
+      `[tor-draft] ${doc.announcementNo} scored ${doc.aiConfidence} but cannot publish (${blocker}) — leaving for manual review instead of auto-publishing`
     )
     return
   }
 
   try {
-    const published = await publishDraftContent(doc)
-    doc.set({
-      reviewStatus: "auto-approved",
-      publishedTorId: published._id,
-      publishedAt: new Date(),
-    })
-    await doc.save()
-    await notifyCompaniesForTor(published).catch((error) => {
-      console.error("notifyCompaniesForTor failed", error)
-    })
+    // publishDraft saves the draft itself (reviewStatus/publishedTorId/
+    // publishedAt) and notifies companies — the same call the admin review
+    // screen makes, just with "auto-approved" instead of "approved" so the
+    // two paths stay visually distinguishable in the review queue.
+    await publishDraft(doc, "auto-approved")
   } catch (error) {
     console.error(`[tor-draft] auto-publish failed for ${doc.announcementNo}`, error)
   }

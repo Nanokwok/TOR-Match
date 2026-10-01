@@ -44,7 +44,7 @@ import {
   type BmaListing,
   type BmaProjectDetail,
 } from "@/scraper/bma-client"
-import { extractTorFromPdf } from "@/scraper/extract"
+import { contextFromBmaDetail, extractTorFromPdf } from "@/scraper/extract"
 import {
   classifyProject,
   metadataRejects,
@@ -343,7 +343,9 @@ async function ingest(
     const pdf = await downloadDocument(context, document.url)
     if (!pdf) throw new Error(`Could not download ${document.url}`)
 
-    const extraction = await extractTorFromPdf(detail, pdf)
+    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), [
+      { name: document.label || "announcement.pdf", pdf },
+    ])
 
     job.set({ stage: "index", pages: countPdfPages(pdf) })
     await job.save()
@@ -378,15 +380,9 @@ async function ingest(
             method: extraction.method,
             milestones: extraction.milestones,
           },
-          qualificationRequirements: extraction.qualificationRequirements.map(
-            (row, index) => ({
-              id: extraction.qualificationIds[index],
-              requirement: row.requirement,
-              torCriteria: row.torCriteria,
-              autoCheckable: row.autoCheckable,
-              criteria: row.criteria,
-            })
-          ),
+          // Already carries id, key and criteria — assigned together during
+          // repair so no call site can zip parallel arrays differently.
+          qualificationRequirements: extraction.qualificationRequirements,
           aiConfidence: extraction.aiConfidence,
           reviewStatus:
             extraction.aiConfidence >= AUTO_APPROVE_CONFIDENCE_THRESHOLD

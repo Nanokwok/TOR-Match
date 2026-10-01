@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Plus, X } from "lucide-react"
 
 import { saveCompanySetupProfileAction } from "@/actions/company-setup"
@@ -56,9 +56,18 @@ export function CompanySetupWizard({
   mode = "setup",
 }: CompanySetupWizardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t } = useLocale()
   const isEdit = mode === "edit"
-  const [stepIndex, setStepIndex] = useState(0)
+  // A TOR's qualification panel links straight here when a requirement needs a
+  // field the profile has not filled in, so `?step=` opens on that field's step
+  // rather than making the user page through the wizard to find it.
+  const [stepIndex, setStepIndex] = useState(() => {
+    const requested = COMPANY_SETUP_STEPS.findIndex(
+      (step) => step.id === searchParams.get("step")
+    )
+    return requested < 0 ? 0 : requested
+  })
   const [profile, setProfile] = useState<CompanySetupProfile>(
     () => initialProfile ?? createDefaultCompanySetupProfile()
   )

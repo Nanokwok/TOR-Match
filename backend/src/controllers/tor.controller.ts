@@ -1,8 +1,9 @@
 import type { Request, Response } from "express"
-import { isValidObjectId } from "mongoose"
+import { isValidObjectId, type Types } from "mongoose"
 import { Company } from "@/models/Company.model"
+import { QualificationSelfCheck } from "@/models/QualificationSelfCheck.model"
 import { localizedKey } from "@/models/localized.schema"
-import { matchCompanyToTor } from "@/services/qualification.service"
+import { matchCompanyToTor, type SelfCheckEntry } from "@/services/qualification.service"
 import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filters"
 import { Tor } from "@/models/Tor.model"
 import { ApiError } from "@/utils/ApiError"
@@ -13,6 +14,19 @@ const BUDGET_RANGES: Record<string, { min: number; max: number }> = {
   "3m-6m": { min: 3_000_000, max: 6_000_000 },
   "6m-10m": { min: 6_000_000, max: 10_000_000 },
   "over-10m": { min: 10_000_000, max: Number.POSITIVE_INFINITY },
+}
+
+/**
+ * The company's own answers for these TORs, keyed by TOR id.
+ *
+ * Answers only affect what a bidder is shown, never `eligible` — see
+ * qualification.service — so an anonymous or profile-less caller simply gets
+ * an empty map rather than a different code path.
+ */
+async function selfChecksByTor(companyId: Types.ObjectId | undefined, torIds: Types.ObjectId[]) {
+  if (!companyId || !torIds.length) return new Map<string, SelfCheckEntry[]>()
+  const stored = await QualificationSelfCheck.find({ companyId, torId: { $in: torIds } })
+  return new Map(stored.map((row) => [String(row.torId), row.entries as SelfCheckEntry[]]))
 }
 
 export const listTors = asyncHandler(async (req: Request, res: Response) => {
@@ -58,9 +72,12 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
     Tor.find(filter).sort({ createdAt: -1 }),
     req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
   ])
+  // One query for the whole page rather than one per TOR: the matching loop
+  // below already runs in JS over every result.
+  const selfChecks = await selfChecksByTor(company?._id, tors.map((tor) => tor._id))
   const now = new Date()
   const items = tors.filter((tor) => matchesDetailFilters(tor, detail)).map((tor) => {
-    const qualification = matchCompanyToTor(company, tor, now)
+    const qualification = matchCompanyToTor(company, tor, now, selfChecks.get(String(tor._id)))
     return { ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false }
   }).filter((tor) => req.query.eligibleOnly !== "true" || tor.eligible)
   res.status(200).json({ items, total: items.length })
@@ -73,7 +90,8 @@ export const getTorById = asyncHandler(async (req: Request, res: Response) => {
     req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
   ])
   if (!tor) throw ApiError.notFound("TOR not found")
-  const qualification = matchCompanyToTor(company, tor)
+  const selfChecks = await selfChecksByTor(company?._id, [tor._id])
+  const qualification = matchCompanyToTor(company, tor, new Date(), selfChecks.get(String(tor._id)))
   res.status(200).json({ ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false })
 })
 
@@ -104,5 +122,6 @@ export const getTorQualification = asyncHandler(async (req: Request, res: Respon
     Company.findOne({ ownerId: req.user.sub }),
   ])
   if (!tor) throw ApiError.notFound("TOR not found")
-  res.status(200).json(matchCompanyToTor(company, tor))
+  const selfChecks = await selfChecksByTor(company?._id, [tor._id])
+  res.status(200).json(matchCompanyToTor(company, tor, new Date(), selfChecks.get(String(tor._id))))
 })

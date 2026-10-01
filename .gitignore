@@ -22,6 +22,9 @@ out/
 # backend build output
 dist/
 
+# scheduled ingest logs
+logs/
+
 # misc
 .DS_Store
 *.pem

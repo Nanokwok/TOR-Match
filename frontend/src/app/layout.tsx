@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Covered_By_Your_Grace, Geist_Mono, Google_Sans } from "next/font/google";
+import { Covered_By_Your_Grace, Geist_Mono, Prompt } from "next/font/google";
 
 import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -14,7 +14,12 @@ import { isThemePreference, type ResolvedTheme } from "@/lib/theme";
 
 import "./globals.css";
 
-const googleSans = Google_Sans({
+// "Google_Sans" isn't a real Google Fonts family (never released as a public
+// web font) — next/font/google silently warned about it for a while, then a
+// Next.js update turned that into a hard build error. Prompt is a real font
+// covering both Latin and Thai and is visually a close stand-in.
+const googleSans = Prompt({
+  weight: ["400", "500", "600", "700"],
   variable: "--font-google-sans",
   subsets: ["latin", "thai"],
 });
