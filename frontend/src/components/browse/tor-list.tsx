@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { Bookmark, Link2 } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
+import { DeadlineBadge } from "@/components/common/deadline-badge"
 import { formatBaht } from "@/lib/format"
 import { listTagLabel } from "@/lib/browse-labels"
 import { pickLocalized } from "@/lib/localized-content"
@@ -113,6 +114,7 @@ export function TorList({
 
             <div className="mt-3 flex items-end justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
+                <DeadlineBadge deadline={tor.deadline} variant="badge" />
                 {tor.listTags.map((tag) => (
                   <span
                     key={tag}

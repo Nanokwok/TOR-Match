@@ -1,10 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
+import { useDeadlineHighlight } from "@/components/preferences/deadline-highlight-provider"
 import { useTheme } from "@/components/theme/theme-provider"
 import { Label } from "@/components/ui/label"
 import {
@@ -20,7 +20,7 @@ import type { ThemePreference } from "@/lib/theme"
 export function AppearanceSettingsView() {
   const { t } = useLocale()
   const { theme, setTheme } = useTheme()
-  const [showDeadlines, setShowDeadlines] = useState(true)
+  const { highlightDeadlines, setHighlightDeadlines } = useDeadlineHighlight()
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -88,8 +88,8 @@ export function AppearanceSettingsView() {
             </p>
           </div>
           <Switch
-            checked={showDeadlines}
-            onCheckedChange={setShowDeadlines}
+            checked={highlightDeadlines}
+            onCheckedChange={setHighlightDeadlines}
             aria-label={t("appearanceSettings.highlightDeadlinesAria")}
           />
         </div>
