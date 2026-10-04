@@ -94,7 +94,6 @@ function TorDetailContent({
   const [showTabModal, setShowTabModal] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const isCollapsedRef = useRef(false);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
@@ -102,10 +101,18 @@ function TorDetailContent({
     onDirtyChange?.(isQualificationDirty);
   }, [isQualificationDirty, onDirtyChange]);
 
-  // Reset scroll and collapsed state whenever the active TOR changes
-  useEffect(() => {
-    isCollapsedRef.current = false;
+  // A new TOR starts expanded. Adjusted during render rather than in an
+  // effect: an effect runs after paint, so the new TOR's header would appear
+  // collapsed for a frame and then jump open.
+  const [expandedForTorId, setExpandedForTorId] = useState(tor.id);
+  if (expandedForTorId !== tor.id) {
+    setExpandedForTorId(tor.id);
     setIsCollapsed(false);
+  }
+
+  // The scroll position is on a DOM node, not in React state, so resetting it
+  // stays in an effect.
+  useEffect(() => {
     if (contentScrollRef.current) {
       contentScrollRef.current.scrollTop = 0;
     }
@@ -113,32 +120,22 @@ function TorDetailContent({
 
   function handleScroll(e: React.UIEvent<HTMLDivElement>) {
     const el = e.currentTarget;
-    const currentScrollTop = el.scrollTop;
-    if (currentScrollTop < 0) return; // ignore momentum bounce on iOS
-
-    // Expand ONLY when scrolled back to the top
-    if (currentScrollTop <= 20) {
-      if (isCollapsedRef.current) {
-        isCollapsedRef.current = false;
-        setIsCollapsed(false);
-      }
-      return;
-    }
-
-    // Only collapse if the page has enough scrollable overflow to sustain the collapse
-    // (Header shrinks by ~195px; requires >= 260px of scrollable content to prevent clamping to top)
+    const scrollTop = el.scrollTop;
+    if (scrollTop < 0) return; // ignore momentum bounce on iOS
     const maxScroll = el.scrollHeight - el.clientHeight;
-    if (!isCollapsedRef.current && maxScroll < 260) {
-      return;
-    }
 
-    // Collapse when scrolled down past threshold
-    if (currentScrollTop > 60) {
-      if (!isCollapsedRef.current) {
-        isCollapsedRef.current = true;
-        setIsCollapsed(true);
-      }
-    }
+    // Decided from the collapsed state React is holding right now: scroll
+    // events arrive faster than renders, so the value in this closure can be a
+    // frame behind.
+    setIsCollapsed((collapsed) => {
+      // Expand ONLY when scrolled back to the top
+      if (scrollTop <= 20) return false;
+      // Only collapse if the page has enough scrollable overflow to sustain it
+      // (the header shrinks by ~195px; below ~260px of scrollable content the
+      // collapse would clamp the scroll back to the top and fight itself)
+      if (!collapsed && maxScroll < 260) return collapsed;
+      return scrollTop > 60 ? true : collapsed;
+    });
   }
 
   function handleTabChange(nextTab: string) {
@@ -147,7 +144,6 @@ function TorDetailContent({
       setShowTabModal(true);
     } else {
       setActiveTab(nextTab);
-      isCollapsedRef.current = false;
       setIsCollapsed(false);
       if (contentScrollRef.current) {
         contentScrollRef.current.scrollTop = 0;
@@ -160,7 +156,6 @@ function TorDetailContent({
     setIsQualificationDirty(false);
     if (pendingTab) {
       setActiveTab(pendingTab);
-      isCollapsedRef.current = false;
       setIsCollapsed(false);
       if (contentScrollRef.current) {
         contentScrollRef.current.scrollTop = 0;
@@ -225,7 +220,6 @@ function TorDetailContent({
           title={localized.title}
           onClick={() => {
             if (isCollapsed) {
-              isCollapsedRef.current = false;
               setIsCollapsed(false);
               contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
             }
