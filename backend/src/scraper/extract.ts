@@ -14,6 +14,7 @@ import {
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import type { BmaProjectDetail } from "@/scraper/bma-client"
+import { withRetry } from "@/scraper/retry"
 import { parseJsonResponse } from "@/scraper/software-filter"
 import {
   repairQualifications,
@@ -211,7 +212,8 @@ export async function extractTorFromPdf(
   ].join("\n")
 
   const ai = await getClient()
-  const response = await ai.models.generateContent({
+  const response = await withRetry(`extraction ${context.projectNo}`, () =>
+    ai.models.generateContent({
     model: env.extractionModel,
     contents: [
       {
@@ -255,8 +257,9 @@ export async function extractTorFromPdf(
       // The same zod schema the result is validated against, so the constraint
       // the model is given and the contract the caller relies on cannot drift.
       responseJsonSchema: z.toJSONSchema(extractionSchema),
-    },
-  })
+      },
+    })
+  )
 
   // A response cut short by maxOutputTokens leaves truncated JSON, which would
   // otherwise surface as a confusing parse error deep in the pipeline.

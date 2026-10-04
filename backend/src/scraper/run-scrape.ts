@@ -42,6 +42,7 @@ import {
   launchBrowser,
   parseThaiDate,
   pickTorDocument,
+  rankTorDocuments,
   type BmaListing,
   type BmaProjectDetail,
 } from "@/scraper/bma-client"
@@ -284,6 +285,15 @@ async function ingestMetadataOnly(listing: BmaListing, page: Page): Promise<void
   }
 }
 
+/**
+ * How many attached documents one extraction reads, and their combined size.
+ *
+ * Two covers the split the site publishes to — tender plus invitation — and
+ * the cap stays under the 20MB the extractor enforces.
+ */
+const MAX_EXTRACTION_DOCUMENTS = 2
+const MAX_EXTRACTION_BYTES = 18 * 1024 * 1024
+
 /** Approximate page count, for the admin job table only. */
 function countPdfPages(pdf: Buffer): number {
   const matches = pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g)
@@ -335,7 +345,8 @@ async function ingest(
       }
     }
 
-    const document = pickTorDocument(detail.documents)
+    const ranked = rankTorDocuments(detail.documents)
+    const document = ranked[0]
     if (!document) {
       throw new Error("No TOR document attached to this announcement")
     }
@@ -343,14 +354,28 @@ async function ingest(
     job.set({ stage: "parse" })
     await job.save()
 
-    const pdf = await downloadDocument(context, document.url)
-    if (!pdf) throw new Error(`Could not download ${document.url}`)
+    // Both of the top documents, not just the tender: the deadline is stated
+    // only in the invitation, so reading one document alone leaves every
+    // extracted TOR without the date bidders most need.
+    const documents: { name: string; pdf: Buffer }[] = []
+    let totalBytes = 0
+    for (const candidate of ranked.slice(0, MAX_EXTRACTION_DOCUMENTS)) {
+      const pdf = await downloadDocument(context, candidate.url)
+      if (!pdf) continue
+      // Dropping an extra document costs a field or two; exceeding the request
+      // cap costs the whole extraction.
+      if (documents.length > 0 && totalBytes + pdf.byteLength > MAX_EXTRACTION_BYTES) break
+      documents.push({ name: candidate.label || "announcement.pdf", pdf })
+      totalBytes += pdf.byteLength
+    }
+    if (documents.length === 0) throw new Error(`Could not download ${document.url}`)
 
-    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), [
-      { name: document.label || "announcement.pdf", pdf },
-    ])
+    const extraction = await extractTorFromPdf(contextFromBmaDetail(detail), documents)
 
-    job.set({ stage: "index", pages: countPdfPages(pdf) })
+    job.set({
+      stage: "index",
+      pages: documents.reduce((sum, item) => sum + countPdfPages(item.pdf), 0),
+    })
     await job.save()
 
     const announcementDate =

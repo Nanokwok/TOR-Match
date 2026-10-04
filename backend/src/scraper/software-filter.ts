@@ -5,6 +5,7 @@ import * as z from "zod/v4"
 
 import { env } from "@/config/env"
 import type { BmaListing, BmaProjectDetail } from "@/scraper/bma-client"
+import { withRetry } from "@/scraper/retry"
 
 /**
  * Keeps the scraper on software work.
@@ -229,7 +230,8 @@ export async function classifyProject(
   ].join("\n")
 
   const ai = await getClient()
-  const response = await ai.models.generateContent({
+  const response = await withRetry(`classification ${detail.projectNo}`, () =>
+    ai.models.generateContent({
     model: env.classifierModel,
     contents: [{ role: "user", parts: [{ text: summary }] }],
     config: {
@@ -246,8 +248,9 @@ export async function classifyProject(
       thinkingConfig: { thinkingBudget: 0 },
       responseMimeType: "application/json",
       responseJsonSchema: z.toJSONSchema(classificationSchema),
-    },
-  })
+      },
+    })
+  )
 
   const text = response.text
   if (!text) {

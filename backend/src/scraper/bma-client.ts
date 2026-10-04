@@ -333,11 +333,28 @@ export async function fetchProjectDetail(
 
 /** The TOR itself, preferred over any other attached announcement. */
 export function pickTorDocument(documents: BmaDocument[]): BmaDocument | null {
-  return (
-    documents.find((doc) => /TOR|ขอบเขตของงาน/i.test(`${doc.label} ${doc.url}`)) ??
-    documents[0] ??
-    null
-  )
+  return rankTorDocuments(documents)[0] ?? null
+}
+
+/**
+ * The attached documents, best-first for extraction.
+ *
+ * An announcement's content is split across them: the tender (ร่างขอบเขตของงาน
+ * / TOR) states who may bid and what is to be delivered, while the invitation
+ * (ประกาศเชิญชวน / ประกวดราคา) is the one that carries the bid deadline. A
+ * reader given only the first comes away without a deadline, which is why the
+ * caller feeds the top of this list rather than a single document. The median
+ * price sheet is ranked last: it repeats figures the page already states.
+ */
+export function rankTorDocuments(documents: BmaDocument[]): BmaDocument[] {
+  const rank = (doc: BmaDocument): number => {
+    const text = `${doc.label} ${doc.url}`
+    if (/TOR|ขอบเขตของงาน/i.test(text)) return 0
+    if (/เชิญชวน|ประกวดราคา|สอบราคา/.test(text)) return 1
+    if (/ราคากลาง/.test(text)) return 3
+    return 2
+  }
+  return [...documents].sort((a, b) => rank(a) - rank(b))
 }
 
 export async function downloadDocument(
