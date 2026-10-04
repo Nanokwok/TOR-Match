@@ -1,5 +1,6 @@
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod"
-import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"
+// `resolution-mode` because @google/genai is ESM-only: under CommonJS
+// resolution TypeScript would otherwise refuse the type-only import.
+import type { GoogleGenAI } from "@google/genai" with { "resolution-mode": "import" }
 import * as z from "zod/v4"
 
 import { env } from "@/config/env"
@@ -16,7 +17,7 @@ import type { BmaListing, BmaProjectDetail } from "@/scraper/bma-client"
  *   1. `titleSuggestsSoftware`  — listing title, free
  *   2. `metadataRejects`        — detail page fields, free (one page load we
  *                                 already make)
- *   3. `classifyProject`        — Claude on title + metadata, ~$0.0001/project
+ *   3. `classifyProject`        — Gemini on title + metadata, ~$0.0001/project
  *
  * Only after all three does a PDF get downloaded and sent for full extraction.
  */
@@ -139,6 +140,21 @@ export function metadataRejects(detail: BmaProjectDetail): string | null {
   return hit ? `category "${hit}"` : null
 }
 
+/**
+ * Parses a response the model was told to return as JSON.
+ *
+ * Gemini occasionally ignores the JSON constraint and answers in prose; the
+ * raw `JSON.parse` error ("Unexpected token 'H'") says nothing about which
+ * call misbehaved or what it said, so quote the start of the answer.
+ */
+export function parseJsonResponse(label: string, text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+  }
+}
+
 const classificationSchema = z.object({
   isSoftwareProject: z
     .boolean()
@@ -169,9 +185,10 @@ The line to hold: the contract must produce or maintain *software*. A project th
 
 Titles are Thai. Judge only what the title and metadata state — do not assume unstated scope.`
 
-let client: AnthropicVertex | null = null
+let client: GoogleGenAI | null = null
 
-function getClient(): AnthropicVertex {
+/** Same Vertex client setup as extraction — see the note in extract.ts. */
+async function getClient(): Promise<GoogleGenAI> {
   if (!env.vertexProjectId) {
     throw new Error(
       "VERTEX_PROJECT_ID (or GOOGLE_CLOUD_PROJECT) must be set to classify projects.\n" +
@@ -179,15 +196,21 @@ function getClient(): AnthropicVertex {
         "  gcloud auth application-default login"
     )
   }
-  client ??= new AnthropicVertex({
-    projectId: env.vertexProjectId,
-    region: env.vertexRegion,
-  })
+  if (!client) {
+    // Imported dynamically: @google/genai ships as ESM, and this backend
+    // compiles to CommonJS, where a static import would not resolve.
+    const { GoogleGenAI } = await import("@google/genai")
+    client = new GoogleGenAI({
+      vertexai: true,
+      project: env.vertexProjectId,
+      location: env.vertexRegion,
+    })
+  }
   return client
 }
 
 /**
- * Stage 3: Claude judges from the title and metadata only — never the PDF.
+ * Stage 3: Gemini judges from the title and metadata only — never the PDF.
  *
  * That is the whole point: a few hundred tokens decides whether the tens of
  * thousands of tokens a PDF costs are worth spending.
@@ -205,17 +228,30 @@ export async function classifyProject(
     `งบประมาณ (บาท): ${detail.budgetBaht ?? "-"}`,
   ].join("\n")
 
-  const response = await getClient().messages.parse({
+  const ai = await getClient()
+  const response = await ai.models.generateContent({
     model: env.classifierModel,
-    max_tokens: 256,
-    system: CLASSIFIER_PROMPT,
-    output_config: { format: zodOutputFormat(classificationSchema) },
-    messages: [{ role: "user", content: summary }],
+    contents: [{ role: "user", parts: [{ text: summary }] }],
+    config: {
+      systemInstruction: CLASSIFIER_PROMPT,
+      // A screening call, like extraction: the same announcement must not
+      // sometimes be worth a PDF and sometimes not.
+      temperature: 0,
+      // Reasoning tokens come out of this budget before any answer does. At
+      // 256 the model spent the lot thinking and returned a truncated "Here is
+      // the JSON requested:" instead of the object.
+      maxOutputTokens: 2048,
+      // Nothing here needs deliberation — it is a yes/no on two lines of
+      // metadata — and thinking is what overran the budget.
+      thinkingConfig: { thinkingBudget: 0 },
+      responseMimeType: "application/json",
+      responseJsonSchema: z.toJSONSchema(classificationSchema),
+    },
   })
 
-  const parsed = response.parsed_output
-  if (!parsed) {
-    throw new Error("Classification returned no parseable output")
+  const text = response.text
+  if (!text) {
+    throw new Error("Classification returned no output")
   }
-  return parsed
+  return classificationSchema.parse(parseJsonResponse("Classification", text))
 }

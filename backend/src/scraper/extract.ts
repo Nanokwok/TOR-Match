@@ -14,6 +14,7 @@ import {
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import type { BmaProjectDetail } from "@/scraper/bma-client"
+import { parseJsonResponse } from "@/scraper/software-filter"
 import {
   repairQualifications,
   type StoredQualification,
@@ -268,7 +269,7 @@ export async function extractTorFromPdf(
   // Validated rather than cast: `responseJsonSchema` constrains the model but
   // the SDK does not check the result, and a draft built from an unvalidated
   // shape would fail later against the Mongoose schema instead of here.
-  const parsed = extractionSchema.parse(JSON.parse(text))
+  const parsed = extractionSchema.parse(parseJsonResponse("Extraction", text))
 
   return {
     ...parsed,
