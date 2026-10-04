@@ -157,13 +157,7 @@ async function main() {
   const candidates = [...sources.values()].filter((entry) => {
     if (options.allCategories) return true
     const title = primary(entry).title
-    return titleSuggestsSoftware({
-      detailUrl: "",
-      projectNo: entry.projectNo,
-      title,
-      department: "",
-      budgetBaht: 0,
-    })
+    return titleSuggestsSoftware({ title })
   })
 
   console.log(

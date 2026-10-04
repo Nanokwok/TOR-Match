@@ -1,20 +1,28 @@
 "use server"
 
+import { ApiRequestError } from "@/lib/api-client"
 import {
-  cloneNotificationSettings,
-  DEFAULT_NOTIFICATION_SETTINGS,
-} from "@/lib/notification-settings"
+  getNotificationSettings,
+  saveNotificationSettings,
+} from "@/server/services/notification-settings.service"
 import type { NotificationSettings } from "@/types/notification-settings"
 
-let savedSettings = cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
-
 export async function getNotificationSettingsAction() {
-  return cloneNotificationSettings(savedSettings)
+  return getNotificationSettings()
 }
 
 export async function saveNotificationSettingsAction(
   settings: NotificationSettings
-) {
-  savedSettings = cloneNotificationSettings(settings)
-  return { ok: true as const, settings: cloneNotificationSettings(savedSettings) }
+): Promise<
+  { ok: true; settings: NotificationSettings } | { ok: false; error: string }
+> {
+  try {
+    const saved = await saveNotificationSettings(settings)
+    return { ok: true, settings: saved }
+  } catch (error) {
+    const message =
+      error instanceof ApiRequestError ? error.message : "Something went wrong. Please try again."
+    console.error("saveNotificationSettingsAction failed", error)
+    return { ok: false, error: message }
+  }
 }

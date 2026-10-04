@@ -17,13 +17,10 @@
     "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",
-    "scrape": "tsx src/scraper/run-scrape.ts",
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.124.0",
-    "@anthropic-ai/vertex-sdk": "^0.19.7",
     "@google/genai": "^2.24.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
@@ -47,7 +44,6 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.9",
     "eslint": "^9.9.0",
-    "playwright": "^1.63.0",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",

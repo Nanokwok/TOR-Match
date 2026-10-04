@@ -1,14 +1,14 @@
 import type { Request, Response } from "express"
 import { z } from "zod"
 
-import { ScrapeJob } from "@/models/ScrapeJob.model"
-import { AUTO_APPROVE_CONFIDENCE_THRESHOLD, TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
+import { TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
 import {
   PROCUREMENT_METHODS,
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
+import { notifyCompaniesForTor } from "@/services/match-notification.service"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
@@ -197,20 +197,13 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
 
   const published = await publishDraft(draft)
 
-  res.status(200).json({ draft, tor: published })
-})
-
-export const listScrapeJobs = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await ScrapeJob.find().sort({ createdAt: -1 }).limit(200)
-
-  const [pending, failed] = await Promise.all([
-    ScrapeJob.countDocuments({ status: "running" }),
-    ScrapeJob.countDocuments({ status: "failure" }),
-  ])
-
-  res.status(200).json({
-    items,
-    total: items.length,
-    stats: { pending, failed, autoApproveThreshold: AUTO_APPROVE_CONFIDENCE_THRESHOLD },
+  // Awaited (not fire-and-forget) so a client refetching notifications right
+  // after this response can't race ahead of the write — same reasoning as
+  // the company-save trigger in company.controller.ts. A notification bug
+  // must still never fail the publish itself, hence the catch.
+  await notifyCompaniesForTor(published).catch((error) => {
+    console.error("notifyCompaniesForTor failed", error)
   })
+
+  res.status(200).json({ draft, tor: published })
 })

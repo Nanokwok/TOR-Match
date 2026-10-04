@@ -425,7 +425,6 @@
   },
   "admin": {
     "overview": "ภาพรวม",
-    "scraperOcr": "Scraper & OCR",
     "torReview": "ตรวจสอบ TOR",
     "companies": "บริษัท",
     "subscriptions": "การสมัครสมาชิก",
@@ -463,6 +462,7 @@
     "saving": "กำลังบันทึก...",
     "restoredDefaults": "คืนค่าเริ่มต้นแล้ว กดบันทึกเพื่อใช้งาน",
     "preferencesSaved": "บันทึกการตั้งค่าแล้ว",
+    "saveFailed": "บันทึกการตั้งค่าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
     "unsavedChanges": "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก",
     "allSaved": "บันทึกครบแล้ว",
     "ariaInApp": "{event} ในแอป",

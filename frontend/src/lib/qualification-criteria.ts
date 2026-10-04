@@ -3,7 +3,11 @@ import {
   COMPANY_SIZE_OPTIONS,
   SPECIALIZATION_OPTIONS,
 } from "@/lib/company-setup"
-import type { QualificationCriteria, NumericOperator } from "@/types/qualification-criteria"
+import type {
+  BackendQualificationCriteria,
+  QualificationCriteria,
+  NumericOperator,
+} from "@/types/qualification-criteria"
 import type { CertificationId, CompanySize, SpecializationId } from "@/types/company-setup"
 
 export type CriteriaFieldType =
@@ -161,6 +165,79 @@ export function criteriaLabel(criteria: QualificationCriteria | undefined): stri
 
     default:
       return "Unknown criteria"
+  }
+}
+
+/**
+ * Maps this editor's richer criteria type down to what the backend matching
+ * engine actually understands (see BackendQualificationCriteria). The
+ * backend has no company-size or specialization types, and its numeric
+ * criteria are minimum-only (no operator choice) — anything that can't be
+ * represented falls back to "manual" rather than silently dropping the
+ * admin's intent or sending something the backend would reject. A row that
+ * falls back this way keeps showing as an auto-check card in this form until
+ * the next reload, even though the backend will treat it as manual review.
+ */
+export function toBackendCriteria(
+  criteria: QualificationCriteria | undefined
+): BackendQualificationCriteria | undefined {
+  if (!criteria) return undefined
+
+  switch (criteria.type) {
+    case "registered-capital":
+      return criteria.op === ">="
+        ? { type: "min-registered-capital", minAmountThb: criteria.amountThb }
+        : { type: "manual" }
+    case "past-contract":
+      return criteria.op === ">="
+        ? { type: "min-past-contract", minAmountThb: criteria.amountThb }
+        : { type: "manual" }
+    case "certification": {
+      const certificationIds = [...criteria.ids, ...(criteria.customIds ?? [])]
+      return certificationIds.length > 0
+        ? { type: "certification", certificationIds, mode: criteria.mode }
+        : { type: "manual" }
+    }
+    case "egp-registered":
+      return criteria.requiredStatus === "registered" ? { type: "egp-registered" } : { type: "manual" }
+    case "not-blacklisted":
+      return { type: "not-blacklisted" }
+    case "company-size":
+    case "specialization":
+      return { type: "manual" }
+    case "manual":
+      return { type: "manual" }
+  }
+}
+
+const KNOWN_CERTIFICATION_IDS = new Set(CERTIFICATION_OPTIONS.map((option) => option.id))
+
+function isCertificationId(id: string): id is CertificationId {
+  return KNOWN_CERTIFICATION_IDS.has(id as CertificationId)
+}
+
+/** Inverse of {@link toBackendCriteria} — expands the backend's stored criteria back into this editor's richer type. */
+export function fromBackendCriteria(
+  criteria: BackendQualificationCriteria | undefined
+): QualificationCriteria | undefined {
+  if (!criteria) return undefined
+
+  switch (criteria.type) {
+    case "min-registered-capital":
+      return { type: "registered-capital", op: ">=", amountThb: criteria.minAmountThb }
+    case "min-past-contract":
+      return { type: "past-contract", op: ">=", amountThb: criteria.minAmountThb }
+    case "certification": {
+      const ids = criteria.certificationIds.filter(isCertificationId)
+      const customIds = criteria.certificationIds.filter((id) => !isCertificationId(id))
+      return { type: "certification", mode: criteria.mode, ids, customIds: customIds.length ? customIds : undefined }
+    }
+    case "egp-registered":
+      return { type: "egp-registered", requiredStatus: "registered" }
+    case "not-blacklisted":
+      return { type: "not-blacklisted" }
+    case "manual":
+      return { type: "manual" }
   }
 }
 

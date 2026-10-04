@@ -13,9 +13,7 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import type { BmaProjectDetail } from "@/scraper/bma-client"
 import { withRetry } from "@/scraper/retry"
-import { parseJsonResponse } from "@/scraper/software-filter"
 import {
   repairQualifications,
   type StoredQualification,
@@ -36,23 +34,6 @@ export type ExtractionContext = {
   metadata: Record<string, string | number | null | undefined>
 }
 
-/** Builds the context from a BMA detail page. */
-export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContext {
-  return {
-    projectNo: detail.projectNo,
-    metadata: {
-      "ชื่อโครงการ": detail.title,
-      "หน่วยงาน": detail.department,
-      "ส่วนราชการ": detail.government,
-      "ส่วนราชการย่อย": detail.subGovernment,
-      "ประเภทการจัดซื้อจัดจ้าง": detail.procurementType,
-      "ด้านตามลักษณะงาน": detail.workType,
-      "งบประมาณ (บาท)": detail.budgetBaht,
-      "ราคากลาง (บาท)": detail.medianPriceBaht,
-      "สถานะโครงการ": detail.projectStatus,
-    },
-  }
-}
 
 /**
  * Turns an announcement PDF into the structured TOR shape the app stores.
@@ -65,6 +46,21 @@ export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContex
  * quota that Google only lifts for accounts with a corporate domain and an
  * assigned sales representative; Google's own models need no such approval.
  */
+
+/**
+ * Parses a response the model was told to return as JSON.
+ *
+ * Gemini occasionally ignores the JSON constraint and answers in prose; the
+ * raw `JSON.parse` error ("Unexpected token 'H'") says nothing about what the
+ * model actually said, so quote the start of the answer.
+ */
+function parseJsonResponse(label: string, text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+  }
+}
 
 /** The API caps a request at 32MB and base64 inflates by ~4/3. */
 const MAX_PDF_BYTES = 20 * 1024 * 1024
@@ -79,7 +75,8 @@ const localizedList = z.object({
   th: z.array(z.string()),
 })
 
-const extractionSchema = z.object({
+/** Exported for the test that renders it as a structured-output schema. */
+export const extractionSchema = z.object({
   title: localizedText,
   department: localizedText,
   localOffice: localizedText,

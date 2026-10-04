@@ -3,7 +3,6 @@ import {
   Building2,
   // CreditCard,
   FileSearch,
-  ScanSearch,
 } from "lucide-react"
 
 import type {
@@ -19,7 +18,6 @@ type OverviewViewProps = {
   stats: {
     activeCompanies: string
     torsNeedReview: string
-    ocrPending: string
     // mrr: string
   }
   trend: readonly { label: string; tors: number; matches: number }[]
@@ -28,14 +26,12 @@ type OverviewViewProps = {
 }
 
 const activityStyles: Record<OverviewActivityType, string> = {
-  ocr: "border-transparent bg-amber-100 text-amber-800",
   review: "border-transparent bg-sky-100 text-sky-800",
   company: "border-transparent bg-violet-100 text-violet-800",
   subscription: "border-transparent bg-emerald-100 text-emerald-800",
 }
 
 const activityLabels: Record<OverviewActivityType, string> = {
-  ocr: "OCR",
   review: "Review",
   company: "Company",
   subscription: "Billing",
@@ -126,12 +122,10 @@ export function OverviewView({
   const statCards = [
     { label: "Active Companies", value: stats.activeCompanies },
     { label: "TORs Need Review", value: stats.torsNeedReview },
-    { label: "OCR Pending", value: stats.ocrPending },
     // { label: "MRR", value: stats.mrr },
   ]
 
   const shortcuts = [
-    { label: "Scraper & OCR", href: "/admin/scraper-ocr", icon: ScanSearch },
     { label: "TOR Review", href: "/admin/tor-review", icon: FileSearch },
     { label: "Companies", href: "/admin/companies", icon: Building2 },
     // { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
