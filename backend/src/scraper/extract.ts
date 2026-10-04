@@ -247,7 +247,10 @@ export async function extractTorFromPdf(
       // A full tender document runs to 25-30 qualification clauses, each
       // carrying both locales of two sentences plus its rule — which overran
       // the previous 16000 and truncated the JSON mid-object.
-      maxOutputTokens: 40000,
+      // The model's ceiling. A 100-page tender with 30 qualification clauses
+      // in two locales overran 40000 and came back as truncated JSON; there is
+      // nothing to gain from stopping short of what the model allows.
+      maxOutputTokens: 65535,
       responseMimeType: "application/json",
       // The same zod schema the result is validated against, so the constraint
       // the model is given and the contract the caller relies on cannot drift.

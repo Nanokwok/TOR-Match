@@ -7,6 +7,7 @@
  *   npm run scrape -- --dry-run                     # discover + filter only, no PDF, no LLM
  *   npm run scrape -- --no-extract                  # metadata-only drafts, no PDF, no LLM
  *   npm run scrape -- --refresh                     # re-read pages of published TORs
+ *   npm run scrape -- --re-extract                  # redo drafts that already exist
  *
  * --no-extract builds drafts from the announcement page alone (Thai title,
  * department, budget, median price, method, TOR link). Everything that lives
@@ -59,6 +60,7 @@ type Options = {
   dryRun: boolean
   noExtract: boolean
   refresh: boolean
+  reExtract: boolean
   allCategories: boolean
 }
 
@@ -79,6 +81,7 @@ function parseArgs(argv: string[]): Options {
     dryRun: argv.includes("--dry-run"),
     noExtract: argv.includes("--no-extract"),
     refresh: argv.includes("--refresh"),
+    reExtract: argv.includes("--re-extract"),
     // The platform exists to match software companies to government work, so
     // non-software announcements are filtered out by default. --all keeps them.
     allCategories: argv.includes("--all"),
@@ -443,11 +446,25 @@ async function main() {
         .lean()).map((tor) => tor.announcementNo)
     )
 
+    // An announcement that already has a draft is skipped for two reasons:
+    // re-extracting it pays for the same PDF twice, and the write below is a
+    // $set that would overwrite whatever a reviewer has since corrected.
+    // --re-extract is the deliberate way to redo one.
+    const draftedNos = options.reExtract
+      ? new Set<string>()
+      : new Set(
+          (await TorDraft.find({ announcementNo: { $in: candidates.map((c) => c.projectNo) } })
+            .select("announcementNo")
+            .lean()).map((draft) => draft.announcementNo)
+        )
+
     const queue = candidates
-      .filter((listing) => !publishedNos.has(listing.projectNo))
+      .filter((listing) => !publishedNos.has(listing.projectNo) && !draftedNos.has(listing.projectNo))
       .slice(0, options.limit)
 
-    console.log(`[scrape] ingesting ${queue.length} (skipped ${publishedNos.size} already published)`)
+    console.log(
+      `[scrape] ingesting ${queue.length} (skipped ${publishedNos.size} already published, ${draftedNos.size} already drafted)`
+    )
 
     if (options.dryRun) {
       for (const listing of queue) {
