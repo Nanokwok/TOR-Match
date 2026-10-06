@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatShortDate } from "@/lib/format"
 import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
@@ -335,7 +336,8 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
                   </div>
 
                   {/* List of Documents */}
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+                  <ScrollArea className="max-h-56 pr-1">
+                    <div className="space-y-2">
                     {docs.map((doc) => {
                       const isDownloading = downloadingId === doc.id
                       const docTitle = doc.name
@@ -385,7 +387,8 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
                         </div>
                       )
                     })}
-                  </div>
+                    </div>
+                  </ScrollArea>
                 </PopoverContent>
               </Popover>
             )

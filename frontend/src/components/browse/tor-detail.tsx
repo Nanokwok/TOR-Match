@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
 import { getTorStatusBadgeInfo, getTorDeadlineInfo } from "@/lib/deadline"
 import {
@@ -532,10 +533,11 @@ function TorDetailContent({
           </div>
         ) : null}
 
-        <div
-          ref={contentScrollRef}
+        <ScrollArea
+          viewportRef={contentScrollRef}
           onScroll={handleScroll}
-          className="min-h-0 flex-1 overflow-y-auto p-5 md:p-6"
+          className="min-h-0 flex-1"
+          viewportClassName="p-5 md:p-6"
         >
           <TabsContent value="summary" className="mt-0 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -627,7 +629,7 @@ function TorDetailContent({
               isCollapsed={isCollapsed}
             />
           </TabsContent>
-        </div>
+        </ScrollArea>
       </Tabs>
 
       <ShareTorDialog
