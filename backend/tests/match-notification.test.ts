@@ -70,8 +70,8 @@ test("requirementsVersion is stable for the same rules and changes when a rule c
 
 import { allowsEmail, emailRecipient, renderEmail } from "../src/services/match-notification.service"
 
-test("allowsEmail needs a saved preference — no settings means no email", () => {
-  assert.equal(allowsEmail(null, "high-budget"), false)
+test("allowsEmail is on by default — no saved settings still means email", () => {
+  assert.equal(allowsEmail(null, "high-budget"), true)
   assert.equal(allowsEmail({}, "high-budget"), true)
 })
 

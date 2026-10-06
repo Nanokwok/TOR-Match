@@ -45,13 +45,13 @@ export function allowsInApp(settings: PreferenceSource, event: NotificationEvent
 }
 
 /**
- * Pure: whether to email this event right now. Unlike in-app alerts, email
- * needs an explicit saved preference: someone who never opened the settings
- * screen has not agreed to be mailed. The instant switch gates it because
- * digests (which would carry the rest) are not sent yet.
+ * Pure: whether to email this event right now. Like in-app alerts it is on
+ * by default — a user who never opened the settings screen is emailed, and
+ * turns it off there (the screen shows the same defaults). The instant switch
+ * gates it because digests (which would carry the rest) are not sent yet.
  */
 export function allowsEmail(settings: PreferenceSource, event: NotificationEvent): boolean {
-  if (!settings) return false
+  if (!settings) return true
   if (settings.emailEnabled === false || settings.instantEmailAlerts === false) return false
   return settings.events?.[event]?.email !== false
 }
