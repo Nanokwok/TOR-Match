@@ -27,13 +27,15 @@ import { connectDB, disconnectDB } from "@/config/db"
 import { env } from "@/config/env"
 import { TorDraft } from "@/models/TorDraft.model"
 import {
-  changedFields,
   groupByProject,
-  needsInvitation,
+  linksFor,
+  mergeAnnouncementLinks,
+  type AnnouncementLink,
   primary,
-  primaryDocument,
   type AnnouncementSources,
 } from "@/scraper/announcement-sources"
+import { planForProject, statusForTypes, type IngestAction } from "@/scraper/announcement-plan"
+import { applyLinks, applyStatus } from "@/services/announcement-lifecycle.service"
 import { resolveDetailUrls } from "@/scraper/bma-detail-link"
 import type { ExtractionContext } from "@/scraper/extract"
 import {
@@ -41,7 +43,7 @@ import {
   extractAndStore,
   type AutoApprove,
 } from "@/services/tor-extraction.service"
-import { hasFlag } from "@/utils/cli-flags"
+import { hasFlag, readFlag } from "@/utils/cli-flags"
 import {
   ANNOUNCE_TYPES,
   FEED_WINDOW_LABEL,
@@ -57,6 +59,8 @@ type Options = {
   allCategories: boolean
   force: boolean
   announceTypes: AnnounceType[]
+  /** Restricts the run to one project number, for inspecting a single extraction. */
+  only?: string
 }
 
 function parseArgs(argv: string[]): Options {
@@ -66,8 +70,50 @@ function parseArgs(argv: string[]): Options {
     // An announcement already extracted is not re-read: the PDF behind a
     // project number does not change, and re-reading it costs a full extraction.
     force: hasFlag(argv, "force"),
-    announceTypes: [ANNOUNCE_TYPES.draft, ANNOUNCE_TYPES.invitation],
+    announceTypes: parseAnnounceTypes(readFlag(argv, "types")),
+    only: readFlag(argv, "only"),
   }
+}
+
+/**
+ * The feed is read in lifecycle order, so a project's own history arrives in
+ * the order it happened: the plan, then the price, the tender, the notice and
+ * its amendments, then the award and its corrections.
+ */
+const LIFECYCLE_ORDER: AnnounceType[] = [
+  ANNOUNCE_TYPES.plan,
+  ANNOUNCE_TYPES.medianPrice,
+  ANNOUNCE_TYPES.draft,
+  ANNOUNCE_TYPES.invitation,
+  ANNOUNCE_TYPES.invitationChanged,
+  ANNOUNCE_TYPES.invitationCancelled,
+  ANNOUNCE_TYPES.winner,
+  ANNOUNCE_TYPES.winnerCancelled,
+  ANNOUNCE_TYPES.winnerChanged,
+]
+
+/**
+ * Only these decide whether a TOR exists at all, so only these are worth the
+ * twelve-request narrowing sweep when the feed truncates a day (§4.2).
+ */
+const NARROW_ON_TRUNCATION = new Set<AnnounceType>([
+  ANNOUNCE_TYPES.draft,
+  ANNOUNCE_TYPES.invitation,
+  ANNOUNCE_TYPES.invitationChanged,
+])
+
+const ALL_ANNOUNCE_TYPES = new Set<string>(Object.values(ANNOUNCE_TYPES))
+
+function parseAnnounceTypes(raw: string | undefined): AnnounceType[] {
+  if (!raw) return LIFECYCLE_ORDER
+
+  const wanted = raw.split(",").map((part) => part.trim().toUpperCase()).filter(Boolean)
+  const unknown = wanted.filter((type) => !ALL_ANNOUNCE_TYPES.has(type))
+  if (unknown.length) {
+    throw new Error(`Unknown announce type(s): ${unknown.join(", ")}. Known: ${[...ALL_ANNOUNCE_TYPES].join(", ")}`)
+  }
+  // Kept in lifecycle order however they were listed on the command line.
+  return LIFECYCLE_ORDER.filter((type) => wanted.includes(type))
 }
 
 function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionContext {
@@ -85,33 +131,28 @@ function contextFromAnnouncement(announcement: EgpAnnouncement): ExtractionConte
 
 async function ingestNew(
   entry: AnnouncementSources,
+  action: Extract<IngestAction, { kind: "extract" }>,
   threshold: AutoApprove,
-  /**
-   * The document a previous run already found for this project.
-   *
-   * Load-bearing when the invitation turns up after the draft: by then the B0
-   * has usually aged out of the seven-day feed, so this run only sees the D0.
-   * Reading that alone would trade a tender document's worth of qualifications
-   * for a deadline. The stored link still resolves, so both are read.
-   */
-  storedDocumentUrl?: string,
+  rows: readonly AnnouncementLink[],
+  stored?: { pdfUrl?: string; invitationUrl?: string },
   /** The announcement's page on the agency's site, when one was resolved. */
   detailUrl?: string
 ): Promise<void> {
   const lead = primary(entry)
-  // The tender document is read first because it carries the qualifications;
-  // the invitation follows for the deadline. One request reads both.
+  const links = linksFor(entry, stored)
+
   try {
     const result = await extractAndStore({
       announcementNo: entry.projectNo,
-      pdfUrl: entry.draft?.pdfUrl ?? storedDocumentUrl ?? primaryDocument(entry).pdfUrl,
-      invitationUrl: entry.invitation?.pdfUrl,
+      pdfUrl: links.pdfUrl || action.urls[0],
+      invitationUrl: links.invitationUrl || undefined,
       detailUrl,
       publishedDate: lead.publishedDate,
       context: contextFromAnnouncement(lead),
       threshold,
+      announcements: rows,
     })
-    const types = [entry.draft && "B0", entry.invitation && "D0"].filter(Boolean).join("+")
+    const types = [...new Set(entry.all.map((item) => item.announceType))].join("+")
     console.log(
       `[rss] ${result.announcementNo} -> ${types}, extracted from ${result.documents} doc(s) ` +
         `(confidence ${result.aiConfidence}, ${result.outcome})`
@@ -139,87 +180,97 @@ async function main() {
   await connectDB()
 
   // Both types are kept, not merged into one. A project can be published as
-  // both, and they carry different things: B0 (ร่างเอกสารประกวดราคา) is the
-  // tender document and holds the bidder qualifications but, being a draft,
-  // states no closing date; D0 (ประกาศเชิญชวน) is the two-page notice that
-  // defers the qualifications and does give the deadline. Collapsing them threw
-  // one of those away whichever won.
+  // Every type is kept apart, never merged: they carry different things. B0
+  // (ร่างเอกสารประกวดราคา) is the tender document and holds the bidder
+  // qualifications but, being a draft, states no closing date; D0
+  // (ประกาศเชิญชวน) is the two-page notice that defers the qualifications and
+  // does give the deadline; D1/D2 and W0/W1/W2 say what became of the project.
+  // Collapsing them threw away whichever lost.
   const byType = new Map<AnnounceType, EgpAnnouncement[]>()
   for (const announceType of options.announceTypes) {
-    const items = await fetchAnnouncements({ deptId: env.egpDeptId, announceType })
-    console.log(`[rss] ${announceType}: ${items.length} announcements`)
-    byType.set(announceType, items)
+    const result = await fetchAnnouncements(
+      { deptId: env.egpDeptId, announceType },
+      { narrowOnTruncation: NARROW_ON_TRUNCATION.has(announceType) }
+    )
+    // countByDay is the day's real total (§4.7). Printing it next to what we
+    // got is the only way a day over the 20-item cap is visible at all.
+    const total = result.countByDay || result.items.length
+    const note = result.truncated
+      ? NARROW_ON_TRUNCATION.has(announceType)
+        ? " (truncated even after narrowing by method)"
+        : " (truncated; narrowing not worth it for this type)"
+      : ""
+    console.log(`[rss] ${announceType}: ${result.items.length}/${total} announcements${note}`)
+    byType.set(announceType, result.items)
   }
 
   const sources = groupByProject(byType)
-  const overlapping = [...sources.values()].filter((s) => s.draft && s.invitation)
 
   const candidates = [...sources.values()].filter((entry) => {
+    // --only narrows a run to one project, so a single extraction can be paid
+    // for and inspected without ingesting everything the feed offered.
+    if (options.only && entry.projectNo !== options.only) return false
     if (options.allCategories) return true
-    const title = primary(entry).title
-    return titleSuggestsSoftware({ title })
+    return titleSuggestsSoftware({ title: primary(entry).title })
   })
 
   console.log(
-    `[rss] ${sources.size} unique announcements (${overlapping.length} published as both), ` +
-      `${candidates.length} pass the software filter`
+    `[rss] ${sources.size} unique projects, ${candidates.length} pass the software filter`
   )
 
   const existing = await TorDraft.find(
     { announcementNo: { $in: candidates.map((entry) => entry.projectNo) } },
-    { announcementNo: 1, pdfUrl: 1, invitationUrl: 1, deadline: 1 }
+    { announcementNo: 1, pdfUrl: 1, invitationUrl: 1, deadline: 1, status: 1, announcements: 1 }
   )
-  const byAnnouncementNo = new Map(
-    existing.map((draft) => [draft.announcementNo, draft])
-  )
+  const byAnnouncementNo = new Map(existing.map((draft) => [draft.announcementNo, draft]))
 
-  // A TOR is built on the tender document, and only ever on that.
-  //
-  // An invitation on its own yields one or two generic lines —
-  // "คุณสมบัติให้เป็นไปตามเอกสารประกวดราคา" — because it defers the
-  // qualifications to a document we would not have. Publishing that produces a
-  // TOR nothing can be matched against, next to TORs carrying twenty real
-  // requirements. So an announcement enters only through its B0; an invitation
-  // is what later fills in the deadline for one already here.
-  const wanted = candidates.filter(
-    (entry) => entry.draft || byAnnouncementNo.has(entry.projectNo)
-  )
-  const skipped = candidates.length - wanted.length
-  if (skipped) {
-    console.log(`[rss] skipped ${skipped} invitation-only announcement(s) — no tender document`)
-  }
-
-  const fresh = wanted.filter((entry) => {
-    const draft = byAnnouncementNo.get(entry.projectNo)
-    return options.force || !draft || needsInvitation(draft, entry)
+  // One decision per project, taken before anything is downloaded or written,
+  // so a dry run reports exactly what a real run would do.
+  const planned = candidates.map((entry) => {
+    const stored = byAnnouncementNo.get(entry.projectNo)
+    return {
+      entry,
+      stored,
+      rows: mergeAnnouncementLinks(stored?.announcements, entry),
+      action: planForProject({
+        entry,
+        stored: stored ?? undefined,
+        force: options.force,
+      }),
+    }
   })
-  const known = wanted.filter((entry) => !fresh.includes(entry))
+
+  const counts = planned.reduce<Record<string, number>>((tally, item) => {
+    tally[item.action.kind] = (tally[item.action.kind] ?? 0) + 1
+    return tally
+  }, {})
+  console.log(
+    `[rss] planned: ${Object.entries(counts).map(([kind, n]) => `${n} ${kind}`).join(", ") || "nothing"}`
+  )
 
   if (options.dryRun) {
-    console.log(`\n[dry-run] ${fresh.length} to extract, ${known.length} already stored\n`)
-    for (const entry of wanted) {
-      const draft = byAnnouncementNo.get(entry.projectNo)
-      const mark = !draft ? "NEW  " : needsInvitation(draft, entry) ? "D0+  " : "known"
-      const types = [entry.draft && "B0", entry.invitation && "D0"].filter(Boolean).join("+")
-      console.log(`  [${mark}] ${entry.projectNo}  ${types.padEnd(5)} ${primary(entry).title.slice(0, 56)}`)
+    console.log("")
+    for (const { entry, action, rows } of planned) {
+      const types = [...new Set(entry.all.map((item) => item.announceType))].join("+")
+      const detail =
+        action.kind === "none"
+          ? action.reason
+          : action.kind === "status"
+            ? `${action.status} (from ${action.from})`
+            : action.kind === "extract"
+              ? `${action.urls.length} doc(s) from ${action.from}`
+              : action.kind === "links"
+                ? `${rows.added.length} new link(s)`
+                : "median price"
+      console.log(
+        `  [${action.kind.padEnd(13)}] ${entry.projectNo}  ${types.padEnd(8)} ${detail.padEnd(26)} ${primary(entry).title.slice(0, 44)}`
+      )
     }
     await disconnectDB()
     return
   }
 
-  // Known announcements: refresh what the feed can tell us, no AI involved.
-  let updated = 0
-  for (const entry of known) {
-    const draft = byAnnouncementNo.get(entry.projectNo)
-    if (!draft) continue
-
-    const changes = changedFields(draft, entry)
-    if (Object.keys(changes).length === 0) continue
-
-    await TorDraft.updateOne({ _id: draft._id }, { $set: changes })
-    updated += 1
-    console.log(`[rss] ${entry.projectNo} -> updated ${Object.keys(changes).join(", ")}`)
-  }
+  const extracting = planned.filter((item) => item.action.kind === "extract")
 
   const threshold = await autoApproveSettings()
   console.log(
@@ -229,20 +280,62 @@ async function main() {
   // Looked up once for the whole batch: the feed gives only file links, so this
   // is the only way the TOR page can send a bidder somewhere they can read the
   // announcement themselves.
-  const detailUrls = await resolveDetailUrls(fresh.map((entry) => entry.projectNo))
-  console.log(`[rss] resolved ${detailUrls.size}/${fresh.length} announcement pages`)
+  const detailUrls = await resolveDetailUrls(extracting.map((item) => item.entry.projectNo))
+  console.log(`[rss] resolved ${detailUrls.size}/${extracting.length} announcement pages`)
 
-  for (const entry of fresh) {
-    await ingestNew(
-      entry,
-      threshold,
-      byAnnouncementNo.get(entry.projectNo)?.pdfUrl,
-      detailUrls.get(entry.projectNo)
-    )
+  let statusChanges = 0
+  let linkUpdates = 0
+
+  for (const { entry, stored, rows, action } of planned) {
+    switch (action.kind) {
+      case "none":
+        break
+
+      case "links":
+        if (!rows.added.length) break
+        await applyLinks(entry.projectNo, rows.rows)
+        linkUpdates += 1
+        console.log(
+          `[rss] ${entry.projectNo} -> recorded ${rows.added.map((row) => row.announceType).join(", ")}`
+        )
+        break
+
+      case "status": {
+        // What a project's outcome is comes from which announcement was
+        // published, so this needs no document and no model call.
+        const next = statusForTypes([...entry.all.map((item) => item.announceType)], stored?.status)
+        const status = next ?? action.status
+        await applyStatus(entry.projectNo, status, rows.rows)
+        statusChanges += 1
+        console.log(`[rss] ${entry.projectNo} -> ${status} (from ${action.from})`)
+        break
+      }
+
+      case "median-price":
+        // Reading the official ราคากลาง is a separate, much smaller extraction;
+        // until it exists the link is recorded so nothing is lost.
+        await applyLinks(entry.projectNo, rows.rows)
+        linkUpdates += 1
+        console.log(`[rss] ${entry.projectNo} -> recorded median-price announcement`)
+        break
+
+      case "extract":
+        await ingestNew(
+          entry,
+          action,
+          threshold,
+          rows.rows,
+          stored ?? undefined,
+          detailUrls.get(entry.projectNo)
+        )
+        break
+    }
   }
 
   console.log(
-    `\n[rss] done — ${fresh.length} extracted, ${updated} updated, ${known.length - updated} unchanged`
+    `
+[rss] done — ${extracting.length} extracted, ${statusChanges} status change(s), ` +
+      `${linkUpdates} link update(s)`
   )
   await disconnectDB()
 }

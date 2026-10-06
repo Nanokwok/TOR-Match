@@ -12,11 +12,16 @@ export type TorProcurementMethod =
   | "specific"
   | "price-agreement"
 
+/** Mirrors PROCUREMENT_STATUSES in backend/src/models/tor-fields.schema.ts. */
 export type TorProcurementStatus =
   | "open"
   | "closing-soon"
   | "closed"
   | "awarded"
+  | "cancelled"
+  | "changed"
+  | "winner-cancelled"
+  | "winner-revised"
 
 export type TorDurationPreset =
   | "under-3m"

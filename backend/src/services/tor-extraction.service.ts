@@ -1,9 +1,12 @@
 import { ScrapeJob } from "@/models/ScrapeJob.model"
+import type { AnnouncementLink } from "@/scraper/announcement-sources"
+import { ANNOUNCE_TYPES, type AnnounceType } from "@/scraper/egp-rss"
+import { mergeExtraction } from "@/services/tor-merge"
 import { SystemSettings, SYSTEM_SETTINGS_SINGLETON_KEY } from "@/models/SystemSettings.model"
 import { TorDraft } from "@/models/TorDraft.model"
 import { extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
 import { sourceUrlFor } from "@/scraper/announcement-sources"
-import { downloadAllTorDocuments } from "@/scraper/tor-documents"
+import { carriesFullTender, downloadAllTorDocuments } from "@/scraper/tor-documents"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 
 /**
@@ -61,8 +64,13 @@ export async function extractAndStore(params: {
   publishedDate: string
   context: ExtractionContext
   threshold: AutoApprove
+  /** Which announcement this extraction reads, deciding what it may overwrite. */
+  from?: AnnounceType
+  /** Every announcement known for this project, stored alongside the content. */
+  announcements?: readonly AnnouncementLink[]
 }): Promise<ExtractionOutcome> {
   const { announcementNo, pdfUrl, invitationUrl, detailUrl, publishedDate, context, threshold } = params
+  const from = params.from ?? ANNOUNCE_TYPES.draft
 
   const links = [...new Set([pdfUrl, invitationUrl].filter((url): url is string => Boolean(url)))]
   // Where a person is sent, which is not where the pipeline reads.
@@ -88,42 +96,37 @@ export async function extractAndStore(params: {
     // draft waits for a human rather than reaching the published collection.
     const autoApproved = threshold.enabled && extraction.aiConfidence >= threshold.threshold
 
+    // What this announcement is allowed to overwrite depends on what it is and
+    // on what a reviewer has already touched — see tor-merge.ts.
+    const stored = await TorDraft.findOne({ announcementNo }).lean()
+    const content = mergeExtraction(stored, extraction, {
+      from,
+      fullTender: carriesFullTender(documents),
+      publishedDate,
+      lockedFields: stored?.lockedFields,
+      reviewStatus: stored?.reviewStatus,
+    })
+
     const draft = await TorDraft.findOneAndUpdate(
       { announcementNo },
       {
         $set: {
           announcementNo,
-          title: extraction.title,
-          department: extraction.department,
-          localOffice: extraction.localOffice,
-          summary: extraction.summary,
-          deliverables: extraction.deliverables,
-          budgetBaht: extraction.budgetBaht,
-          projectScale: extraction.projectScale,
-          durationDays: extraction.durationDays,
-          method: extraction.method,
-          status: extraction.status,
-          deadline: extraction.deadline,
-          announcementDate: extraction.announcementDate || publishedDate,
+          ...content,
           sourceUrl,
           pdfUrl,
-          invitationUrl: invitationUrl ?? "",
-          detailUrl: detailUrl ?? "",
-          techTags: extraction.techTags,
-          listTags: extraction.listTags,
-          financials: {
-            totalBudgetBaht: extraction.budgetBaht,
-            medianPriceBaht: extraction.medianPriceBaht,
-            method: extraction.method,
-            milestones: extraction.milestones,
-          },
-          // Already carries id, key and criteria — assigned together during
-          // repair so no call site can zip parallel arrays differently.
-          qualificationRequirements: extraction.qualificationRequirements,
+          invitationUrl: invitationUrl ?? stored?.invitationUrl ?? "",
+          detailUrl: detailUrl ?? stored?.detailUrl ?? "",
           aiConfidence: extraction.aiConfidence,
-          reviewStatus: autoApproved ? "auto-approved" : "need-review",
           sourceJobId: job._id,
+          ...(params.announcements?.length ? { announcements: [...params.announcements] } : {}),
         },
+        // A reviewer's verdict is theirs: a later announcement may add a
+        // deadline to an approved draft, but it does not send it back to the
+        // queue. Only a draft nobody has ruled on takes this.
+        ...(stored?.reviewStatus === "approved"
+          ? {}
+          : { $set: { reviewStatus: autoApproved ? "auto-approved" : "need-review" } }),
       },
       { upsert: true, runValidators: true, new: true }
     )
@@ -134,7 +137,12 @@ export async function extractAndStore(params: {
     // on /admin/settings mean "skip the reviewer" rather than "label it and
     // wait anyway".
     let outcome = "needs review"
-    if (autoApproved && draft) {
+    // Already published and signed off: the content in `tors` is the human's,
+    // and re-publishing the draft over it would throw their corrections away.
+    // The lifecycle facts reach the published TOR by their own path.
+    if (stored?.publishedTorId && stored.reviewStatus === "approved") {
+      outcome = "approved and published already — content left alone"
+    } else if (autoApproved && draft) {
       const blocker = publishBlocker(draft)
       if (blocker) {
         outcome = `auto-approved but not publishable (${blocker})`

@@ -37,6 +37,10 @@ export function procurementStatusLabel(
       "closing-soon": "browse.statusClosingSoon",
       closed: "browse.statusClosed",
       awarded: "browse.statusAwarded",
+      cancelled: "browse.statusCancelled",
+      changed: "browse.statusChanged",
+      "winner-cancelled": "browse.statusWinnerCancelled",
+      "winner-revised": "browse.statusWinnerRevised",
       all: "common.all",
     }[status] ?? status
   return key === status ? status : t(key)

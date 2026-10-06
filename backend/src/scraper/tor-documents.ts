@@ -88,6 +88,41 @@ export function withinBudget(documents: TorDocument[]): TorDocument[] {
  * invitation costs a deadline, while losing the tender document costs every
  * qualification, and neither is a reason to discard the other.
  */
+/**
+ * Roughly how many pages a PDF has.
+ *
+ * Counted from the raw bytes rather than parsed: e-GP documents carry an
+ * uncompressed page tree, and the number only has to be good enough to tell a
+ * two-page notice from a tender document. Returns 0 when neither marker is
+ * found, which callers must read as "unknown", not "empty".
+ */
+export function countPdfPages(pdf: Buffer): number {
+  const text = pdf.toString("latin1")
+  const pageObjects = text.match(/\/Type\s*\/Page[^s]/g)?.length ?? 0
+  if (pageObjects > 0) return pageObjects
+
+  const counts = [...text.matchAll(/\/Count\s+(\d+)/g)].map((match) => Number(match[1]))
+  return counts.length ? Math.max(...counts) : 0
+}
+
+/**
+ * Whether this document set contains a tender, rather than only a notice.
+ *
+ * ประกาศเชิญชวน is two to four pages and a couple of hundred kilobytes; it
+ * defers every qualification to the tender document. A tender runs to dozens of
+ * pages, or arrives as an archive of several files. Deciding here — after the
+ * download, before the model call — costs nothing, and tells the merge whether
+ * this extraction may overwrite the content a previous one found.
+ */
+export function carriesFullTender(documents: readonly TorDocument[]): boolean {
+  if (documents.length > 1) return true
+
+  const [only] = documents
+  if (!only) return false
+
+  return countPdfPages(only.pdf) >= 10 || only.pdf.byteLength >= 300_000
+}
+
 export async function downloadAllTorDocuments(
   urls: readonly string[]
 ): Promise<TorDocument[]> {

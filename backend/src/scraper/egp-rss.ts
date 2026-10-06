@@ -42,6 +42,10 @@ export const ANNOUNCE_TYPES = {
   invitationCancelled: "D1",
   /** เปลี่ยนแปลงประกาศเชิญชวน */
   invitationChanged: "D2",
+  /** ยกเลิกประกาศรายชื่อผู้ชนะ / ผู้ได้รับการคัดเลือก */
+  winnerCancelled: "W1",
+  /** เปลี่ยนแปลงประกาศรายชื่อผู้ชนะ */
+  winnerChanged: "W2",
 } as const
 
 export type AnnounceType = (typeof ANNOUNCE_TYPES)[keyof typeof ANNOUNCE_TYPES]
@@ -278,27 +282,50 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
   return parseFeed(xml)
 }
 
+/** Spacing between feed requests, so a narrowing sweep is not a burst. */
+const REQUEST_GAP_MS = 300
+
 /**
  * Fetches one announcement type, working around the 20-item cap (§4.2).
  *
  * When the feed reports more announcements than it returned, the same query is
  * re-run per procurement method: each narrower query gets its own 20-item
  * allowance, so together they reach announcements the broad query hid.
+ *
+ * That sweep costs twelve more requests, which is worth paying only where a
+ * missed item decides whether a TOR exists at all — the tender and the notice.
+ * For the rest, a missed announcement is a link row the next run picks up, and
+ * the feed keeps seven days (§4.2). Hence `narrowOnTruncation`.
  */
 export async function fetchAnnouncements(
-  query: EgpFeedQuery & { announceType: AnnounceType }
-): Promise<EgpAnnouncement[]> {
+  query: EgpFeedQuery & { announceType: AnnounceType },
+  { narrowOnTruncation = true }: { narrowOnTruncation?: boolean } = {}
+): Promise<FetchResult> {
   const broad = await fetchFeed(query)
-  if (!broad.truncated) return broad.items
+  if (!broad.truncated || !narrowOnTruncation) {
+    return { items: broad.items, countByDay: broad.countByDay, truncated: broad.truncated }
+  }
 
   const byProjectNo = new Map(broad.items.map((item) => [item.projectNo, item]))
 
   for (const methodId of Object.values(METHOD_IDS)) {
+    await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
     const narrowed = await fetchFeed({ ...query, methodId })
     for (const item of narrowed.items) {
       byProjectNo.set(item.projectNo, item)
     }
   }
 
-  return [...byProjectNo.values()]
+  const items = [...byProjectNo.values()]
+  // Still short of the day's total even after narrowing: the caller should say
+  // so rather than report a number that silently omits announcements.
+  return { items, countByDay: broad.countByDay, truncated: broad.countByDay > items.length }
+}
+
+/** What a fetch found, and whether the feed admitted to holding back more. */
+export type FetchResult = {
+  items: EgpAnnouncement[]
+  /** The day's real total as the feed reports it (§4.7), 0 when absent. */
+  countByDay: number
+  truncated: boolean
 }

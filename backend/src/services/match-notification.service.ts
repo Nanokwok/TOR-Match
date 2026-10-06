@@ -1,6 +1,7 @@
 import type { CompanyDoc } from "@/models/Company.model"
 import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
+import { BIDDABLE_STATUSES } from "@/models/tor-fields.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import { matchCompanyToTor } from "@/services/qualification.service"
 
@@ -37,7 +38,7 @@ function buildMatchNotification(userId: unknown, tor: TorDoc) {
  * is a historical fact, not a live status).
  */
 export async function notifyNewMatches(userId: string, company: CompanyDoc): Promise<void> {
-  const tors = await Tor.find({ status: { $in: ["open", "closing-soon"] } })
+  const tors = await Tor.find({ status: { $in: BIDDABLE_STATUSES } })
   if (!tors.length) return
 
   const eligibleTors = tors.filter((tor: TorDoc) => matchCompanyToTor(company, tor).eligible)
@@ -67,7 +68,9 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
  * is the real point a TOR becomes visible to users, not the seed script.
  */
 export async function notifyCompaniesForTor(tor: TorDoc): Promise<void> {
-  if (!["open", "closing-soon"].includes(tor.status)) return
+  // A cancelled project, or one that already has a winner, is not something a
+  // company can act on — telling them they now qualify for it would be noise.
+  if (!BIDDABLE_STATUSES.includes(tor.status as (typeof BIDDABLE_STATUSES)[number])) return
 
   const companies = await Company.find()
   if (!companies.length) return

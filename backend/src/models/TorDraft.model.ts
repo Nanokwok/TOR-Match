@@ -70,6 +70,15 @@ const torDraftSchema = new Schema(
      * nothing, and `sourceUrl` falls back to the document link.
      */
     detailUrl: { type: String, default: "" },
+    /**
+     * Fields a reviewer has edited by hand.
+     *
+     * A project is announced several times, and each announcement re-extracts.
+     * Without this, the next one would quietly revert a correction someone made
+     * on /admin/tor-review — so once a human has written a field, the model
+     * stops being allowed to.
+     */
+    lockedFields: { type: [String], default: [] },
     sourceJobId: { type: Schema.Types.ObjectId, ref: "ScrapeJob", default: null },
     /** Set once published; a draft with this set has a counterpart in `tors`. */
     publishedTorId: { type: Schema.Types.ObjectId, ref: "Tor", default: null },
