@@ -3,6 +3,7 @@ import {
   applyTorTranslations,
   type TorSeed,
 } from "@/server/db/mock/tor-translations";
+import { buildTorTimeline } from "@/server/db/mock/tor-timeline";
 import type { QualificationCriteria } from "@/types/qualification-criteria";
 
 function milestonesForBudget(totalBudgetBaht: number) {
@@ -147,7 +148,8 @@ type RawTorSeed = Omit<TorSeed, "localOffice" | "announcementDate">
 
 function withBrowseMeta(tors: RawTorSeed[]): TorSeed[] {
   return tors.map((tor, index) => {
-    const deadline = new Date(tor.deadline)
+    const hasDeadline = Boolean(tor.deadline) && !Number.isNaN(new Date(tor.deadline).getTime())
+    const deadline = hasDeadline ? new Date(tor.deadline) : new Date("2026-10-01T00:00:00+07:00")
     const announced = new Date(deadline)
     announced.setDate(announced.getDate() - (21 + (index % 40)))
     const method =
@@ -190,7 +192,7 @@ export function getMockTors(): Tor[] {
       status: "open",
       eligible: true,
       bookmarked: false,
-      deadline: "2026-08-20T16:30:00+07:00",
+      deadline: "2026-10-20T16:30:00+07:00",
       sourceUrl: "https://www.gprocurement.go.th",
       summary:
         "Develop a web application for BMA procurement & budget tracking, including an OCR system for PDF invoices, a real-time analytics dashboard, and a data pipeline for automatic budget reconciliation.",
@@ -224,10 +226,10 @@ export function getMockTors(): Tor[] {
       projectScale: "LARGE",
       durationDays: 365,
       method: "e-bidding",
-      status: "open",
+      status: "draft",
       eligible: true,
       bookmarked: true,
-      deadline: "2026-09-05T16:30:00+07:00",
+      deadline: "2026-10-15T16:30:00+07:00",
       sourceUrl: "https://www.gprocurement.go.th",
       summary:
         "Build a city-wide traffic analytics platform that ingests IoT sensor data, predicts congestion, and provides operational dashboards for district offices.",
@@ -257,10 +259,10 @@ export function getMockTors(): Tor[] {
       projectScale: "LARGE",
       durationDays: 270,
       method: "selective",
-      status: "closing-soon",
+      status: "draft",
       eligible: false,
       bookmarked: false,
-      deadline: "2026-08-15T12:00:00+07:00",
+      deadline: "",
       sourceUrl: "https://www.gprocurement.go.th",
       summary:
         "Integrate fragmented hospital record systems into a unified digital health platform with HL7/FHIR interoperability and secure patient consent workflows.",
@@ -665,6 +667,11 @@ export function getMockTors(): Tor[] {
       },
       qualificationRequirements: defaultQualifications(2_000_000, 1_500_000),
     },
-  ]).map(applyTorTranslations)
+  ])
+    .map(applyTorTranslations)
+    .map((tor) => ({
+      ...tor,
+      timeline: buildTorTimeline(tor),
+    }))
 }
 

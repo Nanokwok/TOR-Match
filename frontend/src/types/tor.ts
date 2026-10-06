@@ -13,6 +13,7 @@ export type TorProcurementMethod =
   | "price-agreement"
 
 export type TorProcurementStatus =
+  | "draft"
   | "open"
   | "closing-soon"
   | "closed"
@@ -51,6 +52,54 @@ export type TorQualificationRequirement = {
   criteria?: QualificationCriteria
 }
 
+export type TorStepCode =
+  | "P0" // แผนงาน
+  | "15" // ราคากลาง
+  | "B0" // ร่าง TOR
+  | "D0" // ประกาศเชิญชวน
+  | "D2" // แก้ไขประกาศเชิญชวน
+  | "D1" // ยกเลิกประกาศเชิญชวน
+  | "W0" // ประกาศผู้ชนะ
+  | "W2" // แก้ไขประกาศผู้ชนะ
+  | "W1" // ยกเลิกประกาศผู้ชนะ
+
+export type TorStepStatus =
+  | "completed"
+  | "current"
+  | "upcoming"
+  | "amended"
+  | "cancelled"
+
+export type TorStepDocument = {
+  id: string
+  fileName: string
+  name?: LocalizedText
+  fileSize: string
+  fileUrl: string
+  publishDate?: string
+  docType?: string
+}
+
+export type TorTimelineStep = {
+  code: TorStepCode
+  title: LocalizedText
+  status: TorStepStatus
+  date?: string
+  deadline?: string
+  daysRemaining?: number | null
+  description?: LocalizedText
+  document?: TorStepDocument
+  documents?: TorStepDocument[]
+  branchType?: "none" | "amendment" | "cancellation"
+  branchFrom?: "D0" | "W0"
+}
+
+export type TorTimeline = {
+  currentStepCode: TorStepCode
+  latestFileName?: string
+  steps: TorTimelineStep[]
+}
+
 export type Tor = {
   id: string
   announcementNo: string
@@ -75,6 +124,7 @@ export type Tor = {
   listTags: string[]
   financials: TorFinancials
   qualificationRequirements: TorQualificationRequirement[]
+  timeline?: TorTimeline
 }
 
 export type QualificationStatus = "passed" | "failed" | "insufficient-data" | "manual-review"

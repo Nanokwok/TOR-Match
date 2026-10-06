@@ -24,6 +24,7 @@ type TorQualificationPanelProps = {
   torId: string
   check: TorQualificationCheck
   onDirtyChange?: (isDirty: boolean) => void
+  isCollapsed?: boolean
 }
 
 type QualificationRow = TorQualificationRow
@@ -379,6 +380,7 @@ export function TorQualificationPanel({
   torId,
   check: initialCheck,
   onDirtyChange,
+  isCollapsed = false,
 }: TorQualificationPanelProps) {
   const router = useRouter()
   const { t } = useLocale()
@@ -486,16 +488,16 @@ export function TorQualificationPanel({
         ) : null}
       </div>
       <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
-        <thead>
-          <tr className="bg-primary text-primary-foreground">
-            <th className="w-[25%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.requirement")}
+        <thead className={cn(isCollapsed && "invisible")}>
+          <tr className={cn(isCollapsed ? "h-0" : "bg-primary text-primary-foreground")}>
+            <th className={cn("w-[25%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              {!isCollapsed && t("browse.qualificationPanel.requirement")}
             </th>
-            <th className="w-[55%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.torCriteria")}
+            <th className={cn("w-[55%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              {!isCollapsed && t("browse.qualificationPanel.torCriteria")}
             </th>
-            <th className="w-[20%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.companyProfile")}
+            <th className={cn("w-[20%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              {!isCollapsed && t("browse.qualificationPanel.companyProfile")}
             </th>
           </tr>
         </thead>

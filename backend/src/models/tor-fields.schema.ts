@@ -21,7 +21,7 @@ export const PROCUREMENT_METHODS = [
   "specific",
   "price-agreement",
 ] as const
-export const PROCUREMENT_STATUSES = ["open", "closing-soon", "closed", "awarded"] as const
+export const PROCUREMENT_STATUSES = ["draft", "open", "closing-soon", "closed", "awarded"] as const
 
 const paymentMilestoneSchema = new Schema(
   {
