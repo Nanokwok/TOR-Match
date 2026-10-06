@@ -107,27 +107,32 @@ export async function extractAndStore(params: {
       reviewStatus: stored?.reviewStatus,
     })
 
+    const update: Record<string, unknown> = {
+      announcementNo,
+      ...content,
+      sourceUrl,
+      pdfUrl,
+      invitationUrl: invitationUrl ?? stored?.invitationUrl ?? "",
+      detailUrl: detailUrl ?? stored?.detailUrl ?? "",
+      aiConfidence: extraction.aiConfidence,
+      sourceJobId: job._id,
+      ...(params.announcements?.length ? { announcements: [...params.announcements] } : {}),
+    }
+
+    // A reviewer's verdict is theirs: a later announcement may add a deadline
+    // to an approved draft, but it does not send it back to the queue. Only a
+    // draft nobody has ruled on takes this.
+    //
+    // One object, assigned: writing it as a second `$set` spread made the
+    // later key replace the whole first one, and the upsert then created a
+    // draft with nothing in it but a review status.
+    if (stored?.reviewStatus !== "approved") {
+      update.reviewStatus = autoApproved ? "auto-approved" : "need-review"
+    }
+
     const draft = await TorDraft.findOneAndUpdate(
       { announcementNo },
-      {
-        $set: {
-          announcementNo,
-          ...content,
-          sourceUrl,
-          pdfUrl,
-          invitationUrl: invitationUrl ?? stored?.invitationUrl ?? "",
-          detailUrl: detailUrl ?? stored?.detailUrl ?? "",
-          aiConfidence: extraction.aiConfidence,
-          sourceJobId: job._id,
-          ...(params.announcements?.length ? { announcements: [...params.announcements] } : {}),
-        },
-        // A reviewer's verdict is theirs: a later announcement may add a
-        // deadline to an approved draft, but it does not send it back to the
-        // queue. Only a draft nobody has ruled on takes this.
-        ...(stored?.reviewStatus === "approved"
-          ? {}
-          : { $set: { reviewStatus: autoApproved ? "auto-approved" : "need-review" } }),
-      },
+      { $set: update },
       { upsert: true, runValidators: true, new: true }
     )
 

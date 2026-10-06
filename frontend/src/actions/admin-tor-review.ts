@@ -69,12 +69,24 @@ export type AdminActionResult<T = undefined> =
   | { ok: true; data: T }
   | { ok: false; error: string }
 
+/**
+ * Localized text a draft may be missing entirely.
+ *
+ * The queue is the screen for drafts that are not right yet, so it has to
+ * survive one that is badly wrong: an ingest that stored a draft without a
+ * title took the whole page down with it, hiding every other draft waiting for
+ * review. A blank cell is a problem a reviewer can see and act on.
+ */
+function localized(value: { en?: string; th?: string } | undefined): string {
+  return value?.th || value?.en || ""
+}
+
 function toListItem(draft: BackendDraft): TorReviewListItem {
   return {
     id: draft._id,
     announcementId: draft.announcementNo,
-    projectTitle: draft.title.th || draft.title.en,
-    department: draft.department.th || draft.department.en,
+    projectTitle: localized(draft.title),
+    department: localized(draft.department),
     budgetBaht: draft.budgetBaht,
     aiConfidence: draft.aiConfidence,
     reviewStatus: draft.reviewStatus,
@@ -87,10 +99,10 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
     // The form edits Thai (the site default). The list may fall back to
     // English for display; the form must not, or a save writes English into
     // `.th`.
-    department: draft.department.th,
-    projectTitleEn: draft.title.en,
-    projectTitleTh: draft.title.th,
-    localOffice: draft.localOffice.th,
+    department: draft.department?.th ?? "",
+    projectTitleEn: draft.title?.en ?? "",
+    projectTitleTh: draft.title?.th ?? "",
+    localOffice: draft.localOffice?.th ?? "",
     projectScale: draft.projectScale,
     durationDays: draft.durationDays,
     method: draft.method,
@@ -98,7 +110,7 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
     deadline: draft.deadline,
     announcementDate: draft.announcementDate,
     sourceUrl: draft.sourceUrl,
-    summary: draft.summary.th,
+    summary: draft.summary?.th ?? "",
     deliverables: draft.deliverables?.th ?? [],
     techTags: draft.techTags,
     listTags: draft.listTags,
