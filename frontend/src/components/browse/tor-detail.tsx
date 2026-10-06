@@ -44,6 +44,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
 import {
+  announceTypeLabel,
   procurementMethodLabel,
   procurementStatusLabel,
   projectScaleLabel,
@@ -168,6 +169,11 @@ function TorDetailContent({
   const deadlineText = formatTorDeadline(tor.deadline, locale, "-");
   const qualificationCheck = tor.qualification;
   const sourceHref = safeExternalUrl(tor.sourceUrl);
+  // Newest first: a bidder opening a TOR wants the amendment or the award, not
+  // the plan that started it two years ago.
+  const announcements = [...(tor.announcements ?? [])].sort((a, b) =>
+    b.publishedDate.localeCompare(a.publishedDate),
+  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
@@ -433,6 +439,53 @@ function TorDetailContent({
                   </li>
                 ))}
               </ol>
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">
+                {t("browse.announcements")}
+              </h3>
+              {announcements.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("common.notSpecified")}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {announcements.map((announcement) => {
+                    const href = safeExternalUrl(announcement.url);
+                    const label = announceTypeLabel(
+                      announcement.announceType,
+                      t,
+                      announcement.announceLabel,
+                    );
+                    return (
+                      <li
+                        key={`${announcement.announceType}-${announcement.url}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+                      >
+                        <span className="min-w-0">
+                          <span className="text-foreground">{label}</span>
+                          {announcement.publishedDate ? (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {formatShortDate(announcement.publishedDate, locale)}
+                            </span>
+                          ) : null}
+                        </span>
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 text-primary underline-offset-4 hover:underline"
+                          >
+                            {t("browse.viewSource")}
+                          </a>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
 
             <div className="flex flex-wrap gap-2 pt-2">

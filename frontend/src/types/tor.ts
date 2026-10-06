@@ -13,6 +13,21 @@ export type TorProcurementMethod =
   | "price-agreement"
 
 /** Mirrors PROCUREMENT_STATUSES in backend/src/models/tor-fields.schema.ts. */
+/**
+ * One announcement in a project's history, as the e-GP feed published it.
+ *
+ * Mirrors announcementLinkSchema in backend/src/models/tor-fields.schema.ts.
+ * `announceType` is the CGD code — B0 the tender, D0 the invitation, W0 the
+ * winner, and so on — which is what the UI labels it by.
+ */
+export type TorAnnouncement = {
+  announceType: string
+  announceLabel: string
+  url: string
+  publishedDate: string
+  title: string
+}
+
 export type TorProcurementStatus =
   | "open"
   | "closing-soon"
@@ -74,6 +89,8 @@ export type Tor = {
   deadline: string
   announcementDate: string
   sourceUrl: string
+  /** Every announcement e-GP published for this project — see TorAnnouncement. */
+  announcements?: TorAnnouncement[]
   summary: LocalizedText
   deliverables: LocalizedList
   techTags: string[]

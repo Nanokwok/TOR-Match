@@ -282,3 +282,68 @@ export async function extractTorFromPdf(
     qualificationRequirements: repairQualifications(parsed.qualificationRequirements),
   }
 }
+
+/**
+ * The official median price (ราคากลาง), read from a บก.06 announcement.
+ *
+ * Its own tiny extraction rather than the full one: the form is a page or two
+ * and states one number that outranks whatever a tender document happened to
+ * mention. Running the full schema over it would cost a hundred times as much
+ * to learn the same figure, and ราคากลาง is among the feed's most numerous
+ * announcement types.
+ */
+export const medianPriceSchema = z.object({
+  medianPriceBaht: z
+    .number()
+    .describe("ราคากลาง in baht as the form states it. 0 if the document states none."),
+  approvedDate: z
+    .string()
+    .describe('วันที่อนุมัติราคากลาง, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if absent.'),
+  aiConfidence: z.number().describe("0-100: how certain the figure above is."),
+})
+
+export type MedianPriceExtraction = z.infer<typeof medianPriceSchema>
+
+const MEDIAN_PRICE_PROMPT = `You read Thai government median-price announcements (ประกาศราคากลาง, form บก.06) for Bangkok Metropolitan Administration.
+
+Report only the official median price the document states and the date it was approved.
+- ราคากลาง is the approved reference price, not the budget (วงเงินงบประมาณ). When the document shows both, report ราคากลาง.
+- Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00.
+- State 0 rather than guessing when the document gives no figure.`
+
+export async function extractMedianPrice(
+  context: ExtractionContext,
+  documents: TorDocument[]
+): Promise<MedianPriceExtraction> {
+  if (documents.length === 0) throw new Error("No documents to read a median price from")
+
+  const ai = await getClient()
+  const response = await withRetry(`median price ${context.projectNo}`, () =>
+    ai.models.generateContent({
+      model: env.extractionModel,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            ...documents.map((document) => ({
+              inlineData: { mimeType: "application/pdf", data: document.pdf.toString("base64") },
+            })),
+            { text: `เลขที่โครงการ: ${context.projectNo}\n\nRead the median price.` },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: MEDIAN_PRICE_PROMPT,
+        temperature: 0,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+        responseJsonSchema: z.toJSONSchema(medianPriceSchema),
+      },
+    })
+  )
+
+  const text = response.text
+  if (!text) throw new Error("Median price extraction returned no output")
+
+  return medianPriceSchema.parse(parseJsonResponse("Median price extraction", text))
+}

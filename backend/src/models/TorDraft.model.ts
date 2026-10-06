@@ -78,6 +78,14 @@ const torDraftSchema = new Schema(
      * on /admin/tor-review — so once a human has written a field, the model
      * stops being allowed to.
      */
+    /**
+     * Which announcement the stored median price came from.
+     *
+     * "15" means the official ราคากลาง form said so, and no later extraction
+     * may overrule it — see tor-merge.ts.
+     */
+    medianPriceSource: { type: String, default: "" },
+    medianPriceApprovedDate: { type: String, default: "" },
     lockedFields: { type: [String], default: [] },
     sourceJobId: { type: Schema.Types.ObjectId, ref: "ScrapeJob", default: null },
     /** Set once published; a draft with this set has a counterpart in `tors`. */

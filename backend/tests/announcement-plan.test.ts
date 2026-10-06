@@ -14,6 +14,7 @@ function announcement(pdfUrl: string, publishedDate = "2026-10-01"): EgpAnnounce
     methodLabel: "ประกวดราคาอิเล็กทรอนิกส์ (e-bidding)",
     announceLabel: "-",
     publishedDate,
+    isDocument: true,
   }
 }
 

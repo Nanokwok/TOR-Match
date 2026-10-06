@@ -39,6 +39,11 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
   // there by default.
   const content = {
     announcementNo: draft.announcementNo,
+    // The documents themselves, so a bidder on /browse can read the tender,
+    // the invitation and whatever came after it. Capped: a long-running
+    // project collects amendments, and the published document should not grow
+    // without bound for the sake of history nobody is reading.
+    announcements: (draft.announcements ?? []).slice(-20),
     title: draft.title,
     department: draft.department,
     localOffice: draft.localOffice,

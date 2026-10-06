@@ -92,6 +92,15 @@ export type EgpAnnouncement = {
   announceLabel: string
   /** YYYY-MM-DD as published. */
   publishedDate: string
+  /**
+   * Whether `pdfUrl` is the document itself rather than a portal page.
+   *
+   * Cancellations and award notices are published with a link to e-GP's own
+   * search page, which carries no file. Those announcements still matter —
+   * their *type* is the news — so they are kept, and only the types something
+   * actually reads are required to carry a document.
+   */
+  isDocument: boolean
 }
 
 /**
@@ -226,11 +235,14 @@ export function parseFeed(xml: string): EgpFeedResult {
         methodLabel,
         announceLabel,
         publishedDate: asText(raw.pubDate),
+        isDocument: isDocumentLink(asText(raw.link)),
       }
     })
-    // An item with no project number cannot be keyed against the database,
-    // and one whose link is not the document itself cannot be extracted.
-    .filter((item) => item.projectNo && isDocumentLink(item.pdfUrl))
+    // An item with no project number cannot be keyed against the database.
+    // A portal link is kept: D1 ยกเลิกประกาศเชิญชวน and W1 are published that
+    // way, and dropping them here meant a cancelled project stayed "open"
+    // for ever — the status is in the announcement's type, not its file.
+    .filter((item) => item.projectNo)
 
   const countByDay = Number(channel.countbyday ?? 0) || 0
 

@@ -26,6 +26,7 @@ function announcement(overrides: Partial<EgpAnnouncement> = {}): EgpAnnouncement
     methodLabel: "ประกวดราคาอิเล็กทรอนิกส์ (e-bidding)",
     announceLabel: "ร่างเอกสารประกวดราคา (e-Bidding)",
     publishedDate: "2026-09-25",
+    isDocument: true,
     ...overrides,
   }
 }
@@ -161,4 +162,31 @@ test("sourceUrlFor prefers the agency's page over the file", () => {
     "https://egp2.bangkok.go.th/project-detail/x")
   assert.equal(sourceUrlFor({ detailUrl: "", pdfUrl: DRAFT_LINK }), DRAFT_LINK)
   assert.equal(sourceUrlFor({}), "")
+})
+
+test("a cancellation published as a portal link is kept, but never read", () => {
+  const cancellation = announcement({
+    pdfUrl: "http://process.gprocurement.go.th/egp2procmainWeb/jsp/procsearch.sch?proc_id=ShowHTMLFile",
+    announceLabel: "ยกเลิกประกาศเชิญชวน",
+    isDocument: false,
+  })
+  const entry = group([
+    [ANNOUNCE_TYPES.draft, [draft]],
+    [ANNOUNCE_TYPES.invitationCancelled, [cancellation]],
+  ])
+
+  // It is in the history a bidder can see...
+  assert.equal(mergeAnnouncementLinks([], entry).added.length, 2)
+  // ...but it is a web page, so nothing tries to extract from it.
+  assert.deepEqual(documentsToRead(entry), [DRAFT_LINK])
+})
+
+test("an invitation that is only a portal link does not become the stored link", () => {
+  const portalOnly = announcement({
+    pdfUrl: "http://process.gprocurement.go.th/egp2procmainWeb/jsp/procsearch.sch?proc_id=x",
+    isDocument: false,
+  })
+  const entry = group([[ANNOUNCE_TYPES.invitation, [portalOnly]]])
+
+  assert.equal(linksFor(entry).invitationUrl, "")
 })

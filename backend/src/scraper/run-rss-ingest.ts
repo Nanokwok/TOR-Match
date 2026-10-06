@@ -35,7 +35,11 @@ import {
   type AnnouncementSources,
 } from "@/scraper/announcement-sources"
 import { planForProject, statusForTypes, type IngestAction } from "@/scraper/announcement-plan"
-import { applyLinks, applyStatus } from "@/services/announcement-lifecycle.service"
+import {
+  applyLinks,
+  applyMedianPrice,
+  applyStatus,
+} from "@/services/announcement-lifecycle.service"
 import { resolveDetailUrls } from "@/scraper/bma-detail-link"
 import type { ExtractionContext } from "@/scraper/extract"
 import {
@@ -150,6 +154,9 @@ async function ingestNew(
       publishedDate: lead.publishedDate,
       context: contextFromAnnouncement(lead),
       threshold,
+      // Which announcement this reads decides what it may overwrite: a notice
+      // must not replace the tender's qualifications with its own deferral.
+      from: action.from,
       announcements: rows,
     })
     const types = [...new Set(entry.all.map((item) => item.announceType))].join("+")
@@ -192,15 +199,15 @@ async function main() {
       { deptId: env.egpDeptId, announceType },
       { narrowOnTruncation: NARROW_ON_TRUNCATION.has(announceType) }
     )
-    // countByDay is the day's real total (§4.7). Printing it next to what we
-    // got is the only way a day over the 20-item cap is visible at all.
-    const total = result.countByDay || result.items.length
+    // countByDay is today's total (§4.7); the items can exceed it because the
+    // feed backfills up to seven days to reach twenty (§4.2). So it is only
+    // worth printing when the feed admits it held something back.
     const note = result.truncated
       ? NARROW_ON_TRUNCATION.has(announceType)
-        ? " (truncated even after narrowing by method)"
-        : " (truncated; narrowing not worth it for this type)"
+        ? ` — ${result.countByDay} published today, still short after narrowing by method`
+        : ` — ${result.countByDay} published today, not all of them returned`
       : ""
-    console.log(`[rss] ${announceType}: ${result.items.length}/${total} announcements${note}`)
+    console.log(`[rss] ${announceType}: ${result.items.length} announcements${note}`)
     byType.set(announceType, result.items)
   }
 
@@ -312,11 +319,25 @@ async function main() {
       }
 
       case "median-price":
-        // Reading the official ราคากลาง is a separate, much smaller extraction;
-        // until it exists the link is recorded so nothing is lost.
+        // A page or two stating one number, so this is a fraction of a full
+        // extraction — and the figure it gives outranks any a tender mentions.
         await applyLinks(entry.projectNo, rows.rows)
         linkUpdates += 1
-        console.log(`[rss] ${entry.projectNo} -> recorded median-price announcement`)
+        try {
+          const price = await applyMedianPrice(
+            entry.projectNo,
+            action.url,
+            contextFromAnnouncement(primary(entry))
+          )
+          console.log(
+            price
+              ? `[rss] ${entry.projectNo} -> median price ${price.toLocaleString()} baht`
+              : `[rss] ${entry.projectNo} -> median-price announcement states no figure`
+          )
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error)
+          console.warn(`[rss] ${entry.projectNo} -> median price failed: ${message}`)
+        }
         break
 
       case "extract":

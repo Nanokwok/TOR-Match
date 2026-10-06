@@ -14,6 +14,7 @@
     "publish:approved": "tsx src/scraper/run-publish-approved.ts",
     "backfill:keys": "tsx src/scraper/run-backfill-keys.ts",
     "backfill:links": "tsx src/scraper/run-backfill-links.ts",
+    "backfill:announcements": "tsx src/scraper/run-backfill-announcements.ts",
     "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",

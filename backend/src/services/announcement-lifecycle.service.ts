@@ -1,5 +1,8 @@
 import { Tor } from "@/models/Tor.model"
 import { TorDraft } from "@/models/TorDraft.model"
+import { ANNOUNCE_TYPES } from "@/scraper/egp-rss"
+import { extractMedianPrice, type ExtractionContext } from "@/scraper/extract"
+import { downloadTorDocuments } from "@/scraper/tor-documents"
 import type { AnnouncementLink } from "@/scraper/announcement-sources"
 import type { ProcurementStatus } from "@/scraper/announcement-plan"
 
@@ -44,4 +47,35 @@ export async function applyStatus(
     { announcementNo },
     { $set: { status, ...(rows.length ? { announcements: rows.slice(-20) } : {}) } }
   )
+}
+
+/**
+ * Reads the official median price off a ราคากลาง announcement.
+ *
+ * Recorded with its source so a later tender extraction cannot overrule it:
+ * บก.06 is the approved figure, and a number lifted out of a tender's prose is
+ * not. Returns the figure written, or null when the document states none.
+ */
+export async function applyMedianPrice(
+  announcementNo: string,
+  url: string,
+  context: ExtractionContext
+): Promise<number | null> {
+  const documents = await downloadTorDocuments(url)
+  const { medianPriceBaht, approvedDate } = await extractMedianPrice(context, documents)
+  if (medianPriceBaht <= 0) return null
+
+  await TorDraft.updateOne(
+    { announcementNo },
+    {
+      $set: {
+        "financials.medianPriceBaht": medianPriceBaht,
+        medianPriceSource: ANNOUNCE_TYPES.medianPrice,
+        medianPriceApprovedDate: approvedDate,
+      },
+    }
+  )
+  await Tor.updateOne({ announcementNo }, { $set: { "financials.medianPriceBaht": medianPriceBaht } })
+
+  return medianPriceBaht
 }

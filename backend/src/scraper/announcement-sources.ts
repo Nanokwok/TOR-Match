@@ -104,14 +104,20 @@ export function primary(entry: AnnouncementSources): StampedAnnouncement {
  * deadline. `stored.pdfUrl` stands in for a tender that has aged out of the
  * feed's seven-day window — by the time the D0 appears, the B0 usually has.
  */
+/** The link of one type, but only when it really is a file to read. */
+function documentUrl(entry: AnnouncementSources, announceType: AnnounceType): string | undefined {
+  const found = latestOf(entry, announceType)
+  return found?.isDocument ? found.pdfUrl : undefined
+}
+
 export function documentsToRead(
   entry: AnnouncementSources,
   stored?: { pdfUrl?: string }
 ): string[] {
   const urls = [
-    latestOf(entry, ANNOUNCE_TYPES.draft)?.pdfUrl ?? stored?.pdfUrl,
-    latestOf(entry, ANNOUNCE_TYPES.invitation)?.pdfUrl,
-    latestOf(entry, ANNOUNCE_TYPES.invitationChanged)?.pdfUrl,
+    documentUrl(entry, ANNOUNCE_TYPES.draft) ?? stored?.pdfUrl,
+    documentUrl(entry, ANNOUNCE_TYPES.invitation),
+    documentUrl(entry, ANNOUNCE_TYPES.invitationChanged),
   ].filter((url): url is string => Boolean(url))
 
   return [...new Set(urls)]
@@ -129,13 +135,14 @@ export function linksFor(
   entry: AnnouncementSources,
   stored?: { pdfUrl?: string; invitationUrl?: string }
 ): { pdfUrl: string; invitationUrl: string } {
-  const tender = latestOf(entry, ANNOUNCE_TYPES.draft)
+  const tender = documentUrl(entry, ANNOUNCE_TYPES.draft)
   const notice =
-    latestOf(entry, ANNOUNCE_TYPES.invitationChanged) ?? latestOf(entry, ANNOUNCE_TYPES.invitation)
+    documentUrl(entry, ANNOUNCE_TYPES.invitationChanged) ??
+    documentUrl(entry, ANNOUNCE_TYPES.invitation)
 
   return {
-    pdfUrl: tender?.pdfUrl ?? stored?.pdfUrl ?? "",
-    invitationUrl: notice?.pdfUrl ?? stored?.invitationUrl ?? "",
+    pdfUrl: tender ?? stored?.pdfUrl ?? "",
+    invitationUrl: notice ?? stored?.invitationUrl ?? "",
   }
 }
 
