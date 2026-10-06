@@ -1,6 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { carriesFullTender, countPdfPages } from "../src/scraper/tor-documents"
+import { zipSync } from "fflate"
+import { carriesFullTender, countPdfPages, unpackArchive } from "../src/scraper/tor-documents"
 
 /** A PDF carrying `pages` page objects, padded to `bytes`. */
 function pdf(pages: number, bytes = 1024): Buffer {
@@ -47,4 +48,28 @@ test("an archive of several files is always a tender", () => {
 
 test("nothing downloaded is not a tender", () => {
   assert.equal(carriesFullTender([]), false)
+})
+
+test("a huge scan inside an archive is skipped, the tender document is not", () => {
+  // Shaped after the live archives: a few-megabyte tender beside a scan far
+  // past what one request may carry. The oversized entry must never be
+  // decompressed, which is what makes a 182MB archive readable at all.
+  const archive = Buffer.from(
+    zipSync({
+      "doc_tender.pdf": new Uint8Array(pdf(30, 2_000_000)),
+      "sit.pdf": new Uint8Array(pdf(400, 16 * 1024 * 1024)),
+    })
+  )
+
+  const documents = unpackArchive(archive)
+
+  assert.deepEqual(documents.map((document) => document.name), ["doc_tender.pdf"])
+})
+
+test("an archive of nothing but oversized PDFs says so", () => {
+  const archive = Buffer.from(
+    zipSync({ "sit.pdf": new Uint8Array(pdf(400, 16 * 1024 * 1024)) })
+  )
+
+  assert.throws(() => unpackArchive(archive), /per-request budget/)
 })
