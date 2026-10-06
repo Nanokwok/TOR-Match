@@ -21,7 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatShortDate } from "@/lib/format"
 import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
-import type { Tor, TorStepDocument, TorTimeline, TorTimelineStep } from "@/types/tor"
+import type { Tor, TorStepDocument, TorTimeline } from "@/types/tor"
 
 type TorTimelineStepperProps = {
   tor: Tor
@@ -38,16 +38,15 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
   const [pinnedStepCode, setPinnedStepCode] = useState<string | null>(null)
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  if (!timeline) {
-    return null
-  }
-
-  const { currentStepCode, steps } = timeline
+  const steps = useMemo(() => timeline?.steps ?? [], [timeline?.steps])
+  const currentStepCode = timeline?.currentStepCode
 
   // Main 5 sequential steps: P0, 15, B0, D0, W0
-  const mainSteps = steps.filter(
-    (s) => s.branchType !== "amendment" && s.branchType !== "cancellation"
-  )
+  const mainSteps = useMemo(() => {
+    return steps.filter(
+      (s) => s.branchType !== "amendment" && s.branchType !== "cancellation"
+    )
+  }, [steps])
 
   // Map each main step to all its associated documents (including any branch files like D2, D1, W2, W1)
   const stepDocsMap = useMemo(() => {
@@ -76,6 +75,10 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
 
     return map
   }, [mainSteps, steps])
+
+  if (!timeline) {
+    return null
+  }
 
   // Single file download handler
   const handleDownloadFile = (doc: TorStepDocument) => {

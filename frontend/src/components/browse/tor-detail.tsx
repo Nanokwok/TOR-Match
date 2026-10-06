@@ -44,11 +44,10 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
+import { formatBaht, formatShortDate } from "@/lib/format"
 import { getTorStatusBadgeInfo, getTorDeadlineInfo } from "@/lib/deadline"
 import {
   procurementMethodLabel,
-  procurementStatusLabel,
   projectScaleLabel,
 } from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
@@ -90,7 +89,7 @@ function formatCompactBaht(amountBaht: number, locale: string = "th") {
     );
     return locale === "th" ? `${millions} ล้านบาท` : `฿${millions}M`;
   }
-  return formatBaht(amountBaht, locale as any);
+  return formatBaht(amountBaht, locale);
 }
 
 function TorDetailContent({
@@ -113,14 +112,19 @@ function TorDetailContent({
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
+  const [prevTorId, setPrevTorId] = useState(tor.id);
+  if (prevTorId !== tor.id) {
+    setPrevTorId(tor.id);
+    setIsCollapsed(false);
+  }
+
   useEffect(() => {
     onDirtyChange?.(isQualificationDirty);
   }, [isQualificationDirty, onDirtyChange]);
 
-  // Reset scroll and collapsed state whenever the active TOR changes
+  // Reset scroll and ref whenever the active TOR changes
   useEffect(() => {
     isCollapsedRef.current = false;
-    setIsCollapsed(false);
     if (contentScrollRef.current) {
       contentScrollRef.current.scrollTop = 0;
     }
@@ -183,7 +187,6 @@ function TorDetailContent({
     }
   }
 
-  const deadlineText = formatTorDeadline(tor.deadline, locale, "-");
   const qualificationCheck = tor.qualification;
   const sourceHref = safeExternalUrl(tor.sourceUrl);
 
