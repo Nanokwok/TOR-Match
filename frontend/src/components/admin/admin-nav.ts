@@ -1,15 +1,10 @@
-import { Building2, /* CreditCard, */ LayoutDashboard, ScanSearch, Settings, FileSearch } from "lucide-react"
+import { Building2, /* CreditCard, */ LayoutDashboard, Settings, FileSearch } from "lucide-react"
 
 export const adminNavItems = [
   {
     titleKey: "admin.overview",
     href: "/admin/overview",
     icon: LayoutDashboard,
-  },
-  {
-    titleKey: "admin.scraperOcr",
-    href: "/admin/scraper-ocr",
-    icon: ScanSearch,
   },
   {
     titleKey: "admin.torReview",

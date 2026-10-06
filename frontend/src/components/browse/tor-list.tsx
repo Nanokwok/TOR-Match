@@ -4,9 +4,16 @@ import { useEffect, useRef } from "react"
 import { Bookmark, Building2, Link2 } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
+import { DeadlineBadge } from "@/components/common/deadline-badge"
+import { listTagLabel } from "@/lib/browse-labels"
 import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
-import { TooltipProvider } from "@/components/ui/tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   getTorMatchBadge,
   getTorDeadlineCountdown,
@@ -158,17 +165,63 @@ export function TorList({
                 </p>
               </div>
 
-              {/* 3. บรรทัดล่างสุดเหลือแค่ 2 ก้อน: ฝั่งซ้ายยอดงบประมาณตัวหนา + ฝั่งขวาวันนับถอยหลังเรียบๆ */}
+              {/* 3. บรรทัดล่างสุด: ฝั่งซ้ายยอดงบประมาณตัวหนา + แท็กโครงการ (listTags) / ฝั่งขวาวันนับถอยหลัง */}
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
-                {/* ฝั่งซ้าย: ยอดงบประมาณตัวหนาชัดเจน (฿7,087,000) */}
-                <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">
-                  ฿{tor.budgetBaht.toLocaleString(locale === "th" ? "th-TH" : "en-US")}
-                </span>
+                {/* ฝั่งซ้าย: ยอดงบประมาณตัวหนาชัดเจน (฿7,087,000) + listTags */}
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+                  <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">
+                    ฿{tor.budgetBaht.toLocaleString(locale === "th" ? "th-TH" : "en-US")}
+                  </span>
+
+                  <DeadlineBadge deadline={tor.deadline} variant="badge" />
+
+                  {tor.listTags && tor.listTags.length > 0 ? (
+                    <div className="hidden sm:flex items-center gap-1 overflow-hidden">
+                      {(tor.listTags.length > 2
+                        ? tor.listTags.slice(0, 2)
+                        : tor.listTags
+                      ).map((tag, index) => {
+                        const label = listTagLabel(tag, t)
+                        return (
+                          <Tooltip key={`${tag}-${index}`}>
+                            <TooltipTrigger
+                              render={
+                                <span className="inline-block max-w-[85px] shrink truncate rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground sm:max-w-[95px]" />
+                              }
+                            >
+                              {label}
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {label}
+                            </TooltipContent>
+                          </Tooltip>
+                        )
+                      })}
+                      {tor.listTags.length > 2 ? (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <span className="shrink-0 cursor-default rounded-full border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground" />
+                            }
+                          >
+                            +{tor.listTags.length - 2}
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            {tor.listTags
+                              .slice(2)
+                              .map((tTag) => listTagLabel(tTag, t))
+                              .join(", ")}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
 
                 {/* ฝั่งขวา: วันนับถอยหลังเรียบๆ (เหลือ 7 วัน) */}
                 <span
                   className={cn(
-                    "text-xs tracking-tight whitespace-nowrap",
+                    "text-xs tracking-tight whitespace-nowrap shrink-0",
                     countdown.textClass
                   )}
                 >

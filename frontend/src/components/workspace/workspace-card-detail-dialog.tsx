@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Banknote,
   Check,
-  Clock3,
   FileText,
   FolderOpen,
   ListChecks,
@@ -13,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { DeadlineBadge } from "@/components/common/deadline-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocale } from "@/components/i18n/locale-provider";
-import { formatDaysLeft, formatThb } from "@/lib/format";
+import { formatThb } from "@/lib/format";
 import { pickLocalized } from "@/lib/localized-content";
 import { workspaceActions } from "@/lib/workspace-actions";
 import { cn } from "@/lib/utils";
@@ -109,11 +109,6 @@ function WorkspaceCardDetailBody({
 
   const title = pickLocalized(draft.title, locale);
   const department = pickLocalized(draft.department, locale);
-  const daysLeftLabels = {
-    dueToday: t("workspace.dueToday"),
-    oneDayLeft: t("workspace.oneDayLeft"),
-    daysLeft: t("workspace.daysLeft"),
-  };
 
   const columnOptions: WorkspaceColumnId[] = [
     "bookmark",
@@ -215,10 +210,11 @@ function WorkspaceCardDetailBody({
                 <Banknote className="size-3.5 text-primary" />
                 {formatThb(draft.budgetBaht, locale)}
               </p>
-              <p className="flex items-center justify-end gap-1.5">
-                <Clock3 className="size-3.5 text-primary" />
-                {formatDaysLeft(draft.deadline, locale, daysLeftLabels)}
-              </p>
+              <DeadlineBadge
+                deadline={draft.deadline}
+                variant="inline"
+                className="justify-end"
+              />
             </div>
             <Button
               variant="ghost"
@@ -237,10 +233,7 @@ function WorkspaceCardDetailBody({
             <Banknote className="size-3.5 text-primary" />
             {formatThb(draft.budgetBaht, locale)}
           </p>
-          <p className="flex items-center gap-1.5">
-            <Clock3 className="size-3.5 text-primary" />
-            {formatDaysLeft(draft.deadline, locale, daysLeftLabels)}
-          </p>
+          <DeadlineBadge deadline={draft.deadline} variant="inline" />
         </div>
 
         <Tabs defaultValue={initialTab} className="mt-5 gap-0">

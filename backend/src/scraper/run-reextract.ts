@@ -28,6 +28,7 @@ import { hasFlag } from "@/utils/cli-flags"
 type DraftLike = {
   announcementNo: string
   pdfUrl?: string
+  invitationUrl?: string
   announcementDate?: string
   title?: { en: string; th: string }
   department?: { en: string; th: string }
@@ -100,6 +101,9 @@ async function main() {
       const result = await extractAndStore({
         announcementNo: draft.announcementNo,
         pdfUrl: draft.pdfUrl!,
+        // Carried through, or a re-run would drop the invitation and with it
+        // both the deadline and the link a person can open.
+        invitationUrl: draft.invitationUrl || undefined,
         publishedDate: draft.announcementDate ?? "",
         context: contextFromDraft(draft),
         threshold,

@@ -3,9 +3,12 @@ import { cookies } from "next/headers";
 import { Covered_By_Your_Grace, Geist_Mono, Google_Sans } from "next/font/google";
 
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { DeadlineHighlightProvider } from "@/components/preferences/deadline-highlight-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { DEFAULT_LOCALE, isLocale, localeToHtmlLang } from "@/lib/i18n";
 import {
+  DEFAULT_HIGHLIGHT_DEADLINES,
+  HIGHLIGHT_DEADLINES_COOKIE,
   LOCALE_COOKIE,
   RESOLVED_THEME_COOKIE,
   THEME_COOKIE,
@@ -58,6 +61,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         : "light"
       : theme;
 
+  const storedHighlightDeadlines = cookieStore.get(HIGHLIGHT_DEADLINES_COOKIE)?.value;
+  const initialHighlightDeadlines =
+    storedHighlightDeadlines !== undefined
+      ? storedHighlightDeadlines === "true"
+      : DEFAULT_HIGHLIGHT_DEADLINES;
+
   return (
     <html
       lang={localeToHtmlLang(locale)}
@@ -78,7 +87,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             initialTheme={theme}
             initialResolvedTheme={resolvedTheme}
           >
-            {children}
+            <DeadlineHighlightProvider
+              initialHighlightDeadlines={initialHighlightDeadlines}
+            >
+              {children}
+            </DeadlineHighlightProvider>
           </ThemeProvider>
         </LocaleProvider>
       </body>

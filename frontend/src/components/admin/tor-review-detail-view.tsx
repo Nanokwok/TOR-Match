@@ -50,7 +50,6 @@ import type {
   TorProcurementStatus,
   TorProjectScale,
 } from "@/types/tor"
-import type { QualificationCriteria } from "@/types/qualification-criteria"
 import { QualificationCriteriaEditor } from "@/components/admin/qualification-criteria-editor"
 
 type TorReviewDetailViewProps = {
@@ -102,10 +101,14 @@ function toDateTimeLocal(iso: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-function toSafeIsoString(value: string, fallback: string): string {
+/**
+ * Inverse of {@link toDateTimeLocal}. These are Bangkok procurement dates and
+ * the stored format carries Thailand's offset, so the reviewer's local input is
+ * written back as +07:00 rather than the browser's own zone.
+ */
+function fromDateTimeLocal(value: string, fallback: string) {
   if (!value) return fallback
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? fallback : date.toISOString()
+  return `${value}:00+07:00`
 }
 
 function subscribeDesktopMedia(callback: () => void) {
@@ -222,15 +225,6 @@ export function TorReviewDetailView({
     )
   }
 
-  function updateQualification(
-    index: number,
-    patch: Partial<ReviewQualification>
-  ) {
-    setQualifications((current) =>
-      current.map((item, i) => (i === index ? { ...item, ...patch } : item))
-    )
-  }
-
   function updateQualificationById(
     id: string,
     patch: Partial<ReviewQualification>
@@ -298,12 +292,14 @@ export function TorReviewDetailView({
     })
   }
 
-  function buildPatch(): Partial<TorReviewDetail> {
+  /** Collects the form back into the shape the review API takes. */
+  function currentDetail(): TorReviewDetail {
     return {
-      projectTitleTh,
-      projectTitleEn,
-      projectTitle: projectTitleEn,
+      ...tor,
       announcementId,
+      projectTitle: projectTitleEn,
+      projectTitleEn,
+      projectTitleTh,
       department,
       localOffice,
       budgetBaht: budgetNumber,
@@ -312,8 +308,8 @@ export function TorReviewDetailView({
       durationDays: Number(durationDays) || 0,
       method,
       status,
-      deadline: toSafeIsoString(deadline, tor.deadline),
-      announcementDate: toSafeIsoString(announcementDate, tor.announcementDate),
+      deadline: fromDateTimeLocal(deadline, tor.deadline),
+      announcementDate: fromDateTimeLocal(announcementDate, tor.announcementDate),
       sourceUrl,
       summary,
       deliverables: deliverables.filter((item) => item.trim().length > 0),
@@ -331,7 +327,7 @@ export function TorReviewDetailView({
     setErrors(validationErrors)
 
     try {
-      const res = await saveTorReviewAction({ ...tor, ...buildPatch() })
+      const res = await saveTorReviewAction(currentDetail())
       if (!res.ok) {
         setMessage(res.error)
       } else {
@@ -362,7 +358,7 @@ export function TorReviewDetailView({
     setErrors({})
 
     try {
-      const res = await publishTorReviewAction({ ...tor, ...buildPatch() })
+      const res = await publishTorReviewAction(currentDetail())
       if (!res.ok) {
         setMessage(res.error)
       } else {

@@ -1,22 +1,25 @@
 import { localizedKey } from "@/models/localized.schema"
-import { Tor } from "@/models/Tor.model"
+import { Tor, type TorDoc } from "@/models/Tor.model"
 import type { TorDraftDoc } from "@/models/TorDraft.model"
 
 /**
  * Copies a reviewed draft into the published `tors` collection.
  *
  * Shared by the admin review screen (a reviewer pressing publish) and by the
- * RSS ingest (a draft that cleared the auto-approve threshold), so the two
- * paths cannot drift into publishing different subsets of the fields.
+ * auto-publish hook on TorDraft (a draft that cleared the confidence
+ * threshold), so the two paths cannot drift into publishing different subsets
+ * of the fields or applying different rules about what is publishable.
  */
 
 /**
  * Why a draft cannot be published yet, or null when it can.
  *
- * TORs publish with whatever the scraper found — summary, deadline and the rest
+ * TORs publish with whatever the source stated: summary, deadline and the rest
  * may be empty and render as "not specified". Only a title and a department are
- * required: without them a TOR is a blank card that no department filter can
- * reach.
+ * required, and in either locale — Thai is the site's default language and an
+ * announcement is published in Thai, so requiring English would leave every
+ * ingested TOR unpublishable. Without those two a TOR is a blank card that no
+ * department filter can reach, which is why they are the line.
  */
 export function publishBlocker(draft: TorDraftDoc): string | null {
   for (const field of ["title", "department"] as const) {
@@ -25,7 +28,11 @@ export function publishBlocker(draft: TorDraftDoc): string | null {
   return null
 }
 
-export async function publishDraft(draft: TorDraftDoc) {
+/**
+ * Writes the draft's content to `tors` and records the publication on the
+ * draft. Callers decide the review status that goes with it.
+ */
+export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
   // Copied field by field on purpose: the draft carries review bookkeeping
   // (aiConfidence, sourceJobId, ...) that must never reach the published
   // collection, and an allowlist keeps a future draft-only field from leaking
@@ -51,21 +58,18 @@ export async function publishDraft(draft: TorDraftDoc) {
     qualificationRequirements: draft.qualificationRequirements,
   }
 
-  // Upsert by announcementNo — the natural key the seed and the scraper share —
-  // so re-publishing a corrected draft updates the live TOR instead of
+  // Upsert by announcementNo — the natural key the seed and the ingestion
+  // share — so re-publishing a corrected draft updates the live TOR instead of
   // duplicating it.
   const published = await Tor.findOneAndUpdate(
     { announcementNo: draft.announcementNo },
     { $set: content },
     { new: true, upsert: true, runValidators: true }
   )
-
-  draft.set({
-    reviewStatus: "approved",
-    publishedTorId: published?._id ?? null,
-    publishedAt: new Date(),
-  })
-  await draft.save()
-
+  if (!published) {
+    throw new Error(
+      `Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`
+    )
+  }
   return published
 }

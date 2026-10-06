@@ -4,9 +4,9 @@ import { torContentFields } from "@/models/tor-fields.schema"
 /**
  * A published TOR — visible to every user through /api/tors.
  *
- * Nothing writes here except the seed script and an explicit admin publish
- * (see TorDraft): scraped announcements land in `tordrafts` and only reach
- * this collection once a human approves them.
+ * Nothing writes here except the seed script, an explicit admin publish, and
+ * TorDraft's own auto-publish hook for high-confidence extractions (see
+ * TorDraft.model.ts) — every draft still lands in `tordrafts` first.
  */
 const torSchema = new Schema(torContentFields, { timestamps: true })
 

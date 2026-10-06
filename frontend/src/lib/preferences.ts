@@ -16,6 +16,11 @@ export const THEME_COOKIE = "tor-match-theme"
  */
 export const RESOLVED_THEME_COOKIE = "tor-match-theme-resolved"
 
+/** Whether approaching deadlines (< 7 days) should be visually highlighted. */
+export const HIGHLIGHT_DEADLINES_COOKIE = "tor-match-highlight-deadlines"
+export const HIGHLIGHT_DEADLINES_STORAGE_KEY = "tor-match:highlight-deadlines"
+export const DEFAULT_HIGHLIGHT_DEADLINES = true
+
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
 /**

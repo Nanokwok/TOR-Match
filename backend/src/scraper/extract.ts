@@ -13,7 +13,7 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
-import type { BmaProjectDetail } from "@/scraper/bma-client"
+import { withRetry } from "@/scraper/retry"
 import {
   repairQualifications,
   type StoredQualification,
@@ -34,23 +34,6 @@ export type ExtractionContext = {
   metadata: Record<string, string | number | null | undefined>
 }
 
-/** Builds the context from a BMA detail page. */
-export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContext {
-  return {
-    projectNo: detail.projectNo,
-    metadata: {
-      "ชื่อโครงการ": detail.title,
-      "หน่วยงาน": detail.department,
-      "ส่วนราชการ": detail.government,
-      "ส่วนราชการย่อย": detail.subGovernment,
-      "ประเภทการจัดซื้อจัดจ้าง": detail.procurementType,
-      "ด้านตามลักษณะงาน": detail.workType,
-      "งบประมาณ (บาท)": detail.budgetBaht,
-      "ราคากลาง (บาท)": detail.medianPriceBaht,
-      "สถานะโครงการ": detail.projectStatus,
-    },
-  }
-}
 
 /**
  * Turns an announcement PDF into the structured TOR shape the app stores.
@@ -63,6 +46,21 @@ export function contextFromBmaDetail(detail: BmaProjectDetail): ExtractionContex
  * quota that Google only lifts for accounts with a corporate domain and an
  * assigned sales representative; Google's own models need no such approval.
  */
+
+/**
+ * Parses a response the model was told to return as JSON.
+ *
+ * Gemini occasionally ignores the JSON constraint and answers in prose; the
+ * raw `JSON.parse` error ("Unexpected token 'H'") says nothing about what the
+ * model actually said, so quote the start of the answer.
+ */
+function parseJsonResponse(label: string, text: string): unknown {
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+  }
+}
 
 /** The API caps a request at 32MB and base64 inflates by ~4/3. */
 const MAX_PDF_BYTES = 20 * 1024 * 1024
@@ -77,7 +75,8 @@ const localizedList = z.object({
   th: z.array(z.string()),
 })
 
-const extractionSchema = z.object({
+/** Exported for the test that renders it as a structured-output schema. */
+export const extractionSchema = z.object({
   title: localizedText,
   department: localizedText,
   localOffice: localizedText,
@@ -133,6 +132,7 @@ Rules:
 - Populate BOTH locales on every localized field. The source is Thai: copy the Thai into "th" and write a faithful English translation into "en". Never leave "en" empty — downstream filtering keys on it.
 - Extract only what the document and the supplied page metadata actually state. Do not invent budgets, dates, or requirements. If something is absent, use an empty string, an empty array, or 0.
 - Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00.
+- The bid deadline is stated only in the invitation (ประกาศเชิญชวน), as "กำหนดยื่นข้อเสนอ … ในวันที่ … เวลา …". A draft tender document (ร่างเอกสารประกวดราคา) has no closing date — if only the draft is attached, leave "deadline" empty rather than inferring one.
 - "method" must reflect the stated procurement method: ประกวดราคาอิเล็กทรอนิกส์/e-bidding -> "e-bidding", ตลาดอิเล็กทรอนิกส์/e-market -> "e-market", คัดเลือก -> "selective", เฉพาะเจาะจง -> "specific", ตกลงราคา/ราคาคงที่ -> "price-agreement".
 - "projectScale" follows the budget: under 5M baht SMALL, 5-20M MEDIUM, 20-100M LARGE, above 100M ENTERPRISE.
 - Payment milestone amounts should reconcile with percent x total budget.
@@ -209,7 +209,8 @@ export async function extractTorFromPdf(
   ].join("\n")
 
   const ai = await getClient()
-  const response = await ai.models.generateContent({
+  const response = await withRetry(`extraction ${context.projectNo}`, () =>
+    ai.models.generateContent({
     model: env.extractionModel,
     contents: [
       {
@@ -235,16 +236,27 @@ export async function extractTorFromPdf(
     ],
     config: {
       systemInstruction: SYSTEM_PROMPT,
+      // Extraction is transcription, not writing: the same document should
+      // give the same answer every time. Left at the default of 1.0, one
+      // tender document yielded 16, then 20, then 21, then 9 qualification
+      // rows across re-runs — the model re-deciding each time how finely to
+      // split the clauses. That churns requirement ids, which stored
+      // self-check answers are filed under.
+      temperature: 0,
       // A full tender document runs to 25-30 qualification clauses, each
       // carrying both locales of two sentences plus its rule — which overran
       // the previous 16000 and truncated the JSON mid-object.
-      maxOutputTokens: 40000,
+      // The model's ceiling. A 100-page tender with 30 qualification clauses
+      // in two locales overran 40000 and came back as truncated JSON; there is
+      // nothing to gain from stopping short of what the model allows.
+      maxOutputTokens: 65535,
       responseMimeType: "application/json",
       // The same zod schema the result is validated against, so the constraint
       // the model is given and the contract the caller relies on cannot drift.
       responseJsonSchema: z.toJSONSchema(extractionSchema),
-    },
-  })
+      },
+    })
+  )
 
   // A response cut short by maxOutputTokens leaves truncated JSON, which would
   // otherwise surface as a confusing parse error deep in the pipeline.
@@ -260,7 +272,7 @@ export async function extractTorFromPdf(
   // Validated rather than cast: `responseJsonSchema` constrains the model but
   // the SDK does not check the result, and a draft built from an unvalidated
   // shape would fail later against the Mongoose schema instead of here.
-  const parsed = extractionSchema.parse(JSON.parse(text))
+  const parsed = extractionSchema.parse(parseJsonResponse("Extraction", text))
 
   return {
     ...parsed,

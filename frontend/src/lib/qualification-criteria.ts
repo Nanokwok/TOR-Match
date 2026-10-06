@@ -3,7 +3,10 @@ import {
   COMPANY_SIZE_OPTIONS,
   SPECIALIZATION_OPTIONS,
 } from "@/lib/company-setup"
-import type { QualificationCriteria, NumericOperator } from "@/types/qualification-criteria"
+import type {
+  QualificationCriteria,
+  NumericOperator,
+} from "@/types/qualification-criteria"
 import type { CertificationId, CompanySize, SpecializationId } from "@/types/company-setup"
 
 export type CriteriaFieldType =
