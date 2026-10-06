@@ -5,6 +5,7 @@ import {
   moveCard,
   removeCard,
   removeCardByTorId,
+  updateCard,
 } from "@/controllers/workspace.controller"
 import { requireAuth } from "@/middleware/auth.middleware"
 
@@ -14,6 +15,7 @@ router.use(requireAuth)
 router.get("/board", getBoard)
 router.post("/cards", addCard)
 router.patch("/cards/:id/move", moveCard)
+router.patch("/cards/:id", updateCard)
 router.delete("/cards/by-tor/:torId", removeCardByTorId)
 router.delete("/cards/:id", removeCard)
 

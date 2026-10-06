@@ -1,10 +1,4 @@
 export const browseActions = {
-  viewOriginalSource(torId: string, sourceUrl: string) {
-    console.log("Action clicked: View Original Source Page", {
-      torId,
-      sourceUrl,
-    })
-  },
   shareTor(torId: string) {
     console.log("Action clicked: Share", { torId })
   },

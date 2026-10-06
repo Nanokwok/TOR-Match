@@ -1,31 +1,42 @@
+import { localizedKey } from "@/models/localized.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import type { TorDraftDoc } from "@/models/TorDraft.model"
 
 /**
- * A blank English value would drop the TOR out of the department and
- * local-office filter lists, which de-duplicate on `.en` — check this before
- * publishing rather than letting it disappear from browse afterward.
+ * Copies a reviewed draft into the published `tors` collection.
+ *
+ * Shared by the admin review screen (a reviewer pressing publish) and by the
+ * auto-publish hook on TorDraft (a draft that cleared the confidence
+ * threshold), so the two paths cannot drift into publishing different subsets
+ * of the fields or applying different rules about what is publishable.
  */
-const REQUIRED_ENGLISH_FIELDS = ["title", "department", "localOffice", "summary"] as const
 
-/** Returns the name of the first required field missing its English value, or null if all are present. */
-export function missingRequiredEnglishField(draft: TorDraftDoc): string | null {
-  for (const field of REQUIRED_ENGLISH_FIELDS) {
-    if (!draft[field]?.en?.trim()) return field
+/**
+ * Why a draft cannot be published yet, or null when it can.
+ *
+ * TORs publish with whatever the source stated: summary, deadline and the rest
+ * may be empty and render as "not specified". Only a title and a department are
+ * required, and in either locale — Thai is the site's default language and an
+ * announcement is published in Thai, so requiring English would leave every
+ * ingested TOR unpublishable. Without those two a TOR is a blank card that no
+ * department filter can reach, which is why they are the line.
+ */
+export function publishBlocker(draft: TorDraftDoc): string | null {
+  for (const field of ["title", "department"] as const) {
+    if (!localizedKey(draft[field])) return `${field} is empty`
   }
   return null
 }
 
 /**
- * Copies a draft's allowlisted content into the live Tor collection.
- *
- * Copied field by field on purpose: the draft carries review bookkeeping
- * (aiConfidence, reviewStatus, ...) that must never reach the published
- * collection, and an allowlist keeps a future draft-only field from leaking
- * there by default. Upserts by announcementNo, so publishing a corrected
- * draft a second time updates the live TOR instead of duplicating it.
+ * Writes the draft's content to `tors` and records the publication on the
+ * draft. Callers decide the review status that goes with it.
  */
-export async function publishDraftContent(draft: TorDraftDoc): Promise<TorDoc> {
+export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
+  // Copied field by field on purpose: the draft carries review bookkeeping
+  // (aiConfidence, sourceJobId, ...) that must never reach the published
+  // collection, and an allowlist keeps a future draft-only field from leaking
+  // there by default.
   const content = {
     announcementNo: draft.announcementNo,
     title: draft.title,
@@ -47,13 +58,18 @@ export async function publishDraftContent(draft: TorDraftDoc): Promise<TorDoc> {
     qualificationRequirements: draft.qualificationRequirements,
   }
 
+  // Upsert by announcementNo — the natural key the seed and the ingestion
+  // share — so re-publishing a corrected draft updates the live TOR instead of
+  // duplicating it.
   const published = await Tor.findOneAndUpdate(
     { announcementNo: draft.announcementNo },
     { $set: content },
     { new: true, upsert: true, runValidators: true }
   )
   if (!published) {
-    throw new Error(`Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`)
+    throw new Error(
+      `Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`
+    )
   }
   return published
 }

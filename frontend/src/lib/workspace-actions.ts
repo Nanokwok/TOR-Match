@@ -6,7 +6,9 @@ import type { WorkspaceColumnId } from "@/types/workspace"
  */
 export const workspaceActions = {
   seeFullTor(torId: string) {
-    console.log("Action clicked: See full TOR", { torId })
+    if (typeof window !== "undefined" && torId) {
+      window.location.href = `/browse?tor=${encodeURIComponent(torId)}`
+    }
   },
   addTorById(torId: string) {
     console.log("Action clicked: Add TOR by ID", { torId })

@@ -3,6 +3,7 @@ import {
   localizedListSchema,
   localizedTextSchema,
 } from "@/models/localized.schema"
+import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
 
 /**
@@ -45,8 +46,20 @@ const financialsSchema = new Schema(
 
 const qualificationRequirementSchema = new Schema(
   {
-    /** Stable requirement key returned in matching results. */
+    /**
+     * Unique within this announcement. Referenced by a bidder's stored
+     * self-check answers, so it must survive a re-scrape of the same document.
+     */
     id: { type: String, required: true },
+    /**
+     * The shared vocabulary key — the same slug across every announcement that
+     * asks for this kind of thing, which is what lets a requirement be mapped
+     * to a company-profile field automatically. Always equal to `criteria.type`.
+     *
+     * Defaulted rather than merely required so documents written before the
+     * vocabulary existed still load; the backfill script fills them in.
+     */
+    key: { type: String, enum: QUALIFICATION_KEYS, default: "manual" },
     requirement: { type: localizedTextSchema, required: true },
     torCriteria: { type: localizedTextSchema, required: true },
     autoCheckable: { type: Boolean, default: false },
@@ -73,8 +86,11 @@ export const torContentFields = {
   durationDays: { type: Number, required: true },
   method: { type: String, enum: PROCUREMENT_METHODS, required: true },
   status: { type: String, enum: PROCUREMENT_STATUSES, default: "open", index: true },
-  deadline: { type: String, required: true },
-  announcementDate: { type: String, required: true },
+  // Empty when the source doesn't state one: a scraped announcement page has
+  // no bid deadline, and TORs are published with whatever was scraped. The
+  // UI renders an empty date as "not specified".
+  deadline: { type: String, default: "" },
+  announcementDate: { type: String, default: "" },
   sourceUrl: { type: String, default: "" },
   summary: { type: localizedTextSchema, required: true },
   deliverables: { type: localizedListSchema, default: () => ({}) },

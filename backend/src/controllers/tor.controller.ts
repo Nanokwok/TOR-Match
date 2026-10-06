@@ -1,7 +1,9 @@
 import type { Request, Response } from "express"
-import { isValidObjectId } from "mongoose"
+import { isValidObjectId, type Types } from "mongoose"
 import { Company } from "@/models/Company.model"
-import { matchCompanyToTor } from "@/services/qualification.service"
+import { QualificationSelfCheck } from "@/models/QualificationSelfCheck.model"
+import { localizedKey } from "@/models/localized.schema"
+import { matchCompanyToTor, type SelfCheckEntry } from "@/services/qualification.service"
 import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filters"
 import { Tor } from "@/models/Tor.model"
 import { ApiError } from "@/utils/ApiError"
@@ -12,6 +14,19 @@ const BUDGET_RANGES: Record<string, { min: number; max: number }> = {
   "3m-6m": { min: 3_000_000, max: 6_000_000 },
   "6m-10m": { min: 6_000_000, max: 10_000_000 },
   "over-10m": { min: 10_000_000, max: Number.POSITIVE_INFINITY },
+}
+
+/**
+ * The company's own answers for these TORs, keyed by TOR id.
+ *
+ * Answers only affect what a bidder is shown, never `eligible` — see
+ * qualification.service — so an anonymous or profile-less caller simply gets
+ * an empty map rather than a different code path.
+ */
+async function selfChecksByTor(companyId: Types.ObjectId | undefined, torIds: Types.ObjectId[]) {
+  if (!companyId || !torIds.length) return new Map<string, SelfCheckEntry[]>()
+  const stored = await QualificationSelfCheck.find({ companyId, torId: { $in: torIds } })
+  return new Map(stored.map((row) => [String(row.torId), row.entries as SelfCheckEntry[]]))
 }
 
 export const listTors = asyncHandler(async (req: Request, res: Response) => {
@@ -27,8 +42,11 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
   }
   const filter: Record<string, unknown> = {}
   if (status && status !== "all") filter.status = status
-  // English is the canonical identity for localized values.
-  if (department && department !== "all") filter["department.en"] = department
+  // The filter value is localizedKey(): English, or Thai for a Thai-only TOR.
+  const and: Record<string, unknown>[] = []
+  if (department && department !== "all") {
+    and.push({ $or: [{ "department.en": department }, { "department.en": "", "department.th": department }] })
+  }
   if (budgetRange && budgetRange !== "all" && BUDGET_RANGES[budgetRange]) {
     const { min, max } = BUDGET_RANGES[budgetRange]
     filter.budgetBaht = { $gte: min, $lt: max }
@@ -37,23 +55,29 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
     const q = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     // Search every locale so a Thai term still finds a TOR read in English.
     const localizedFields = ["title", "department", "localOffice", "summary"]
-    filter.$or = [
-      ...localizedFields.flatMap((field) => [
-        { [`${field}.en`]: { $regex: q, $options: "i" } },
-        { [`${field}.th`]: { $regex: q, $options: "i" } },
-      ]),
-      { announcementNo: { $regex: q, $options: "i" } },
-      { techTags: { $regex: q, $options: "i" } },
-    ]
+    and.push({
+      $or: [
+        ...localizedFields.flatMap((field) => [
+          { [`${field}.en`]: { $regex: q, $options: "i" } },
+          { [`${field}.th`]: { $regex: q, $options: "i" } },
+        ]),
+        { announcementNo: { $regex: q, $options: "i" } },
+        { techTags: { $regex: q, $options: "i" } },
+      ],
+    })
   }
+  if (and.length) filter.$and = and
 
   const [tors, company] = await Promise.all([
     Tor.find(filter).sort({ createdAt: -1 }),
     req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
   ])
+  // One query for the whole page rather than one per TOR: the matching loop
+  // below already runs in JS over every result.
+  const selfChecks = await selfChecksByTor(company?._id, tors.map((tor) => tor._id))
   const now = new Date()
   const items = tors.filter((tor) => matchesDetailFilters(tor, detail)).map((tor) => {
-    const qualification = matchCompanyToTor(company, tor, now)
+    const qualification = matchCompanyToTor(company, tor, now, selfChecks.get(String(tor._id)))
     return { ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false }
   }).filter((tor) => req.query.eligibleOnly !== "true" || tor.eligible)
   res.status(200).json({ items, total: items.length })
@@ -66,18 +90,20 @@ export const getTorById = asyncHandler(async (req: Request, res: Response) => {
     req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
   ])
   if (!tor) throw ApiError.notFound("TOR not found")
-  const qualification = matchCompanyToTor(company, tor)
+  const selfChecks = await selfChecksByTor(company?._id, [tor._id])
+  const qualification = matchCompanyToTor(company, tor, new Date(), selfChecks.get(String(tor._id)))
   res.status(200).json({ ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false })
 })
 
-/** Returns the localized values, de-duplicated by their canonical English name. */
+/** Returns the localized values, de-duplicated by {@link localizedKey}. */
 async function distinctLocalized(field: "department" | "localOffice") {
   const values = await Tor.distinct(field)
   const byKey = new Map<string, { en: string; th: string }>()
   for (const value of values as { en: string; th: string }[]) {
-    if (value?.en) byKey.set(value.en, value)
+    const key = localizedKey(value)
+    if (key) byKey.set(key, value)
   }
-  return [...byKey.values()].sort((a, b) => a.en.localeCompare(b.en))
+  return [...byKey.values()].sort((a, b) => localizedKey(a).localeCompare(localizedKey(b), "th"))
 }
 
 export const listTorDepartments = asyncHandler(async (_req: Request, res: Response) => {
@@ -96,5 +122,6 @@ export const getTorQualification = asyncHandler(async (req: Request, res: Respon
     Company.findOne({ ownerId: req.user.sub }),
   ])
   if (!tor) throw ApiError.notFound("TOR not found")
-  res.status(200).json(matchCompanyToTor(company, tor))
+  const selfChecks = await selfChecksByTor(company?._id, [tor._id])
+  res.status(200).json(matchCompanyToTor(company, tor, new Date(), selfChecks.get(String(tor._id))))
 })

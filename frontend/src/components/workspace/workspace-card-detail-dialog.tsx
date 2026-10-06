@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Banknote,
   Check,
@@ -31,7 +32,6 @@ import { formatThb } from "@/lib/format";
 import { pickLocalized } from "@/lib/localized-content";
 import { workspaceActions } from "@/lib/workspace-actions";
 import { cn } from "@/lib/utils";
-import { createDefaultChecklist } from "@/lib/workspace-checklist";
 import type { TorPriority } from "@/types/tor";
 import type {
   TeamMember,
@@ -96,9 +96,10 @@ function WorkspaceCardDetailBody({
   initialTab = "details",
 }: WorkspaceCardDetailBodyProps) {
   const { locale, t } = useLocale();
+  const router = useRouter();
   const [draft, setDraft] = useState(card);
   const [checklist, setChecklist] = useState<WorkspaceChecklistItem[]>(() =>
-    createDefaultChecklist(card.torId, t),
+    card.checklist ?? [],
   );
   const [newChecklistLabel, setNewChecklistLabel] = useState("");
   const [assigneeSearch, setAssigneeSearch] = useState("");
@@ -134,6 +135,11 @@ function WorkspaceCardDetailBody({
     onUpdateCard(updated);
   }
 
+  function handleSeeFullTor() {
+    router.push(`/browse?tor=${encodeURIComponent(draft.torId)}`);
+    onClose();
+  }
+
   function removeAssignee(memberId: string) {
     patchDraft({
       assigneeIds: draft.assigneeIds.filter((id) => id !== memberId),
@@ -157,24 +163,26 @@ function WorkspaceCardDetailBody({
   }
 
   function toggleChecklistItem(itemId: string, completed: boolean) {
-    setChecklist((previous) =>
-      previous.map((item) =>
-        item.id === itemId ? { ...item, completed } : item,
-      ),
+    const nextChecklist = checklist.map((item) =>
+      item.id === itemId ? { ...item, completed } : item,
     );
+    setChecklist(nextChecklist);
+    patchDraft({ checklist: nextChecklist });
   }
 
   function addChecklistItem() {
     const label = newChecklistLabel.trim();
     if (!label) return;
-    setChecklist((previous) => [
-      ...previous,
+    const nextChecklist = [
+      ...checklist,
       {
         id: `${draft.torId}-cl-${Date.now()}`,
         label,
         completed: false,
       },
-    ]);
+    ];
+    setChecklist(nextChecklist);
+    patchDraft({ checklist: nextChecklist });
     setNewChecklistLabel("");
   }
 
@@ -396,6 +404,15 @@ function WorkspaceCardDetailBody({
                 ) : null}
               </div>
             </div>
+
+            <div className="mt-6 flex justify-end border-t border-border pt-4">
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={handleSeeFullTor}
+              >
+                {t("workspace.cardDetail.seeFullTor")}
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent
@@ -423,33 +440,41 @@ function WorkspaceCardDetailBody({
             </div>
 
             <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
-              {checklist.map((item) => (
-                <label
-                  key={item.id}
-                  className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-foreground"
-                >
-                  <Checkbox
-                    checked={item.completed}
-                    onCheckedChange={(checked) =>
-                      toggleChecklistItem(item.id, checked === true)
-                    }
-                    className="mt-0.5"
-                  />
-                  <span
-                    className={cn(
-                      item.completed && "text-muted-foreground line-through",
-                    )}
+              {checklist.length === 0 ? (
+                <div className="flex h-36 flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    {t("workspace.cardDetail.emptyChecklist")}
+                  </p>
+                </div>
+              ) : (
+                checklist.map((item) => (
+                  <label
+                    key={item.id}
+                    className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-foreground"
                   >
-                    {item.label}
-                  </span>
-                </label>
-              ))}
+                    <Checkbox
+                      checked={item.completed}
+                      onCheckedChange={(checked) =>
+                        toggleChecklistItem(item.id, checked === true)
+                      }
+                      className="mt-0.5"
+                    />
+                    <span
+                      className={cn(
+                        item.completed && "text-muted-foreground line-through",
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </label>
+                ))
+              )}
             </div>
 
             <div className="mt-5 flex justify-end border-t border-border pt-4">
               <Button
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => workspaceActions.seeFullTor(draft.torId)}
+                onClick={handleSeeFullTor}
               >
                 {t("workspace.cardDetail.seeFullTor")}
               </Button>

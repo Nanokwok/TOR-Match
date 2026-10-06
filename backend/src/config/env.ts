@@ -54,6 +54,25 @@ export const env = {
   vertexRegion: process.env.VERTEX_REGION ?? "global",
   /** Overridable: which Claude models a Vertex project can call varies by project and region. */
   extractionModel: process.env.EXTRACTION_MODEL ?? "claude-opus-5",
+  bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
+  /**
+   * The CGD e-GP RSS feed — the published channel for mirroring procurement
+   * announcements, and the source of the announcement PDFs.
+   */
+  egpRssUrl:
+    process.env.EGP_RSS_URL ??
+    "http://process3.gprocurement.go.th/EPROCRssFeedWeb/egpannouncerss.xml",
+  /** รหัสหน่วยงานภาครัฐ of the Bangkok Metropolitan Administration (4 digits). */
+  egpDeptId: process.env.EGP_DEPT_ID ?? "",
+  /**
+   * Sent on every request to a government site — the RSS feed, the document
+   * downloads, and the detail-page lookups. Identifying ourselves with a
+   * reachable contact is the other half of being allowed to fetch at all, so
+   * keep a real address here.
+   */
+  scraperUserAgent:
+    process.env.SCRAPER_USER_AGENT ??
+    "TORMatchBot/0.1 (+https://github.com/Nanokwok/TOR-Match)",
 }
 
 export const isProduction = env.nodeEnv === "production"

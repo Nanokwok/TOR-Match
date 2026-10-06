@@ -1,5 +1,6 @@
 {
   "common": {
+    "notSpecified": "ไม่ระบุ",
     "search": "ค้นหา",
     "all": "ทั้งหมด",
     "filters": "ตัวกรอง",
@@ -122,6 +123,9 @@
     "ctaSubtitle": "เริ่มค้นหาฟรี หรือตรวจสอบคุณสมบัติจากโปรไฟล์บริษัท"
   },
   "browse": {
+    "localOffice": "หน่วยงานย่อย / เขต",
+    "budget": "งบประมาณ",
+    "announcementDate": "วันที่ประกาศ",
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
     "eligibleOnly": "เฉพาะที่ผ่านเกณฑ์อัตโนมัติ",
     "budgetRange": "ช่วงงบประมาณ",
@@ -149,6 +153,7 @@
       "qrHint": "สแกนด้วยมือถือเพื่อเปิด TOR นี้บนมือถือ"
     },
     "submissionDeadline": "กำหนดยื่นข้อเสนอ",
+    "submissionDeadlinePendingNotice": "ฉบับนี้ยังไม่ได้อยู่ในขั้นประกาศเชิญชวน บุ๊กมาร์กไว้แล้วเราจะแจ้งเตือนเมื่อมีประกาศเชิญชวน",
     "projectScale": "ขนาดโครงการ",
     "duration": "ระยะเวลา",
     "method": "วิธีการ",
@@ -160,13 +165,28 @@
       "torCriteria": "เกณฑ์ขั้นต่ำตาม TOR",
       "companyProfile": "โปรไฟล์บริษัทของคุณ",
       "autoVerified": "ตรวจสอบอัตโนมัติ",
-      "manualReview": "ต้องตรวจสอบด้วยตนเอง",
+      "manualReview": "ข้อที่คุณต้องยืนยันเอง",
       "selfAssessment": "ต้องประเมินด้วยตนเอง",
       "setupPrompt": "ตั้งค่าโปรไฟล์บริษัทเพื่อตรวจสอบคุณสมบัติอัตโนมัติ",
       "companySetup": "ตั้งค่าบริษัท →",
       "weComply": "บริษัทมีคุณสมบัตินี้",
       "scopeNote": "ผลนี้เปรียบเทียบข้อมูลที่บริษัทบันทึกกับเกณฑ์ TOR ยังไม่ใช่การรับรองสิทธิ์ยื่นเสนอราคา",
-      "pendingReview": "ยังมีข้อกำหนดที่ต้องตรวจเอกสารเพิ่มเติม"
+      "pendingReview": "ยังมีข้อกำหนดที่ต้องตรวจเอกสารเพิ่มเติม",
+      "missingProfileField": "โปรไฟล์ของคุณยังไม่มี{field}",
+      "addToProfile": "เพิ่มข้อมูล →",
+      "staleAnswer": "ข้อกำหนดนี้เปลี่ยนไปหลังจากที่คุณยืนยัน กรุณาตรวจสอบอีกครั้ง",
+      "missingCount": "มี {count} จาก {total} ข้อที่โปรไฟล์ของคุณยังไม่มีข้อมูล",
+      "unsavedChanges": "ยังไม่ได้บันทึก",
+      "readyToBid": "ครบทุกข้อกำหนดแล้ว",
+      "save": "บันทึกคำตอบ",
+      "saving": "กำลังบันทึก…",
+      "readMore": "อ่านต่อ",
+      "showLess": "ย่อกลับ",
+      "exit": "ออก",
+      "discardChangesTitle": "คุณมีข้อมูลที่ยังไม่ได้บันทึก",
+      "discardChangesDescription": "คุณได้ทำการเลือกรายการคุณสมบัติไว้ ต้องการละทิ้งการเปลี่ยนแปลงและออกจากหน้านี้ใช่หรือไม่?",
+      "keepEditing": "แก้ไขต่อ",
+      "discardAndExit": "ออกจากหน้านี้"
     },
     "financials": "การเงิน",
     "keyDeliverables": "ขอบเขตงานหลัก",
@@ -212,7 +232,10 @@
       "day": "วัน",
       "milestone": "งวด",
       "deliverable": "ผลงาน",
-      "days": "{count} วัน"
+      "days": "{count} วัน",
+      "readMore": "อ่านต่อ",
+      "showLess": "ย่อกลับ",
+      "totalMilestones": "ทั้งหมด {count} งวด"
     },
     "moreFiltersModal": {
       "title": "ตัวกรองเพิ่มเติม",
@@ -272,6 +295,7 @@
       "addPeople": "เพิ่มสมาชิก",
       "checklistPlaceholder": "เช็คลิสต์",
       "addChecklist": "เพิ่มเช็คลิสต์",
+      "emptyChecklist": "ยังไม่มีเช็คลิสต์งานภายใน สามารถเพิ่มได้จากช่องด้านบน",
       "seeFullTor": "ดู TOR เต็ม →",
       "removeAssignee": "ลบ {name}",
       "close": "ปิด"

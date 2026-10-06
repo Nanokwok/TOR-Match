@@ -7,17 +7,19 @@ import {
   PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { notifyCompaniesForTor } from "@/services/match-notification.service"
-import { missingRequiredEnglishField, publishDraftContent } from "@/services/tor-publish.service"
+import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
 /**
- * The admin review screen is an English editing surface (see the frontend's
- * TorReviewDetail): it renders one string per localized field, plus the Thai
- * title. Everything it sends back is therefore the English side only, and the
- * stored Thai side has to survive the round trip — see mergeLocalized below.
+ * The admin review screen is a Thai editing surface — Thai is the site's
+ * default language (see the frontend's TorReviewDetail). It renders one string
+ * per localized field, plus both titles. Everything it sends back is therefore
+ * the Thai side only, and any stored English has to survive the round trip —
+ * see mergeLocalized below.
  */
 const milestoneSchema = z.object({
   day: z.number(),
@@ -29,14 +31,16 @@ const milestoneSchema = z.object({
 
 const qualificationSchema = z.object({
   id: z.string().min(1),
+  key: z.enum(QUALIFICATION_KEYS).optional(),
   requirement: z.string(),
   torCriteria: z.string(),
   autoCheckable: z.boolean().optional(),
-  // Optional: the review form's criteria editor sends this once it maps its
-  // richer client-side type down to this shape (see the frontend's
-  // toBackendCriteria). Omitted or invalid falls back to whatever the draft
-  // already had — see draftUpdateFrom below.
-  criteria: qualificationCriteriaSchema.optional(),
+  /**
+   * Validated against the criteria union below rather than here, so a reviewer
+   * gets one clear message about the rule instead of a discriminated-union
+   * parse error spanning eight branches.
+   */
+  criteria: z.unknown().optional(),
 })
 
 const updateDraftSchema = z.object({
@@ -65,13 +69,18 @@ const updateDraftSchema = z.object({
 type LocalizedText = { en: string; th: string }
 
 /**
- * Keeps the stored Thai value while taking the reviewer's English edit.
+ * Takes the reviewer's Thai edit and keeps any stored English value.
  *
- * Without this every save through the review form would blank out `.th` on
- * every field but the title, silently destroying the Thai half of the record.
+ * Without this every save through the review form would blank out `.en` (from
+ * AI extraction or the seed) on every field but the title.
+ *
+ * An English value identical to the old Thai one is not a translation — it is
+ * a copy an earlier English-only form wrote into the wrong locale — so it is
+ * dropped rather than preserved.
  */
-function mergeLocalized(existing: LocalizedText | undefined, en: string): LocalizedText {
-  return { en, th: existing?.th ?? "" }
+function mergeLocalized(existing: LocalizedText | undefined, th: string): LocalizedText {
+  const en = existing?.en?.trim() ?? ""
+  return { en: en && en !== existing?.th?.trim() ? en : "", th }
 }
 
 function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSchema>) {
@@ -89,12 +98,12 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
     department: mergeLocalized(draft.department, input.department),
     localOffice: mergeLocalized(draft.localOffice, input.localOffice),
     summary: mergeLocalized(draft.summary, input.summary),
-    // Deliverables have no stable key, so the Thai list is matched by position.
-    // A reviewer who reorders or inserts English rows will misalign it; the
-    // fix is a bilingual form, tracked for Phase 2.
+    // Deliverables have no stable key, so the English list is matched by
+    // position. A reviewer who reorders or inserts Thai rows will misalign it;
+    // the fix is a bilingual form, tracked for Phase 2.
     deliverables: {
-      en: input.deliverables,
-      th: draft.deliverables?.th ?? [],
+      en: draft.deliverables?.en ?? [],
+      th: input.deliverables,
     },
     techTags: input.techTags,
     listTags: input.listTags,
@@ -125,15 +134,21 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
     },
     qualificationRequirements: input.qualificationRequirements.map((row) => {
       const existing = existingQualifications.get(row.id)
+      // An omitted field preserves what is stored, an explicit one overwrites —
+      // the same rule mergeLocalized follows. Until this carried `criteria`,
+      // the review screen's criteria editor saved nothing at all: every rule a
+      // reviewer configured was overwritten with the stored value on save.
+      const criteria = row.criteria ?? existing?.criteria
+      const parsed = qualificationCriteriaSchema.safeParse(criteria)
       return {
         id: row.id,
+        // `key` and `criteria.type` are one concept, so a configured rule names
+        // its own key and cannot disagree with it.
+        key: parsed.success ? parsed.data.type : (row.key ?? existing?.key ?? "manual"),
         requirement: mergeLocalized(existing?.requirement, row.requirement),
         torCriteria: mergeLocalized(existing?.torCriteria, row.torCriteria),
-        autoCheckable: row.autoCheckable ?? existing?.autoCheckable ?? false,
-        // Falls back to whatever extraction computed when the form didn't
-        // send one (or sent something that failed validation upstream),
-        // rather than silently wiping it on every edit.
-        criteria: row.criteria ?? existing?.criteria,
+        autoCheckable: parsed.success ? parsed.data.type !== "manual" : false,
+        criteria,
       }
     }),
   }
@@ -144,7 +159,9 @@ export const listTorDrafts = asyncHandler(async (req: Request, res: Response) =>
 
   const filter: Record<string, unknown> = {}
   if (reviewStatus && reviewStatus !== "all") filter.reviewStatus = reviewStatus
-  if (department && department !== "all") filter["department.en"] = department
+  if (department && department !== "all") {
+    filter.$or = [{ "department.th": department }, { "department.en": department }]
+  }
 
   const items = await TorDraft.find(filter).sort({ createdAt: -1 })
   res.status(200).json({ items, total: items.length })
@@ -175,19 +192,10 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   const draft = await TorDraft.findById(req.params.id)
   if (!draft) throw ApiError.notFound("TOR draft not found")
 
-  const missingField = missingRequiredEnglishField(draft)
-  if (missingField) {
-    throw ApiError.badRequest(`Cannot publish: ${missingField} is missing its English value`)
-  }
+  const blocker = publishBlocker(draft)
+  if (blocker) throw ApiError.badRequest(`Cannot publish: ${blocker}`)
 
-  const published = await publishDraftContent(draft)
-
-  draft.set({
-    reviewStatus: "approved",
-    publishedTorId: published._id,
-    publishedAt: new Date(),
-  })
-  await draft.save()
+  const published = await publishDraft(draft)
 
   // Awaited (not fire-and-forget) so a client refetching notifications right
   // after this response can't race ahead of the write — same reasoning as

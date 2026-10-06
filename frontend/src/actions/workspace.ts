@@ -8,8 +8,9 @@ import {
   moveWorkspaceCard,
   removeWorkspaceCard,
   searchTorsForWorkspace,
+  updateWorkspaceCard,
 } from "@/server/services/workspace.service"
-import type { WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace"
+import type { WorkspaceCard, WorkspaceColumnId, WorkspaceQuery } from "@/types/workspace"
 
 export async function getWorkspaceBoardAction(query: WorkspaceQuery = {}) {
   return getWorkspaceBoard(query)
@@ -38,8 +39,15 @@ export async function addTorToWorkspaceAction(
   return addTorToWorkspace(torId, column)
 }
 
-export async function removeWorkspaceCardAction(torId: string) {
-  return removeWorkspaceCard(torId)
+export async function removeWorkspaceCardAction(torId: string, cardId?: string) {
+  return removeWorkspaceCard(torId, cardId)
+}
+
+export async function updateWorkspaceCardAction(
+  cardId: string,
+  updates: Partial<Pick<WorkspaceCard, "priority" | "column" | "assigneeIds" | "checklist">>
+) {
+  return updateWorkspaceCard(cardId, updates)
 }
 
 export async function bookmarkTorAction(torId: string, bookmarked: boolean) {

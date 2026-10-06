@@ -1,5 +1,6 @@
 {
   "common": {
+    "notSpecified": "Not specified",
     "search": "Search",
     "all": "All",
     "filters": "Filters",
@@ -122,6 +123,9 @@
     "ctaSubtitle": "Start with a free search, or check eligibility against your company profile."
   },
   "browse": {
+    "localOffice": "Local office",
+    "budget": "Budget",
+    "announcementDate": "Announced",
     "searchPlaceholder": "Search your keyword...",
     "eligibleOnly": "Automated criteria met only",
     "budgetRange": "Budget Range",
@@ -149,6 +153,7 @@
       "qrHint": "Scan with a phone to open this TOR on mobile."
     },
     "submissionDeadline": "Submission Deadline",
+    "submissionDeadlinePendingNotice": "This announcement is not yet in the invitation to tender stage. Bookmark it to get notified when the invitation is published.",
     "projectScale": "Project Scale",
     "duration": "Duration",
     "method": "Method",
@@ -160,13 +165,28 @@
       "torCriteria": "TOR Minimum Criteria",
       "companyProfile": "Your Company Profile",
       "autoVerified": "Automatically verified",
-      "manualReview": "Manual review required",
+      "manualReview": "You need to confirm these",
       "selfAssessment": "Self-assessment required",
       "setupPrompt": "Set up your company profile to automatically verify eligibility",
       "companySetup": "Company Setup →",
       "weComply": "We meet this requirement",
       "scopeNote": "These results compare your saved profile with TOR criteria and do not constitute final bidding approval.",
-      "pendingReview": "Some requirements still need document review."
+      "pendingReview": "Some requirements still need document review.",
+      "missingProfileField": "{field} is not in your profile.",
+      "addToProfile": "Add it →",
+      "staleAnswer": "This requirement changed since you confirmed it — please check again.",
+      "missingCount": "{count} of {total} requirements need information your profile does not have yet.",
+      "unsavedChanges": "Unsaved changes",
+      "readyToBid": "All requirements accounted for",
+      "save": "Save answers",
+      "saving": "Saving…",
+      "readMore": "Read more",
+      "showLess": "Show less",
+      "exit": "Exit",
+      "discardChangesTitle": "Unsaved Changes",
+      "discardChangesDescription": "You have unsaved changes in your qualification check. Do you want to discard them and exit?",
+      "keepEditing": "Keep Editing",
+      "discardAndExit": "Discard & Exit"
     },
     "financials": "Financials",
     "keyDeliverables": "Key Deliverables",
@@ -212,7 +232,10 @@
       "day": "Day",
       "milestone": "Milestone",
       "deliverable": "Deliverable",
-      "days": "{count} Days"
+      "days": "{count} Days",
+      "readMore": "Read more",
+      "showLess": "Show less",
+      "totalMilestones": "{count} milestones total"
     },
     "moreFiltersModal": {
       "title": "More Filters",
@@ -272,6 +295,7 @@
       "addPeople": "Add people",
       "checklistPlaceholder": "Checklist",
       "addChecklist": "Add Checklist",
+      "emptyChecklist": "No internal checklist items yet. Add one using the input above.",
       "seeFullTor": "See full TOR →",
       "removeAssignee": "Remove {name}",
       "close": "Close"

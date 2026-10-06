@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { AdminApiAuthError, adminApiFetch } from "@/lib/admin-api"
 import { ApiRequestError } from "@/lib/api-client"
-import { fromBackendCriteria, toBackendCriteria } from "@/lib/qualification-criteria"
-import type { BackendQualificationCriteria } from "@/types/qualification-criteria"
+import type { QualificationCriteria } from "@/types/qualification-criteria"
 import type {
   TorReviewDetail,
   TorReviewListItem,
@@ -58,10 +57,11 @@ type BackendDraft = {
   }
   qualificationRequirements: {
     id: string
+    key?: QualificationCriteria["type"]
     requirement: LocalizedText
     torCriteria: LocalizedText
     autoCheckable: boolean
-    criteria?: BackendQualificationCriteria
+    criteria?: QualificationCriteria
   }[]
 }
 
@@ -73,8 +73,8 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
   return {
     id: draft._id,
     announcementId: draft.announcementNo,
-    projectTitle: draft.title.en || draft.title.th,
-    department: draft.department.en,
+    projectTitle: draft.title.th || draft.title.en,
+    department: draft.department.th || draft.department.en,
     budgetBaht: draft.budgetBaht,
     aiConfidence: draft.aiConfidence,
     reviewStatus: draft.reviewStatus,
@@ -84,9 +84,13 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
 function toDetail(draft: BackendDraft): TorReviewDetail {
   return {
     ...toListItem(draft),
+    // The form edits Thai (the site default). The list may fall back to
+    // English for display; the form must not, or a save writes English into
+    // `.th`.
+    department: draft.department.th,
     projectTitleEn: draft.title.en,
     projectTitleTh: draft.title.th,
-    localOffice: draft.localOffice.en,
+    localOffice: draft.localOffice.th,
     projectScale: draft.projectScale,
     durationDays: draft.durationDays,
     method: draft.method,
@@ -94,8 +98,8 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
     deadline: draft.deadline,
     announcementDate: draft.announcementDate,
     sourceUrl: draft.sourceUrl,
-    summary: draft.summary.en,
-    deliverables: draft.deliverables?.en ?? [],
+    summary: draft.summary.th,
+    deliverables: draft.deliverables?.th ?? [],
     techTags: draft.techTags,
     listTags: draft.listTags,
     medianPriceBaht: draft.financials.medianPriceBaht,
@@ -104,22 +108,26 @@ function toDetail(draft: BackendDraft): TorReviewDetail {
       milestoneNumber: milestone.milestoneNumber,
       percent: milestone.percent,
       amountBaht: milestone.amountBaht,
-      deliverable: milestone.deliverable.en,
+      deliverable: milestone.deliverable.th,
     })),
+    // `criteria` rides along in both directions. Until it did, the criteria
+    // editor on this screen saved nothing: the rule a reviewer configured was
+    // dropped here and overwritten with the stored value on the way back.
     qualificationRequirements: draft.qualificationRequirements.map((row) => ({
       id: row.id,
-      requirement: row.requirement.en,
-      torCriteria: row.torCriteria.en,
+      key: row.key,
+      requirement: row.requirement.th,
+      torCriteria: row.torCriteria.th,
       autoCheckable: row.autoCheckable,
-      criteria: fromBackendCriteria(row.criteria),
+      criteria: row.criteria,
     })),
     pdfUrl: draft.pdfUrl,
   }
 }
 
 /**
- * Only the English side goes back. The backend re-attaches the stored Thai
- * values field by field, so a save through this form never blanks them.
+ * Only the Thai side goes back (plus both titles). The backend re-attaches any
+ * stored English values field by field, so a save never blanks them.
  */
 function toBackendUpdate(detail: TorReviewDetail) {
   return {
@@ -142,15 +150,12 @@ function toBackendUpdate(detail: TorReviewDetail) {
     announcementDate: detail.announcementDate,
     sourceUrl: detail.sourceUrl,
     milestones: detail.milestones,
-    qualificationRequirements: detail.qualificationRequirements.map((row) => ({
-      ...row,
-      criteria: toBackendCriteria(row.criteria),
-    })),
+    qualificationRequirements: detail.qualificationRequirements,
   }
 }
 
 function messageFrom(error: unknown, context: string): string {
-  if (error instanceof AdminApiAuthError || error instanceof ApiRequestError) return error.message
+  if (error instanceof ApiRequestError || error instanceof AdminApiAuthError) return error.message
   console.error(context, error)
   return "Something went wrong. Please try again."
 }

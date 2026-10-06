@@ -89,7 +89,7 @@ type WorkspaceKanbanBoardProps = {
     toIndex: number
   ) => void
   onOpenCardDetails?: (torId: string) => void
-  onDeleteCard?: (torId: string) => void
+  onDeleteCard?: (torId: string, cardId?: string) => void
   onRequestAddTor?: (columnId: WorkspaceColumnId) => void
 }
 

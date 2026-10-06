@@ -107,6 +107,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -117,12 +118,14 @@
           "th": "≥ 2,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 2000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 2000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -133,12 +136,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 1,500,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 1500000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 1500000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -150,15 +155,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -169,11 +175,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-experience",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Government System Experience",
@@ -188,7 +196,8 @@
         }
       },
       {
-        "id": "manual-team",
+        "id": "manual-2",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Dedicated Project Team",
@@ -203,7 +212,8 @@
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual-3",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -332,6 +342,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -342,12 +353,14 @@
           "th": "≥ 5,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 5000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 5000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -358,12 +371,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 3,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 3000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 3000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -375,15 +390,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -394,11 +410,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -527,6 +545,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -537,12 +556,14 @@
           "th": "≥ 4,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 4000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 4000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -553,12 +574,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 2,500,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 2500000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 2500000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -570,15 +593,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -589,11 +613,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -709,6 +735,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -719,12 +746,14 @@
           "th": "≥ 1,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 1000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 1000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -735,12 +764,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 800,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 800000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 800000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -752,15 +783,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -771,11 +803,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -902,6 +936,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -912,12 +947,14 @@
           "th": "≥ 1,500,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 1500000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 1500000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -928,12 +965,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 1,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 1000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 1000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -945,15 +984,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -964,11 +1004,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -1094,6 +1136,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -1104,12 +1147,14 @@
           "th": "≥ 2,500,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 2500000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 2500000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -1120,12 +1165,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 2,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 2000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 2000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -1137,15 +1184,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -1156,11 +1204,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -1287,6 +1337,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -1297,12 +1348,14 @@
           "th": "≥ 3,500,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 3500000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 3500000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -1313,12 +1366,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 2,200,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 2200000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 2200000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -1330,15 +1385,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -1349,11 +1405,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -1479,6 +1537,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -1489,12 +1548,14 @@
           "th": "≥ 1,200,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 1200000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 1200000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -1505,12 +1566,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 900,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 900000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 900000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -1522,15 +1585,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -1541,11 +1605,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -1671,6 +1737,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -1681,12 +1748,14 @@
           "th": "≥ 3,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 3000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 3000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -1697,12 +1766,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 2,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 2000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 2000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -1714,15 +1785,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -1733,11 +1805,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -1863,6 +1937,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -1873,12 +1948,14 @@
           "th": "≥ 1,200,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 1200000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 1200000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -1889,12 +1966,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 1,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 1000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 1000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -1906,15 +1985,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -1925,11 +2005,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -2045,6 +2127,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -2055,12 +2138,14 @@
           "th": "≥ 800,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 800000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 800000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -2071,12 +2156,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 600,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 600000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 600000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -2088,15 +2175,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -2107,11 +2195,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -2237,6 +2327,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -2247,12 +2338,14 @@
           "th": "≥ 3,500,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 3500000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 3500000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -2263,12 +2356,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 2,500,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 2500000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 2500000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -2280,15 +2375,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -2299,11 +2395,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -2430,6 +2528,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -2440,12 +2539,14 @@
           "th": "≥ 1,800,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 1800000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 1800000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -2456,12 +2557,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 1,200,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 1200000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 1200000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -2473,15 +2576,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -2492,11 +2596,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -2622,6 +2728,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -2632,12 +2739,14 @@
           "th": "≥ 8,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 8000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 8000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -2648,12 +2757,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 5,000,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 5000000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 5000000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -2665,15 +2776,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -2684,11 +2796,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",
@@ -2814,6 +2928,7 @@
     "qualificationRequirements": [
       {
         "id": "registered-capital",
+        "key": "registered-capital",
         "autoCheckable": true,
         "requirement": {
           "en": "Registered Capital",
@@ -2824,12 +2939,14 @@
           "th": "≥ 2,000,000 บาท"
         },
         "criteria": {
-          "type": "min-registered-capital",
-          "minAmountThb": 2000000
+          "type": "registered-capital",
+          "op": ">=",
+          "amountThb": 2000000
         }
       },
       {
-        "id": "past-performance",
+        "id": "past-contract",
+        "key": "past-contract",
         "autoCheckable": true,
         "requirement": {
           "en": "Past Performance",
@@ -2840,12 +2957,14 @@
           "th": "มูลค่าสัญญารายฉบับ ≥ 1,500,000 บาท"
         },
         "criteria": {
-          "type": "min-past-contract",
-          "minAmountThb": 1500000
+          "type": "past-contract",
+          "op": ">=",
+          "amountThb": 1500000
         }
       },
       {
-        "id": "certifications",
+        "id": "certification",
+        "key": "certification",
         "autoCheckable": true,
         "requirement": {
           "en": "Certifications",
@@ -2857,15 +2976,16 @@
         },
         "criteria": {
           "type": "certification",
-          "certificationIds": [
+          "mode": "any",
+          "ids": [
             "iso-29110",
             "cmmi-2"
-          ],
-          "mode": "any"
+          ]
         }
       },
       {
-        "id": "deal-breaker",
+        "id": "egp-registered",
+        "key": "egp-registered",
         "autoCheckable": true,
         "requirement": {
           "en": "Deal-Breaker Clauses",
@@ -2876,11 +2996,13 @@
           "th": "ต้องเป็นผู้ค้าอิเล็กทรอนิกส์ที่ลงทะเบียน e-GP"
         },
         "criteria": {
-          "type": "egp-registered"
+          "type": "egp-registered",
+          "requiredStatus": "registered"
         }
       },
       {
-        "id": "manual-contract-scope",
+        "id": "manual",
+        "key": "manual",
         "autoCheckable": false,
         "requirement": {
           "en": "Past contract scope",

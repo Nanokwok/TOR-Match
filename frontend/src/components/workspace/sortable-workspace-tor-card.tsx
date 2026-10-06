@@ -11,7 +11,7 @@ import type { WorkspaceCard } from "@/types/workspace"
 type SortableWorkspaceTorCardProps = {
   card: WorkspaceCard
   onOpenDetails?: (torId: string) => void
-  onDelete?: (torId: string) => void
+  onDelete?: (torId: string, cardId?: string) => void
 }
 
 export function SortableWorkspaceTorCard({
