@@ -339,7 +339,7 @@ function TorDetailContent({
                   </Badge>
                   {renderEligibilityBadge()}
                   <p className="text-sm text-muted-foreground">
-                    {localized.department}
+                    {localized.localOffice || localized.department}
                   </p>
                 </div>
                 <AnnouncementNoCopy announcementNo={tor.announcementNo} />
