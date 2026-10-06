@@ -12,6 +12,10 @@ const notificationSchema = new Schema(
     autoVerifiedMatch: { type: Boolean, default: false },
     /** Set for category "match" notifications; identifies which TOR this alert is about, for dedup. */
     torId: { type: Schema.Types.ObjectId, ref: "Tor", index: true },
+    /** False when the user wanted this event by email only; the bell hides it. */
+    inApp: { type: Boolean, default: true },
+    /** Set once the email for this notification was handed to the mail server. */
+    emailedAt: { type: Date },
     /** One alert per (user, TOR, event version): what keeps a scraper re-run from notifying twice. */
     dedupeKey: { type: String, index: true },
     link: { type: String },

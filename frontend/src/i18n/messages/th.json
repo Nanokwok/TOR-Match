@@ -441,6 +441,7 @@
     "inAppDesc": "เปิดใช้งานไอคอนกระดิ่งแจ้งเตือน",
     "emailTitle": "การแจ้งเตือนทางอีเมล",
     "emailRecipient": "ผู้รับ: {email}",
+    "emailRecipientAccount": "ผู้รับ: อีเมลของบัญชีคุณ",
     "matrixTitle": "ตารางเหตุการณ์แจ้งเตือน",
     "matrixSubtitle": "เลือกเหตุการณ์ที่จะแจ้งเตือนผ่านในแอปและอีเมล",
     "eventCategory": "ประเภทเหตุการณ์",

@@ -67,3 +67,55 @@ test("requirementsVersion is stable for the same rules and changes when a rule c
   assert.equal(requirementsVersion([capitalRule(2_000_000)]), requirementsVersion([capitalRule(2_000_000)]))
   assert.notEqual(requirementsVersion([capitalRule(2_000_000)]), requirementsVersion([capitalRule(8_000_000)]))
 })
+
+import { allowsEmail, emailRecipient, renderEmail } from "../src/services/match-notification.service"
+
+test("allowsEmail needs a saved preference — no settings means no email", () => {
+  assert.equal(allowsEmail(null, "high-budget"), false)
+  assert.equal(allowsEmail({}, "high-budget"), true)
+})
+
+test("allowsEmail honours the master, instant and per-event email switches", () => {
+  assert.equal(allowsEmail({ emailEnabled: false }, "deal-breaker"), false)
+  assert.equal(allowsEmail({ instantEmailAlerts: false }, "deal-breaker"), false)
+  assert.equal(allowsEmail({ events: { "deal-breaker": { email: false } } }, "deal-breaker"), false)
+  assert.equal(allowsEmail({ events: { "deal-breaker": { email: false } } }, "high-budget"), true)
+})
+
+test("emailRecipient prefers the saved alert address and falls back to the account email", () => {
+  assert.equal(emailRecipient({ emailRecipient: " alerts@x.co " }, "me@x.co"), "alerts@x.co")
+  assert.equal(emailRecipient({ emailRecipient: "" }, "me@x.co"), "me@x.co")
+  assert.equal(emailRecipient(null, undefined), "")
+  assert.equal(emailRecipient({ emailRecipient: "user@company.com" }, "me@x.co"), "me@x.co")
+})
+
+test("renderEmail is bilingual, links into the app and escapes scraped text", () => {
+  const mail = renderEmail(
+    {
+      title: { en: "Big <b>TOR</b>", th: "งานใหญ่" },
+      description: { en: "Budget & more", th: "งบสูง" },
+      link: "/browse?tor=abc",
+    },
+    "http://localhost:3000/"
+  )
+  assert.equal(mail.subject, "งานใหญ่ / Big <b>TOR</b>")
+  assert.ok(mail.text.includes("http://localhost:3000/browse?tor=abc"))
+  assert.ok(mail.html.includes("Big &lt;b&gt;TOR&lt;/b&gt;"))
+  assert.ok(!mail.html.includes("<b>TOR</b>"))
+})
+
+import { resolveSender } from "../src/services/email.service"
+
+test("resolveSender uses the admin's support email as From and Reply-To", () => {
+  assert.deepEqual(resolveSender(" Help@X.co ", "TOR Match <env@x.co>"), {
+    from: "TOR Match <Help@X.co>",
+    replyTo: "Help@X.co",
+  })
+})
+
+test("resolveSender falls back to MAIL_FROM when unset, blank or the old placeholder", () => {
+  const fallback = "TOR Match <env@x.co>"
+  assert.deepEqual(resolveSender(undefined, fallback), { from: fallback })
+  assert.deepEqual(resolveSender("  ", fallback), { from: fallback })
+  assert.deepEqual(resolveSender("support@tormatch.local", fallback), { from: fallback })
+})

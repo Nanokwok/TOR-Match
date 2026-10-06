@@ -1,11 +1,14 @@
 import { createHash } from "node:crypto"
 
+import { env } from "@/config/env"
 import type { CompanyDoc } from "@/models/Company.model"
 import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
 import { NotificationSettings } from "@/models/NotificationSettings.model"
 import { Tor, type TorDoc } from "@/models/Tor.model"
+import { User } from "@/models/User.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
+import { currentSender, sendEmail } from "@/services/email.service"
 import { matchCompanyToTor, requirementIdentity } from "@/services/qualification.service"
 
 /** A TOR budgeted above this (baht) raises a "high-budget" alert. */
@@ -18,7 +21,10 @@ export type NotificationEvent = "new-high-match" | "high-budget" | "deal-breaker
 
 type PreferenceSource = {
   inAppEnabled?: boolean
-  events?: Partial<Record<NotificationEvent, { inApp?: boolean }>>
+  emailEnabled?: boolean
+  emailRecipient?: string
+  instantEmailAlerts?: boolean
+  events?: Partial<Record<NotificationEvent, { inApp?: boolean; email?: boolean }>>
 } | null
 
 /** Pure: which of the currently-eligible ids (TOR ids, or owner/user ids) have no existing "match" notification yet. */
@@ -36,6 +42,47 @@ export function allowsInApp(settings: PreferenceSource, event: NotificationEvent
   if (!settings) return true
   if (settings.inAppEnabled === false) return false
   return settings.events?.[event]?.inApp !== false
+}
+
+/**
+ * Pure: whether to email this event right now. Unlike in-app alerts, email
+ * needs an explicit saved preference: someone who never opened the settings
+ * screen has not agreed to be mailed. The instant switch gates it because
+ * digests (which would carry the rest) are not sent yet.
+ */
+export function allowsEmail(settings: PreferenceSource, event: NotificationEvent): boolean {
+  if (!settings) return false
+  if (settings.emailEnabled === false || settings.instantEmailAlerts === false) return false
+  return settings.events?.[event]?.email !== false
+}
+
+/** An earlier build of the settings screen saved this sample address as if it were real. */
+const PLACEHOLDER_RECIPIENT = "user@company.com"
+
+/** Pure: the saved alert address, falling back to the account's own email. */
+export function emailRecipient(settings: PreferenceSource, accountEmail?: string): string {
+  const saved = settings?.emailRecipient?.trim()
+  return (saved && saved !== PLACEHOLDER_RECIPIENT ? saved : "") || accountEmail?.trim() || ""
+}
+
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+
+/** Pure: the bilingual email for one notification. Titles come from scraped text, so the HTML is escaped. */
+export function renderEmail(
+  notification: { title: { en: string; th: string }; description: { en: string; th: string }; link?: string },
+  appUrl: string
+) {
+  const url = notification.link ? `${appUrl.replace(/\/$/, "")}${notification.link}` : appUrl
+  const { title, description } = notification
+  return {
+    subject: `${title.th} / ${title.en}`,
+    text: `${title.th}\n${description.th}\n\n${title.en}\n${description.en}\n\n${url}\n`,
+    html:
+      `<p><strong>${escapeHtml(title.th)}</strong><br>${escapeHtml(description.th)}</p>` +
+      `<p><strong>${escapeHtml(title.en)}</strong><br>${escapeHtml(description.en)}</p>` +
+      `<p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p>`,
+  }
 }
 
 export function isHighBudget(tor: { budgetBaht: number }): boolean {
@@ -64,29 +111,60 @@ export function requirementsVersion(requirements: Requirements): string {
   return createHash("sha1").update(fingerprints.join("|")).digest("hex").slice(0, 12)
 }
 
-async function usersAllowing(userIds: unknown[], event: NotificationEvent): Promise<Set<string>> {
-  if (!userIds.length) return new Set()
-  const saved = await NotificationSettings.find({ userId: { $in: userIds } }).lean()
-  const byUser = new Map(saved.map((doc) => [String(doc.userId), doc as unknown as PreferenceSource]))
-  return new Set(
-    userIds.map(String).filter((id) => allowsInApp(byUser.get(id) ?? null, event))
-  )
-}
-
 type NewNotification = {
   userId: unknown
   dedupeKey: string
+  title: { en: string; th: string }
+  description: { en: string; th: string }
+  link?: string
   [field: string]: unknown
 }
 
-/** Inserts only the notifications whose dedupeKey has not been written before. */
-async function insertUnseen(notifications: NewNotification[]): Promise<void> {
+/**
+ * Stores each notification the recipient's preferences want (bell and/or
+ * email), skipping any whose dedupeKey was written before, then sends the
+ * emails. A record is kept for email-only recipients too (hidden from the
+ * bell), because it is what stops the next ingest run emailing them again.
+ */
+async function deliver(event: NotificationEvent, notifications: NewNotification[]): Promise<void> {
   if (!notifications.length) return
-  const seen = new Set(
-    await Notification.find({ dedupeKey: { $in: notifications.map((n) => n.dedupeKey) } }).distinct("dedupeKey")
+
+  const userIds = [...new Set(notifications.map((n) => String(n.userId)))]
+  const [settingsDocs, users, seenKeys] = await Promise.all([
+    NotificationSettings.find({ userId: { $in: userIds } }).lean(),
+    User.find({ _id: { $in: userIds } }).select("email").lean(),
+    Notification.find({ dedupeKey: { $in: notifications.map((n) => n.dedupeKey) } }).distinct("dedupeKey"),
+  ])
+  const settingsByUser = new Map(settingsDocs.map((doc) => [String(doc.userId), doc as unknown as PreferenceSource]))
+  const emailByUser = new Map(users.map((user) => [String(user._id), user.email]))
+  const seen = new Set(seenKeys)
+
+  const plans = notifications
+    .filter((n) => !seen.has(n.dedupeKey))
+    .map((n) => {
+      const settings = settingsByUser.get(String(n.userId)) ?? null
+      const to = allowsEmail(settings, event) ? emailRecipient(settings, emailByUser.get(String(n.userId))) : ""
+      return { notification: n, inApp: allowsInApp(settings, event), to }
+    })
+    .filter((plan) => plan.inApp || plan.to)
+  if (!plans.length) return
+
+  const inserted = await Notification.insertMany(
+    plans.map((plan) => ({ ...plan.notification, inApp: plan.inApp }))
   )
-  const fresh = notifications.filter((n) => !seen.has(n.dedupeKey))
-  if (fresh.length) await Notification.insertMany(fresh)
+
+  const sender = plans.some((plan) => plan.to) ? await currentSender() : undefined
+  await Promise.allSettled(
+    plans.map(async (plan, index) => {
+      if (!plan.to) return
+      const sent = await sendEmail({ to: plan.to, ...renderEmail(plan.notification, env.appUrl) }, sender)
+      if (sent) await Notification.updateOne({ _id: inserted[index]._id }, { $set: { emailedAt: new Date() } })
+    })
+  ).then((results) => {
+    for (const result of results) {
+      if (result.status === "rejected") console.error("[email] notification email failed", result.reason)
+    }
+  })
 }
 
 const torName = (tor: TorDoc, locale: "en" | "th") =>
@@ -97,6 +175,7 @@ function buildMatchNotification(userId: unknown, tor: TorDoc) {
     userId,
     category: "match" as const,
     torId: tor._id,
+    dedupeKey: `match:${userId}:${tor._id}`,
     autoVerifiedMatch: true,
     link: `/browse?tor=${tor._id}`,
     action: "view-tor" as const,
@@ -158,8 +237,6 @@ function buildDealBreakerNotification(userId: unknown, tor: TorDoc, version: str
  * is a historical fact, not a live status).
  */
 export async function notifyNewMatches(userId: string, company: CompanyDoc): Promise<void> {
-  if (!(await usersAllowing([userId], "new-high-match")).has(userId)) return
-
   const tors = await Tor.find({ status: { $in: ["open", "closing-soon"] } })
   if (!tors.length) return
 
@@ -180,7 +257,10 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
   const newMatches = eligibleTors.filter((tor) => newMatchIds.has(String(tor._id)))
   if (!newMatches.length) return
 
-  await Notification.insertMany(newMatches.map((tor) => buildMatchNotification(userId, tor)))
+  await deliver(
+    "new-high-match",
+    newMatches.map((tor) => buildMatchNotification(userId, tor))
+  )
 }
 
 /**
@@ -196,28 +276,22 @@ export async function notifyCompaniesForTor(tor: TorDoc): Promise<void> {
   const eligibleCompanies = companies.filter((company) => matchCompanyToTor(company, tor).eligible)
   if (!eligibleCompanies.length) return
 
-  const allowed = await usersAllowing(
-    eligibleCompanies.map((company) => company.ownerId),
-    "new-high-match"
-  )
-  const wanting = eligibleCompanies.filter((company) => allowed.has(String(company.ownerId)))
-  if (!wanting.length) return
-
   const alreadyNotified = await Notification.find({
     category: "match",
     torId: tor._id,
-    userId: { $in: wanting.map((company) => company.ownerId) },
+    userId: { $in: eligibleCompanies.map((company) => company.ownerId) },
   }).distinct("userId")
   const newMatchOwnerIds = new Set(
     selectNewMatches(
-      wanting.map((company) => String(company.ownerId)),
+      eligibleCompanies.map((company) => String(company.ownerId)),
       alreadyNotified.map(String)
     )
   )
-  const newMatches = wanting.filter((company) => newMatchOwnerIds.has(String(company.ownerId)))
+  const newMatches = eligibleCompanies.filter((company) => newMatchOwnerIds.has(String(company.ownerId)))
   if (!newMatches.length) return
 
-  await Notification.insertMany(
+  await deliver(
+    "new-high-match",
     newMatches.map((company) => buildMatchNotification(company.ownerId, tor))
   )
 }
@@ -234,14 +308,9 @@ export async function notifyHighBudget(tor: TorDoc): Promise<void> {
   const companies = (await Company.find()).filter(
     (company) => matchCompanyToTor(company, tor).status !== "failed"
   )
-  const allowed = await usersAllowing(
-    companies.map((company) => company.ownerId),
-    "high-budget"
-  )
-  await insertUnseen(
-    companies
-      .filter((company) => allowed.has(String(company.ownerId)))
-      .map((company) => buildHighBudgetNotification(company.ownerId, tor))
+  await deliver(
+    "high-budget",
+    companies.map((company) => buildHighBudgetNotification(company.ownerId, tor))
   )
 }
 
@@ -260,15 +329,10 @@ export async function notifyDealBreakers(tor: TorDoc, before: Requirements | nul
   const companies = (await Company.find({ ownerId: { $in: trackers } })).filter((company) =>
     becameDealBreaker(company, before, tor.qualificationRequirements)
   )
-  const allowed = await usersAllowing(
-    companies.map((company) => company.ownerId),
-    "deal-breaker"
-  )
   const version = requirementsVersion(tor.qualificationRequirements)
-  await insertUnseen(
-    companies
-      .filter((company) => allowed.has(String(company.ownerId)))
-      .map((company) => buildDealBreakerNotification(company.ownerId, tor, version))
+  await deliver(
+    "deal-breaker",
+    companies.map((company) => buildDealBreakerNotification(company.ownerId, tor, version))
   )
 }
 

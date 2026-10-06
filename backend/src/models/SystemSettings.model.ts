@@ -12,7 +12,8 @@ export const DEFAULT_ADMIN_SYSTEM_SETTINGS = {
   notifyOnNewSignup: true,
   maintenanceMode: false,
   adminSessionMinutes: 30,
-  supportEmail: "support@tormatch.local",
+  /** Sender and reply address for notification emails (see email.service). */
+  supportEmail: "tormatch1234@gmail.com",
 } as const
 
 const systemSettingsSchema = new Schema(
