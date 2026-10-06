@@ -144,3 +144,14 @@ test("--force re-reads a stored project even with nothing new", () => {
 
   assert.equal(action.kind, "extract")
 })
+
+test("a project we have never stored, already awarded, is not paid for", () => {
+  // Both announcements are in the same run: the tender we never ingested, and
+  // the award that ended it. Extracting it would buy a TOR nobody can bid on,
+  // and setting a status would write to a draft that does not exist.
+  const action = planForProject({
+    entry: entryOf([ANNOUNCE_TYPES.draft, "b0.zip"], [ANNOUNCE_TYPES.winner, "w0.pdf"]),
+  })
+
+  assert.equal(action.kind, "none")
+})

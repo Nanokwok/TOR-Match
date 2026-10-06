@@ -10,7 +10,6 @@ import { env } from "@/config/env"
 import { CERTIFICATION_IDS, QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import {
   PROCUREMENT_METHODS,
-  PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
 import { withRetry } from "@/scraper/retry"
@@ -85,7 +84,6 @@ export const extractionSchema = z.object({
   projectScale: z.enum(PROJECT_SCALES),
   durationDays: z.number().describe("Contract length in days. 0 if not stated."),
   method: z.enum(PROCUREMENT_METHODS),
-  status: z.enum(PROCUREMENT_STATUSES),
   deadline: z.string().describe('Bid submission deadline, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if absent.'),
   announcementDate: z.string().describe('Same format as deadline.'),
   budgetBaht: z.number(),

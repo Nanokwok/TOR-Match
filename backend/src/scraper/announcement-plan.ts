@@ -133,6 +133,15 @@ export function planForProject(input: {
   // model call. What a cancellation notice says is already in its type.
   const terminal = [...TERMINAL_ORDER].reverse().find((announceType) => fresh.has(announceType))
   if (terminal) {
+    // An outcome belongs to a project we hold. Reaching a project for the
+    // first time already cancelled or awarded, the tender is worth nothing —
+    // nobody can bid on it — and a status write would have no draft to land
+    // on, so the announcement would be recorded as handled while nothing
+    // happened at all.
+    if (!stored) {
+      return { kind: "none", reason: `already ${STATUS_BY_TYPE[terminal] ?? "concluded"}` }
+    }
+
     const status = STATUS_BY_TYPE[terminal]
     if (status) return { kind: "status", status, from: terminal }
   }
