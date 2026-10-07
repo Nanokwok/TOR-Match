@@ -3,12 +3,6 @@ import "server-only"
 import { cookies } from "next/headers"
 import { apiFetch } from "@/lib/api-client"
 import { required } from "@/lib/env"
-import {
-  deleteMockNotification,
-  getMockNotifications,
-  markAllMockNotificationsRead,
-  markMockNotificationRead,
-} from "@/server/db/mock/notifications"
 import type { AppNotification } from "@/types/notification"
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -23,61 +17,42 @@ function fromBackend(notification: BackendNotification): AppNotification {
   return { id: _id, ...rest }
 }
 
+/**
+ * The bell sits in every page's header, so a notifications failure must not
+ * take the page down: it is logged and the bell shows nothing. Signed-out
+ * visitors have no notifications, so nothing is requested for them.
+ */
 export async function listNotifications(): Promise<AppNotification[]> {
   const headers = await authHeaders()
-  if (!headers.Authorization) return getMockNotifications()
+  if (!headers.Authorization) return []
   try {
     const items = await apiFetch<BackendNotification[]>("/notifications", { headers })
-    return items.length > 0 ? items.map(fromBackend) : getMockNotifications()
-  } catch {
-    return getMockNotifications()
+    return items.map(fromBackend)
+  } catch (error) {
+    console.error("listNotifications failed", error)
+    return []
+  }
+}
+
+/** The bell updates optimistically, so a failed write is logged rather than thrown. */
+async function send(path: string, method: "PATCH" | "DELETE"): Promise<void> {
+  const headers = await authHeaders()
+  if (!headers.Authorization) return
+  try {
+    await apiFetch(path, { method, headers })
+  } catch (error) {
+    console.error(`${method} ${path} failed`, error)
   }
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  const headers = await authHeaders()
-  if (!headers.Authorization) {
-    markMockNotificationRead(id)
-    return
-  }
-  try {
-    await apiFetch(`/notifications/${encodeURIComponent(id)}/read`, {
-      method: "PATCH",
-      headers,
-    })
-  } catch {
-    markMockNotificationRead(id)
-  }
+  await send(`/notifications/${encodeURIComponent(id)}/read`, "PATCH")
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const headers = await authHeaders()
-  if (!headers.Authorization) {
-    markAllMockNotificationsRead()
-    return
-  }
-  try {
-    await apiFetch("/notifications/read-all", {
-      method: "PATCH",
-      headers,
-    })
-  } catch {
-    markAllMockNotificationsRead()
-  }
+  await send("/notifications/read-all", "PATCH")
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  const headers = await authHeaders()
-  if (!headers.Authorization) {
-    deleteMockNotification(id)
-    return
-  }
-  try {
-    await apiFetch(`/notifications/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers,
-    })
-  } catch {
-    deleteMockNotification(id)
-  }
+  await send(`/notifications/${encodeURIComponent(id)}`, "DELETE")
 }
