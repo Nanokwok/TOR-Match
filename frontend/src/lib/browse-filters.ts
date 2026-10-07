@@ -1,4 +1,5 @@
 import type {
+  TorSort,
   TorDeadlinePreset,
   TorDetailFilters,
   TorDurationPreset,
@@ -247,3 +248,9 @@ export function getActiveDetailFilterChips(
 
   return chips
 }
+
+/** TORs fetched per page on the browse screen. */
+export const BROWSE_PAGE_SIZE = 10
+
+export const DEFAULT_BROWSE_SORT: TorSort = "opened-desc"
+export const BROWSE_SORTS: readonly TorSort[] = ["opened-desc", "opened-asc", "budget-desc", "budget-asc"]

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LabeledFilterSelect } from "@/components/ui/labeled-filter-select"
+import { BROWSE_SORTS } from "@/lib/browse-filters"
 import { localizedKey, pickLocalized } from "@/lib/localized-content"
 import { SelectItem } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -26,11 +27,13 @@ import type {
   TorDetailFilters,
   TorListQuery,
   TorProcurementStatus,
+  TorSort,
 } from "@/types/tor"
 
 export type BrowseFiltersState = {
   keyword: string
-  eligibleOnly: boolean
+  openOnly: boolean
+  sort: TorSort
   budgetRange: string
   status: TorProcurementStatus | "all"
   department: string
@@ -48,7 +51,8 @@ type TorFilterBarProps = {
 export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
   return {
     keyword: filters.keyword,
-    eligibleOnly: filters.eligibleOnly,
+    openOnly: filters.openOnly,
+    sort: filters.sort,
     budgetRange: filters.budgetRange,
     status: filters.status,
     department: filters.department,
@@ -81,14 +85,14 @@ export function TorFilterBar({
   const baseQuery = useMemo(
     () => ({
       keyword: filters.keyword,
-      eligibleOnly: filters.eligibleOnly,
+      openOnly: filters.openOnly,
       budgetRange: filters.budgetRange,
       status: filters.status,
       department: filters.department,
     }),
     [
       filters.keyword,
-      filters.eligibleOnly,
+      filters.openOnly,
       filters.budgetRange,
       filters.status,
       filters.department,
@@ -150,16 +154,32 @@ export function TorFilterBar({
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
               <Switch
-                checked={filters.eligibleOnly}
+                checked={filters.openOnly}
                 onCheckedChange={(checked) =>
-                  onChange({ ...filters, eligibleOnly: checked })
+                  onChange({ ...filters, openOnly: checked })
                 }
                 className="data-checked:bg-primary"
               />
               <span className="whitespace-nowrap text-foreground">
-                {t("browse.eligibleOnly")}
+                {t("browse.openOnly")}
               </span>
             </label>
+
+            <LabeledFilterSelect
+              label={t("browse.sortBy")}
+              value={filters.sort}
+              formatValue={(value) => t(`browse.sort.${value}`)}
+              onValueChange={(value) =>
+                onChange({ ...filters, sort: value as TorSort })
+              }
+              triggerClassName="min-w-[9rem]"
+            >
+              {BROWSE_SORTS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {t(`browse.sort.${option}`)}
+                </SelectItem>
+              ))}
+            </LabeledFilterSelect>
 
             <LabeledFilterSelect
               label={t("browse.budgetRange")}

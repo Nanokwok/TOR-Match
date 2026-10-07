@@ -157,6 +157,9 @@ export async function extractAndStore(params: {
       detailUrl: detailUrl ?? stored?.detailUrl ?? "",
       aiConfidence: extraction.aiConfidence,
       sourceJobId: job._id,
+      // Which feed this came through (main added the field); constant here
+      // because this service only ever reads the e-GP RSS feed.
+      source: "egp-rss",
       // Recomputed from the title each run rather than merged: this is our own
       // heuristic, owned by neither the model nor a reviewer.
       softwareRelated: params.softwareRelated ?? false,

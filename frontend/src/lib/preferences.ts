@@ -21,6 +21,20 @@ export const HIGHLIGHT_DEADLINES_COOKIE = "tor-match-highlight-deadlines"
 export const HIGHLIGHT_DEADLINES_STORAGE_KEY = "tor-match:highlight-deadlines"
 export const DEFAULT_HIGHLIGHT_DEADLINES = true
 
+/**
+ * The browse screen's "open for bids only" switch. Kept in a cookie so the
+ * server renders the first page of results with the same setting the user left
+ * it on — a client-only store would first show the default list, then swap.
+ * (The other browse filters live in localStorage; see browse-filter-storage.)
+ */
+export const BROWSE_OPEN_ONLY_COOKIE = "tor-match-browse-open-only"
+export const DEFAULT_BROWSE_OPEN_ONLY = true
+
+/** Anything but an explicit "false" means the default, so a missing or mangled cookie is harmless. */
+export function parseBrowseOpenOnly(value: string | undefined): boolean {
+  return value === "false" ? false : DEFAULT_BROWSE_OPEN_ONLY
+}
+
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
 /**

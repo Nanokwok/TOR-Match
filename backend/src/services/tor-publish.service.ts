@@ -76,6 +76,7 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
     deadline: draft.deadline,
     announcementDate: draft.announcementDate,
     sourceUrl: draft.sourceUrl,
+    source: draft.source,
     summary: draft.summary,
     deliverables: draft.deliverables,
     softwareRelated: draft.softwareRelated,

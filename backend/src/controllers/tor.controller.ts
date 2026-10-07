@@ -8,6 +8,9 @@ import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filter
 import { Tor } from "@/models/Tor.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
+import { resolveTorSource } from "@/domain/tor-source"
+import { paginate } from "@/utils/paginate"
+import { DEFAULT_TOR_SORT, isOpenForBids, isTorSort, sortTors } from "@/utils/tor-listing"
 
 const BUDGET_RANGES: Record<string, { min: number; max: number }> = {
   "under-3m": { min: 0, max: 3_000_000 },
@@ -31,6 +34,7 @@ async function selfChecksByTor(companyId: Types.ObjectId | undefined, torIds: Ty
 
 export const listTors = asyncHandler(async (req: Request, res: Response) => {
   const { keyword, status, department, budgetRange } = req.query as Record<string, string | undefined>
+  const sort = isTorSort(req.query.sort) ? req.query.sort : DEFAULT_TOR_SORT
 
   let detail: ReturnType<typeof detailFiltersSchema.parse> | undefined
   if (req.query.detail !== undefined) {
@@ -76,10 +80,23 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
   // below already runs in JS over every result.
   const selfChecks = await selfChecksByTor(company?._id, tors.map((tor) => tor._id))
   const now = new Date()
-  const items = tors.filter((tor) => matchesDetailFilters(tor, detail)).map((tor) => {
+  const open = req.query.openOnly === "true"
+  const items = sortTors(
+    tors.filter((tor) => matchesDetailFilters(tor, detail) && (!open || isOpenForBids(tor, now))),
+    sort
+  ).map((tor) => {
     const qualification = matchCompanyToTor(company, tor, now, selfChecks.get(String(tor._id)))
-    return { ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false }
+    return { ...tor.toObject(), id: tor.id, source: resolveTorSource(tor), eligible: qualification.eligible, qualification, bookmarked: false }
   }).filter((tor) => req.query.eligibleOnly !== "true" || tor.eligible)
+
+  // Opt-in: callers that send no page (workspace, filter-count previews) still
+  // get the whole list. Filtering has to finish first — "eligible only" and the
+  // detail filters are decided per TOR in this process — so `total` is the
+  // count after every filter, and only the response is cut down.
+  if (req.query.page !== undefined || req.query.pageSize !== undefined) {
+    res.status(200).json(paginate(items, req.query.page, req.query.pageSize))
+    return
+  }
   res.status(200).json({ items, total: items.length })
 })
 
@@ -92,7 +109,7 @@ export const getTorById = asyncHandler(async (req: Request, res: Response) => {
   if (!tor) throw ApiError.notFound("TOR not found")
   const selfChecks = await selfChecksByTor(company?._id, [tor._id])
   const qualification = matchCompanyToTor(company, tor, new Date(), selfChecks.get(String(tor._id)))
-  res.status(200).json({ ...tor.toObject(), id: tor.id, eligible: qualification.eligible, qualification, bookmarked: false })
+  res.status(200).json({ ...tor.toObject(), id: tor.id, source: resolveTorSource(tor), eligible: qualification.eligible, qualification, bookmarked: false })
 })
 
 /** Returns the localized values, de-duplicated by {@link localizedKey}. */

@@ -20,7 +20,7 @@ function loadSeed(): SeedTor[] {
   if (!Array.isArray(parsed)) {
     throw new Error(`${file} must contain an array of TOR documents`)
   }
-  return parsed as SeedTor[]
+  return (parsed as SeedTor[]).map((document) => ({ ...document, source: "seed" }))
 }
 
 async function main() {

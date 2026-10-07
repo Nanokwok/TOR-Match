@@ -3,6 +3,7 @@
  *
  *   npm run ingest                      # every announcement type, today's feed
  *   npm run ingest "--" --days 3        # walk three days back — see below
+ *   npm run ingest "--" --days 120 --offset 120   # the 120 days before those
  *   npm run ingest "--" --dry-run       # show what would happen, touch nothing
  *   npm run ingest "--" --all           # keep non-software announcements too
  *   npm run ingest "--" --force         # re-extract announcements already stored
@@ -97,6 +98,8 @@ type Options = {
    * to reach twenty items.
    */
   days?: number
+  /** Days to skip before `--days` starts, for continuing a sectioned backfill. */
+  offset: number
   /** Opts back into the per-method sweep, which measurement showed gains nothing. */
   narrow: boolean
   /** Restricts the run to these project numbers, for inspecting or repairing a few. */
@@ -112,6 +115,7 @@ function parseArgs(argv: string[]): Options {
     force: hasFlag(argv, "force"),
     announceTypes: parseAnnounceTypes(readFlag(argv, "types")),
     days: parseDays(readFlag(argv, "days")),
+    offset: parseDays(readFlag(argv, "offset")) ?? 0,
     narrow: hasFlag(argv, "narrow"),
     only: parseOnly(readFlag(argv, "only")),
   }
@@ -250,8 +254,9 @@ async function main() {
   // Collapsing them threw away whichever lost.
   if (options.days) {
     console.log(
-      `[rss] walking ${options.days} day(s) back — about ` +
-        `${options.days * options.announceTypes.length} feed request(s)`
+      `[rss] walking ${options.days} day(s)` +
+        (options.offset ? ` starting ${options.offset} day(s) back` : " back") +
+        ` — about ${options.days * options.announceTypes.length} feed request(s)`
     )
   }
 
@@ -259,7 +264,10 @@ async function main() {
   let requests = 0
   for (const announceType of options.announceTypes) {
     const result = options.days
-      ? await fetchAnnouncementsOverDays({ deptId: env.egpDeptId, announceType }, { days: options.days })
+      ? await fetchAnnouncementsOverDays(
+          { deptId: env.egpDeptId, announceType },
+          { days: options.days, offset: options.offset }
+        )
       : await fetchAnnouncements(
           { deptId: env.egpDeptId, announceType },
           { narrowOnTruncation: options.narrow }

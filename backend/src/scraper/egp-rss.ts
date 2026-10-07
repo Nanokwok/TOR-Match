@@ -456,7 +456,21 @@ export function announceDateCode(back: number, now = new Date()): string {
  */
 export async function fetchAnnouncementsOverDays(
   query: EgpFeedQuery & { announceType: AnnounceType },
-  { days, onDay }: { days: number; onDay?: (date: string, result: EgpFeedResult) => void }
+  {
+    days,
+    offset = 0,
+    onDay,
+  }: {
+    days: number
+    /**
+     * Days to skip before starting, so a later run can continue where an
+     * earlier one stopped instead of re-reading what it already has. The feed
+     * rate-limits a client after a few hundred requests, which is the whole
+     * reason history is collected in sections.
+     */
+    offset?: number
+    onDay?: (date: string, result: EgpFeedResult) => void
+  }
 ): Promise<FetchResult> {
   const byIdentity = new Map<string, EgpAnnouncement>()
   const cappedDays: string[] = []
@@ -464,7 +478,7 @@ export async function fetchAnnouncementsOverDays(
   let countByDay = 0
   let requests = 0
 
-  for (let back = 0; back < days; back += 1) {
+  for (let back = offset; back < offset + days; back += 1) {
     const announceDate = announceDateCode(back)
     if (requests > 0) await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
     requests += 1

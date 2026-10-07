@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -174,7 +173,7 @@ export function BrowseMoreFiltersDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="min-h-0 flex-1 px-5 py-5" viewportClassName="space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5">
           <FilterSection title={t("browse.moreFiltersModal.category")}>
             <CheckboxRow
               checked={draft.softwareOnly}
@@ -380,7 +379,7 @@ export function BrowseMoreFiltersDialog({
                 </div>
               ) : null}
 
-              <ScrollArea className="max-h-44 rounded-lg border border-border p-2">
+              <div className="max-h-44 overflow-y-auto overscroll-contain rounded-lg border border-border p-2">
                 <div className="space-y-1">
                   {filteredOffices.length === 0 ? (
                     <p className="px-2 py-3 text-sm text-muted-foreground">
@@ -397,12 +396,12 @@ export function BrowseMoreFiltersDialog({
                     ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
           </FilterSection>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="mx-0 mb-0 shrink-0 flex-col items-stretch gap-3 rounded-b-xl border-t border-border bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <DialogFooter className="mx-0 mb-0 shrink-0 flex-col items-stretch gap-3 rounded-b-xl border-t border-border bg-muted p-4 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
             className="self-start text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
