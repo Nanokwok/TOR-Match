@@ -4,10 +4,16 @@ import { ANNOUNCE_TYPES, type AnnounceType } from "@/scraper/egp-rss"
 import { mergeExtraction } from "@/services/tor-merge"
 import { SystemSettings, SYSTEM_SETTINGS_SINGLETON_KEY } from "@/models/SystemSettings.model"
 import { TorDraft } from "@/models/TorDraft.model"
-import { extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
+import { extractDeadline, extractTorFromPdf, type ExtractionContext } from "@/scraper/extract"
 import { sourceUrlFor } from "@/scraper/announcement-sources"
 import { carriesFullTender, downloadAllTorDocuments } from "@/scraper/tor-documents"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
+
+/** The announcement types that state a submission deadline. */
+const INVITATION_TYPES = new Set<AnnounceType>([
+  ANNOUNCE_TYPES.invitation,
+  ANNOUNCE_TYPES.invitationChanged,
+])
 
 /**
  * Reading an announcement's documents and storing what comes back.
@@ -72,7 +78,12 @@ export async function extractAndStore(params: {
   const { announcementNo, pdfUrl, invitationUrl, detailUrl, publishedDate, context, threshold } = params
   const from = params.from ?? ANNOUNCE_TYPES.draft
 
-  const links = [...new Set([pdfUrl, invitationUrl].filter((url): url is string => Boolean(url)))]
+  // Kept apart rather than downloaded as one list: the deadline is read from
+  // the invitation on its own (see below), and a TorDocument does not record
+  // which link it came from.
+  const tenderUrls = [pdfUrl].filter((url): url is string => Boolean(url))
+  const invitationUrls =
+    invitationUrl && invitationUrl !== pdfUrl ? [invitationUrl] : []
   // Where a person is sent, which is not where the pipeline reads.
   const sourceUrl = sourceUrlFor({ detailUrl, pdfUrl })
 
@@ -86,11 +97,39 @@ export async function extractAndStore(params: {
   try {
     job.set({ stage: "parse" })
     await job.save()
-    const documents = await downloadAllTorDocuments(links)
+    const [tenderDocuments, invitationDocuments] = await Promise.all([
+      downloadAllTorDocuments(tenderUrls),
+      invitationUrls.length ? downloadAllTorDocuments(invitationUrls) : Promise.resolve([]),
+    ])
+    const documents = [...tenderDocuments, ...invitationDocuments]
 
     job.set({ stage: "index", pages: documents.length })
     await job.save()
     const extraction = await extractTorFromPdf(context, documents)
+
+    // The deadline is asked for separately, against the invitation alone. The
+    // full call is handed the tender archive as well, and a dozen documents
+    // with no closing date between them can drown out the one two-page notice
+    // that has it — which published TORs reading "กำหนดยื่นข้อเสนอ -" while the
+    // document stating it sat in the same request. A failure here costs the
+    // sharper answer, never the extraction.
+    const deadlineDocuments = invitationDocuments.length
+      ? invitationDocuments
+      : INVITATION_TYPES.has(from)
+        ? tenderDocuments
+        : []
+    if (deadlineDocuments.length) {
+      try {
+        const invitation = await extractDeadline(context, deadlineDocuments)
+        if (invitation.deadline) extraction.deadline = invitation.deadline
+        if (invitation.announcementDate && !extraction.announcementDate) {
+          extraction.announcementDate = invitation.announcementDate
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.warn(`[scrape] ${announcementNo} deadline pass failed: ${message}`)
+      }
+    }
 
     // Below the admin's threshold — or with auto-approval switched off — the
     // draft waits for a human rather than reaching the published collection.

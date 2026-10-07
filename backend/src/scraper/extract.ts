@@ -345,3 +345,74 @@ export async function extractMedianPrice(
 
   return medianPriceSchema.parse(parseJsonResponse("Median price extraction", text))
 }
+
+/**
+ * The bid submission deadline, read from the invitation and nothing else.
+ *
+ * The full extraction is handed every document an announcement has — a tender
+ * archive of a dozen files plus the two-page ประกาศเชิญชวน — and the deadline
+ * appears in exactly one of them. Asked to read everything at once the model
+ * sometimes returns no date at all, which published a TOR whose "กำหนดยื่นข้อเสนอ"
+ * read "-" even though the invitation stating it had been downloaded.
+ *
+ * So it is asked separately, against the invitation alone, the way the median
+ * price is. Two pages and one question is a fraction of the full call, and the
+ * answer cannot be diluted by a tender document that has no closing date to
+ * give.
+ */
+export const deadlineSchema = z.object({
+  deadline: z
+    .string()
+    .describe('กำหนดยื่นข้อเสนอ, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if the document states none.'),
+  announcementDate: z
+    .string()
+    .describe('วันที่ประกาศ, same format. Empty string if absent.'),
+  aiConfidence: z.number().describe("0-100: how certain the date above is."),
+})
+
+export type DeadlineExtraction = z.infer<typeof deadlineSchema>
+
+const DEADLINE_PROMPT = `You read Thai government invitations to bid (ประกาศเชิญชวน / ประกาศประกวดราคา) for Bangkok Metropolitan Administration.
+
+Report only when proposals are due, and the date of the announcement itself.
+- The submission deadline is written as "กำหนดยื่นข้อเสนอและเสนอราคา … ในวันที่ … ระหว่างเวลา … น. ถึง … น." Take the DATE proposals are submitted and the END of that time range.
+- Do not confuse it with other dates in the same document: ซื้อเอกสารประกวดราคา (buying the documents), ขอรับเอกสาร, the วิจารณ์ period of a draft, or the contract duration. Only กำหนดยื่นข้อเสนอ counts.
+- Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00. When no time is given, use 16:30:00.
+- Return an empty string rather than guessing when the document truly states no submission date.`
+
+export async function extractDeadline(
+  context: ExtractionContext,
+  documents: TorDocument[]
+): Promise<DeadlineExtraction> {
+  if (documents.length === 0) throw new Error("No documents to read a deadline from")
+
+  const ai = await getClient()
+  const response = await withRetry(`deadline ${context.projectNo}`, () =>
+    ai.models.generateContent({
+      model: env.extractionModel,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            ...documents.map((document) => ({
+              inlineData: { mimeType: "application/pdf", data: document.pdf.toString("base64") },
+            })),
+            { text: `เลขที่โครงการ: ${context.projectNo}\n\nRead the submission deadline.` },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: DEADLINE_PROMPT,
+        temperature: 0,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+        responseJsonSchema: z.toJSONSchema(deadlineSchema),
+      },
+    })
+  )
+
+  const text = response.text
+  if (!text) throw new Error("Deadline extraction returned no output")
+
+  return deadlineSchema.parse(parseJsonResponse("Deadline extraction", text))
+}
