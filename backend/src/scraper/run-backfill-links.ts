@@ -29,7 +29,10 @@ async function main() {
   const dryRun = hasFlag(process.argv.slice(2), "dry-run")
   await connectDB()
 
-  const drafts = await TorDraft.find({}, { announcementNo: 1, pdfUrl: 1, detailUrl: 1, sourceUrl: 1 })
+  const drafts = await TorDraft.find(
+    {},
+    { announcementNo: 1, pdfUrl: 1, invitationUrl: 1, detailUrl: 1, sourceUrl: 1 }
+  )
   console.log(`[links] ${drafts.length} stored announcement(s)`)
 
   const resolved = await resolveDetailUrls(drafts.map((draft) => draft.announcementNo))
@@ -38,12 +41,21 @@ async function main() {
   let changed = 0
   for (const draft of drafts) {
     const detailUrl = resolved.get(draft.announcementNo) ?? draft.detailUrl ?? ""
-    const sourceUrl = sourceUrlFor({ detailUrl, pdfUrl: draft.pdfUrl })
+    const sourceUrl = sourceUrlFor({
+      detailUrl,
+      invitationUrl: draft.invitationUrl,
+      pdfUrl: draft.pdfUrl,
+    })
     if (sourceUrl === draft.sourceUrl && detailUrl === (draft.detailUrl ?? "")) continue
 
+    const fallback = detailUrl
+      ? ""
+      : sourceUrl === draft.invitationUrl
+        ? "   (no agency page — the ประกาศเชิญชวน instead)"
+        : "   (no agency page and no invitation — the tender archive)"
     console.log(`  ${draft.announcementNo}`)
     console.log(`    was: ${shorten(draft.sourceUrl ?? "")}`)
-    console.log(`    now: ${shorten(sourceUrl)}${detailUrl ? "" : "   (no page found — kept the document)"}`)
+    console.log(`    now: ${shorten(sourceUrl)}${fallback}`)
     changed += 1
 
     if (dryRun) continue

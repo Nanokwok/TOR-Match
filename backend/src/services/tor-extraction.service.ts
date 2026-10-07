@@ -85,7 +85,7 @@ export async function extractAndStore(params: {
   const invitationUrls =
     invitationUrl && invitationUrl !== pdfUrl ? [invitationUrl] : []
   // Where a person is sent, which is not where the pipeline reads.
-  const sourceUrl = sourceUrlFor({ detailUrl, pdfUrl })
+  const sourceUrl = sourceUrlFor({ detailUrl, invitationUrl, pdfUrl })
 
   const job = await ScrapeJob.create({
     documentSource: announcementNo,

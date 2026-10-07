@@ -195,13 +195,29 @@ export function mergeAnnouncementLinks(
 /**
  * Where the TOR page's "view original" button sends a person.
  *
- * The announcement's page on the publishing agency's site, so they can read the
- * documents there themselves. The document link is only a fallback: it is a
- * file — a rendered PDF at best, a ZIP that downloads at worst — but a button
- * that goes somewhere beats one that goes nowhere.
+ * First choice is the announcement's page on the publishing agency's site, so
+ * they can read every document there themselves. Not every project has one:
+ * measured against the BMA site, half the published TORs are simply absent from
+ * it — searching egp2.bangkok.go.th for 69099072681 returns no rows at all,
+ * while the same search by title returns 64 other projects. It is not a lookup
+ * that can be improved; the page does not exist.
+ *
+ * So the fallbacks, in the order a person would want them:
+ *
+ *  - the D0 ประกาศเชิญชวน, which is the announcement itself — two pages that
+ *    open in a browser;
+ *  - the B0 tender archive, last, because it is a ZIP that downloads rather
+ *    than anything anyone can read in place.
+ *
+ * The invitation used to be skipped entirely, which sent half the TORs that
+ * have no agency page straight to a tender archive.
  *
  * Shared by the ingest and the backfill so the two cannot disagree about it.
  */
-export function sourceUrlFor(links: { detailUrl?: string; pdfUrl?: string }): string {
-  return links.detailUrl || links.pdfUrl || ""
+export function sourceUrlFor(links: {
+  detailUrl?: string
+  invitationUrl?: string
+  pdfUrl?: string
+}): string {
+  return links.detailUrl || links.invitationUrl || links.pdfUrl || ""
 }

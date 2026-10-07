@@ -157,10 +157,24 @@ test("a re-published amendment is kept as its own row, not a replacement", () =>
   assert.equal(second.added[0].url, "https://example.test/amend-2.pdf")
 })
 
-test("sourceUrlFor prefers the agency's page over the file", () => {
-  assert.equal(sourceUrlFor({ detailUrl: "https://egp2.bangkok.go.th/project-detail/x", pdfUrl: DRAFT_LINK }),
-    "https://egp2.bangkok.go.th/project-detail/x")
-  assert.equal(sourceUrlFor({ detailUrl: "", pdfUrl: DRAFT_LINK }), DRAFT_LINK)
+test("sourceUrlFor prefers the agency's page over any file", () => {
+  assert.equal(
+    sourceUrlFor({
+      detailUrl: "https://egp2.bangkok.go.th/project-detail/x",
+      invitationUrl: INVITE_LINK,
+      pdfUrl: DRAFT_LINK,
+    }),
+    "https://egp2.bangkok.go.th/project-detail/x"
+  )
+})
+
+test("with no agency page, the invitation beats the tender archive", () => {
+  // Half the published TORs have no page on the BMA site — the project is
+  // genuinely absent from it. What is left is a choice between two files, and
+  // the ประกาศเชิญชวน is two pages that open in a browser while the B0 is a ZIP
+  // that downloads. Sending a bidder to the archive was the old behaviour.
+  assert.equal(sourceUrlFor({ invitationUrl: INVITE_LINK, pdfUrl: DRAFT_LINK }), INVITE_LINK)
+  assert.equal(sourceUrlFor({ detailUrl: "", invitationUrl: "", pdfUrl: DRAFT_LINK }), DRAFT_LINK)
   assert.equal(sourceUrlFor({}), "")
 })
 
