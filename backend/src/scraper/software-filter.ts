@@ -52,6 +52,16 @@ const EXCLUDED_SUBJECTS = [
   "รักษาความปลอดภัย", "ทำความสะอาด", "ซักฟอก",
   "ก่อสร้าง", "ปรับปรุงอาคาร", "ระบายน้ำ", "ประปา",
   "เครื่องปรับอากาศ", "ลิฟต์", "รถยนต์", "ยานพาหนะ", "มูลฝอย",
+  // "บำรุงรักษาระบบ" below is a strong term, and plant has systems too: an
+  // air-conditioner's cooling plant is "ระบบทำความเย็นของระบบปรับอากาศ", which
+  // read as IT work until this line. "ปรับอากาศ" rather than the narrower
+  // "เครื่องปรับอากาศ" so that the system wording is covered as well.
+  "ปรับอากาศ", "ทำความเย็น", "สาธารณูปโภค",
+  // Solar generation is an electrical installation, not a system to be written.
+  "โซลาร์", "solar", "พลังงานแสงอาทิตย์", "ผลิตไฟฟ้า",
+  // Medical devices sold on their digital readout — "ระบบดิจิตอล" is two weak
+  // hits on an ultrasound scanner.
+  "อัลตราซาวด์", "คลื่นเสียงความถี่สูง", "อวัยวะ", "ทันตกรรม",
 ]
 
 /**

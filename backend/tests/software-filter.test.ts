@@ -38,3 +38,20 @@ test("excluded subjects win over a technical-sounding word", () => {
   assert.equal(suggests("จ้างเหมาดูแลทรัพย์สินและรักษาความปลอดภัยบริเวณพื้นที่"), false)
   assert.equal(suggests("จ้างก่อสร้างปรับปรุงซอยคู้คลองสิบ 11"), false)
 })
+
+test("plant has systems too, and they are not IT work", () => {
+  // "บำรุงรักษาระบบ" is a strong term, so anything maintained as a system used
+  // to read as IT. These four reached /browse before the exclusions caught them.
+  assert.equal(suggests("จ้างเหมาซ่อมบำรุงรักษาระบบทำความเย็นของระบบปรับอากาศ จำนวน 1 งาน"), false)
+  assert.equal(suggests("จ้างเหมาบำรุงรักษาระบบอุปกรณ์อาคารและสาธารณูปโภคศูนย์บริการ"), false)
+  assert.equal(suggests("ซื้อและติดตั้งโซลาร์รูฟท็อป (Solar Rooftop) ระบบผลิตไฟฟ้าจากพลังงานแสงอาทิตย์"), false)
+  assert.equal(suggests("ซื้อเครื่องตรวจอวัยวะภายในด้วยคลื่นเสียงความถี่สูงระบบดิจิตอล 5 หัวตรวจ"), false)
+})
+
+test("the exclusions do not catch the network and system work beside them", () => {
+  // The same wording that sells an air-conditioning plant also describes real
+  // IT maintenance, so the exclusions must be about the subject, not the verb.
+  assert.equal(suggests("จ้างเหมาบำรุงรักษาระบบเครือข่ายไร้สาย (Wireless LAN) โรงพยาบาลรัตนประชารักษ์"), true)
+  assert.equal(suggests("จ้างจัดหาระบบคลาวด์สำหรับระบบสารสนเทศศูนย์บริการสาธารณสุข"), true)
+  assert.equal(suggests("จ้างบำรุงรักษาระบบโทรมาตร"), true)
+})
