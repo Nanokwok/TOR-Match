@@ -298,19 +298,23 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
 const REQUEST_GAP_MS = 300
 
 /**
- * Fetches one announcement type, working around the 20-item cap (§4.2).
+ * Fetches one announcement type, optionally re-querying per procurement method
+ * when the 20-item cap (§4.2) hid part of the day.
  *
- * When the feed reports more announcements than it returned, the same query is
- * re-run once per procurement method: each narrower query gets its own 20-item
- * allowance, so together they reach announcements the broad query hid. On a day
- * where the feed admitted to 68 of 20 returned, that is the difference between
- * losing two thirds of the day and losing none of it.
+ * **Measured on 2026-10-07: the method sweep does not work, and callers should
+ * leave `narrowOnTruncation` off.** It was built on the assumption that each
+ * narrower query gets its own 20-item allowance. Against the live feed:
  *
- * The sweep costs up to twelve extra requests per type, and only on a truncated
- * day — a day under the cap returns after one request as before. A narrowed
- * query that is *itself* capped is reported in `saturatedMethods`: method is
- * the only axis this splits on, so beyond that the rest of the day is reachable
- * only by `announceDate` (§4.6) or by `deptSubId`.
+ *  - for `P0` the parameter is ignored outright — all twelve methods returned
+ *    byte-identical responses (20 items, countbyday 84, same first items), and
+ *    the twelve extra requests gained zero announcements;
+ *  - for `D0` it *is* honoured (`02`/`18`/`19` returned nothing, `16` returned
+ *    everything) but cannot split the day, because nearly every BMA
+ *    announcement is e-bidding and therefore in the one bucket.
+ *
+ * {@link fetchAnnouncementsOverDays} is the axis that does work. This is kept
+ * because `methodId` is honoured for some types and a future agency mix could
+ * differ, and because `saturatedMethods` is what proves the ceiling is real.
  *
  * One method's request failing costs that method's share, not the type: the
  * broad result is still returned, and the failure is named so a short count has
@@ -360,7 +364,11 @@ export async function fetchAnnouncements(
 /** What a fetch found, and whether the feed admitted to holding back more. */
 export type FetchResult = {
   items: EgpAnnouncement[]
-  /** The day's real total as the feed reports it (§4.7), 0 when absent. */
+  /**
+   * The day's real total as the feed reports it (§4.7), 0 when absent. Summed
+   * across the days walked when the result came from
+   * {@link fetchAnnouncementsOverDays}.
+   */
   countByDay: number
   truncated: boolean
   /** Feed requests this cost, so the price of the sweep stays visible. */
@@ -369,4 +377,87 @@ export type FetchResult = {
   saturatedMethods: MethodId[]
   /** Methods whose narrowed request failed, so a short count has a reason. */
   failedMethods: MethodId[]
+  /** Day-walk only: days the cap truncated, newest first. */
+  cappedDays?: string[]
+  /** Day-walk only: days whose request failed, newest first. */
+  failedDays?: string[]
+}
+
+/**
+ * The `announceDate` code (YYYYMMDD) for `back` days before `now`.
+ *
+ * Read in Asia/Bangkok, not the host's zone: the feed's day boundary is Thai
+ * local, so a machine set to UTC would ask for the wrong day through most of
+ * its evening — which is exactly when the feed is open (§4.8).
+ */
+export function announceDateCode(back: number, now = new Date()): string {
+  const at = new Date(now.getTime() - back * 86_400_000)
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .format(at)
+    .replace(/-/g, "")
+}
+
+/**
+ * Fetches one announcement type day by day, which is how the 20-item cap is
+ * actually escaped.
+ *
+ * Setting `announceDate` disables the feed's own 7-day backfill (§4.6), and in
+ * exchange each day queried gets its own 20-item allowance. The feed also
+ * answers for days well outside those seven: walking back 45 days on
+ * 2026-10-07 was still returning announcements at 2026-08-24, where the
+ * undated query returned 20 items in total. Measured for B0+D0 over those 45
+ * days: 405 projects, 72 of them software, against 20 from one undated query.
+ *
+ * A day over the cap is still capped — the axis multiplies allowances, it does
+ * not lift the limit — so `cappedDays` names the days that lost announcements.
+ * For B0/D0 that is rare (5-20 published a day); for P0 it is most days.
+ *
+ * Items are kept from every day and deduplicated by project *and url*, not by
+ * project alone: a re-published tender is genuinely two documents, and
+ * `mergeAnnouncementLinks` wants both.
+ */
+export async function fetchAnnouncementsOverDays(
+  query: EgpFeedQuery & { announceType: AnnounceType },
+  { days, onDay }: { days: number; onDay?: (date: string, result: EgpFeedResult) => void }
+): Promise<FetchResult> {
+  const byIdentity = new Map<string, EgpAnnouncement>()
+  const cappedDays: string[] = []
+  const failedDays: string[] = []
+  let countByDay = 0
+  let requests = 0
+
+  for (let back = 0; back < days; back += 1) {
+    const announceDate = announceDateCode(back)
+    if (requests > 0) await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
+    requests += 1
+    try {
+      const result = await fetchFeed({ ...query, announceDate })
+      countByDay += result.countByDay
+      if (result.truncated) cappedDays.push(announceDate)
+      for (const item of result.items) {
+        byIdentity.set(`${item.projectNo}\u0000${item.pdfUrl}`, item)
+      }
+      onDay?.(announceDate, result)
+    } catch {
+      // One day failing must not end a walk that may already have collected
+      // weeks of announcements; the gap is named instead.
+      failedDays.push(announceDate)
+    }
+  }
+
+  return {
+    items: [...byIdentity.values()],
+    countByDay,
+    truncated: cappedDays.length > 0,
+    requests,
+    saturatedMethods: [],
+    failedMethods: [],
+    cappedDays,
+    failedDays,
+  }
 }

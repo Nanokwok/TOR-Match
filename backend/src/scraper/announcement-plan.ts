@@ -104,6 +104,27 @@ function newTypes(entry: AnnouncementSources, stored?: StoredProject): Set<Annou
 }
 
 /**
+ * An extraction, or nothing when there is no document behind it.
+ *
+ * The type being present is not the same as a file being available: a tender or
+ * a notice is occasionally published with a link to e-GP's search page instead
+ * of the document, which `documentsToRead` rightly refuses to return. Planning
+ * an extraction anyway sends the downloader a missing url, which fails per
+ * project with "No document could be read" — a real-looking failure for a
+ * project whose announcement simply has no file yet. It waits instead, and the
+ * next announcement that does carry one extracts it.
+ */
+function extractIfReadable(
+  entry: AnnouncementSources,
+  stored: StoredProject | undefined,
+  from: AnnounceType
+): IngestAction {
+  const urls = documentsToRead(entry, stored)
+  if (!urls.length) return { kind: "none", reason: `${from} carries no readable document` }
+  return { kind: "extract", urls, from }
+}
+
+/**
  * The single action to take for one project this run. First match wins.
  */
 export function planForProject(input: {
@@ -116,7 +137,7 @@ export function planForProject(input: {
   const fresh = newTypes(entry, stored)
 
   if (force && stored) {
-    return { kind: "extract", urls: documentsToRead(entry, stored), from: ANNOUNCE_TYPES.draft }
+    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
   }
 
   // A project enters only through its tender document. An invitation alone
@@ -147,7 +168,7 @@ export function planForProject(input: {
   }
 
   if (fresh.has(ANNOUNCE_TYPES.draft) && !stored) {
-    return { kind: "extract", urls: documentsToRead(entry, stored), from: ANNOUNCE_TYPES.draft }
+    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
   }
 
   // A notice is read even when it is only two pages: the deadline exists
@@ -155,12 +176,12 @@ export function planForProject(input: {
   // merge's decision, not this one.
   for (const announceType of [ANNOUNCE_TYPES.invitationChanged, ANNOUNCE_TYPES.invitation]) {
     if (fresh.has(announceType)) {
-      return { kind: "extract", urls: documentsToRead(entry, stored), from: announceType }
+      return extractIfReadable(entry, stored, announceType)
     }
   }
 
   if (fresh.has(ANNOUNCE_TYPES.draft)) {
-    return { kind: "extract", urls: documentsToRead(entry, stored), from: ANNOUNCE_TYPES.draft }
+    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
   }
 
   // The official median price is worth a small model call, but only for a

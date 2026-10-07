@@ -6,7 +6,11 @@ import { ANNOUNCE_TYPES, type AnnounceType, type EgpAnnouncement } from "../src/
 
 const PROJECT = "69079298848"
 
-function announcement(pdfUrl: string, publishedDate = "2026-10-01"): EgpAnnouncement {
+function announcement(
+  pdfUrl: string,
+  publishedDate = "2026-10-01",
+  isDocument = true
+): EgpAnnouncement {
   return {
     projectNo: PROJECT,
     title: "ประกวดราคาจ้างพัฒนาระบบสารสนเทศ",
@@ -14,7 +18,7 @@ function announcement(pdfUrl: string, publishedDate = "2026-10-01"): EgpAnnounce
     methodLabel: "ประกวดราคาอิเล็กทรอนิกส์ (e-bidding)",
     announceLabel: "-",
     publishedDate,
-    isDocument: true,
+    isDocument,
   }
 }
 
@@ -23,6 +27,14 @@ function entryOf(...types: [AnnounceType, string][]) {
   for (const [announceType, url] of types) {
     byType.set(announceType, [...(byType.get(announceType) ?? []), announcement(url)])
   }
+  return groupByProject(byType).get(PROJECT)!
+}
+
+/** The same, but the announcement links to e-GP's search page, not a file. */
+function portalEntryOf(announceType: AnnounceType, url: string) {
+  const byType = new Map<AnnounceType, EgpAnnouncement[]>([
+    [announceType, [announcement(url, "2026-10-01", false)]],
+  ])
   return groupByProject(byType).get(PROJECT)!
 }
 
@@ -45,6 +57,31 @@ test("a winner notice alone never mints a TOR nobody can bid on", () => {
 
 test("a new tender document is extracted", () => {
   const action = planForProject({ entry: entryOf([ANNOUNCE_TYPES.draft, "b0.zip"]) })
+
+  assert.equal(action.kind, "extract")
+  assert.deepEqual(action.kind === "extract" ? action.urls : [], ["b0.zip"])
+})
+
+test("a tender announced with a portal link, not a file, waits instead of extracting", () => {
+  // Some B0s are published pointing at e-GP's search page. Planning an
+  // extraction with no url behind it sends the downloader nothing and reports
+  // "No document could be read" — a failure that looks like a broken PDF for a
+  // project whose announcement simply has no file.
+  const action = planForProject({
+    entry: portalEntryOf(ANNOUNCE_TYPES.draft, "https://process3.gprocurement.go.th/procsearch.sch?id=1"),
+  })
+
+  assert.equal(action.kind, "none")
+  assert.match(action.kind === "none" ? action.reason : "", /no readable document/)
+})
+
+test("a portal-linked invitation falls back to the stored tender rather than waiting", () => {
+  // The stored tender is still readable, so there is something to extract and
+  // the guard must not swallow the invitation.
+  const action = planForProject({
+    entry: portalEntryOf(ANNOUNCE_TYPES.invitation, "https://process3.gprocurement.go.th/procsearch.sch?id=2"),
+    stored: { pdfUrl: "b0.zip", announcements: [storedRow(ANNOUNCE_TYPES.draft, "b0.zip")] },
+  })
 
   assert.equal(action.kind, "extract")
   assert.deepEqual(action.kind === "extract" ? action.urls : [], ["b0.zip"])

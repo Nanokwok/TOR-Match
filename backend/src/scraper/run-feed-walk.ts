@@ -39,6 +39,7 @@ import { env } from "@/config/env"
 import { TorDraft } from "@/models/TorDraft.model"
 import {
   ANNOUNCE_TYPES,
+  announceDateCode,
   FEED_WINDOW_LABEL,
   fetchFeed,
   isFeedOpen,
@@ -98,25 +99,6 @@ function parseArgs(argv: string[]): Options {
   }
 }
 
-/**
- * The `announceDate` code (YYYYMMDD) for `back` days before today.
- *
- * Read in Asia/Bangkok, not the host's zone: the feed's day boundary is Thai
- * local, so a machine set to UTC would ask for the wrong day for most of its
- * evening — exactly when the feed is open.
- */
-function dayCode(back: number): string {
-  const at = new Date(Date.now() - back * 86_400_000)
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Bangkok",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-    .format(at)
-    .replace(/-/g, "")
-}
-
 /** What one announcement type returned for one day. */
 type Slot = {
   type: AnnounceType
@@ -154,7 +136,7 @@ async function walk(options: Options) {
   let oldestWithItems: string | undefined
 
   for (let back = 0; back < options.maxDays; back += 1) {
-    const announceDate = dayCode(back)
+    const announceDate = announceDateCode(back)
     const slots: Slot[] = []
 
     for (const announceType of options.types) {

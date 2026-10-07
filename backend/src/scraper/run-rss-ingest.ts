@@ -1,20 +1,37 @@
 /**
  * Ingests Bangkok procurement announcements from the CGD e-GP RSS feed.
  *
- *   npm run ingest                      # every announcement type
+ *   npm run ingest                      # every announcement type, today's feed
+ *   npm run ingest "--" --days 3        # walk three days back — see below
  *   npm run ingest "--" --dry-run       # show what would happen, touch nothing
  *   npm run ingest "--" --all           # keep non-software announcements too
  *   npm run ingest "--" --force         # re-extract announcements already stored
  *   npm run ingest "--" --types B0,D0   # only these types
- *   npm run ingest "--" --no-narrow     # one request per type, accept the 20-item cap
+ *   npm run ingest "--" --narrow        # also sweep by methodId (see below)
  *
  * The separator is quoted because PowerShell eats a bare `--`; see hasFlag.
  *
- * The feed caps a day at 20 announcements per type (§4.2) and says how many it
- * held back, so a day with 68 plans returns 20 of them. Every type is therefore
- * re-queried per procurement method when that happens — each narrower query has
- * its own allowance — and what the sweep cost, plus whatever it still could not
- * reach, is logged per type. `--no-narrow` buys a cheap run at the cap's price.
+ * **The 20-item cap, and what gets past it.** The feed returns at most 20
+ * announcements per type per day (§4.2) while telling you how many exist, so a
+ * day with 84 plans hands over 20. Two escapes were tried against the live
+ * feed:
+ *
+ *  - `methodId`, re-querying per procurement method. Measured: zero extra
+ *    announcements. Ignored outright for P0, and for D0 it is honoured but
+ *    cannot split a day in which nearly everything is e-bidding. Still
+ *    available as `--narrow`, off by default because it costs twelve requests
+ *    per truncated type and buys nothing.
+ *  - `announceDate`, one query per day. This works. Each day gets its own
+ *    allowance and the feed answers far past the seven days it backfills — 45
+ *    days back still returned announcements. For B0+D0 over 45 days that was
+ *    405 projects against 20 from the undated query.
+ *
+ * So `--days N` is the setting that decides how much this sees. It costs one
+ * request per type per day, which is why it is explicit rather than the
+ * default: a nightly run wants `--days 2` or 3 (nothing published yesterday can
+ * be missed), while a one-off catch-up wants 30 or more and should be dry-run
+ * first — old announcements extract exactly like new ones, and their bidding
+ * has usually closed.
  *
  * The flow, cheapest step first so nothing expensive runs on an announcement
  * that will be discarded:
@@ -58,8 +75,10 @@ import {
 import { hasFlag, readFlag } from "@/utils/cli-flags"
 import {
   ANNOUNCE_TYPES,
+  announceDateCode,
   FEED_WINDOW_LABEL,
   fetchAnnouncements,
+  fetchAnnouncementsOverDays,
   isFeedOpen,
   type AnnounceType,
   type EgpAnnouncement,
@@ -71,8 +90,14 @@ type Options = {
   allCategories: boolean
   force: boolean
   announceTypes: AnnounceType[]
-  /** Skips the per-method sweep: one request per type, as before. */
-  noNarrow: boolean
+  /**
+   * How many days back to query, one request per type per day. Undefined uses
+   * a single undated query per type, which the feed backfills over seven days
+   * to reach twenty items.
+   */
+  days?: number
+  /** Opts back into the per-method sweep, which measurement showed gains nothing. */
+  narrow: boolean
   /** Restricts the run to one project number, for inspecting a single extraction. */
   only?: string
 }
@@ -85,9 +110,19 @@ function parseArgs(argv: string[]): Options {
     // project number does not change, and re-reading it costs a full extraction.
     force: hasFlag(argv, "force"),
     announceTypes: parseAnnounceTypes(readFlag(argv, "types")),
-    noNarrow: hasFlag(argv, "no-narrow"),
+    days: parseDays(readFlag(argv, "days")),
+    narrow: hasFlag(argv, "narrow"),
     only: readFlag(argv, "only"),
   }
+}
+
+function parseDays(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined
+  const days = Number(raw)
+  if (!Number.isInteger(days) || days < 1) {
+    throw new Error(`--days must be a positive whole number, got "${raw}"`)
+  }
+  return days
 }
 
 /**
@@ -108,6 +143,14 @@ const LIFECYCLE_ORDER: AnnounceType[] = [
 ]
 
 const ALL_ANNOUNCE_TYPES = new Set<string>(Object.values(ANNOUNCE_TYPES))
+
+/**
+ * How old an announcement has to be before a dry run flags it as probably
+ * closed. A BMA e-bidding window runs one to three weeks from the invitation,
+ * so three weeks is where "still biddable" stops being the likely case. Only
+ * ever used to report — nothing is skipped on account of its age.
+ */
+const STALE_AFTER_DAYS = 21
 
 function parseAnnounceTypes(raw: string | undefined): AnnounceType[] {
   if (!raw) return LIFECYCLE_ORDER
@@ -194,27 +237,44 @@ async function main() {
   // (ประกาศเชิญชวน) is the two-page notice that defers the qualifications and
   // does give the deadline; D1/D2 and W0/W1/W2 say what became of the project.
   // Collapsing them threw away whichever lost.
+  if (options.days) {
+    console.log(
+      `[rss] walking ${options.days} day(s) back — about ` +
+        `${options.days * options.announceTypes.length} feed request(s)`
+    )
+  }
+
   const byType = new Map<AnnounceType, EgpAnnouncement[]>()
   let requests = 0
   for (const announceType of options.announceTypes) {
-    const result = await fetchAnnouncements(
-      { deptId: env.egpDeptId, announceType },
-      { narrowOnTruncation: !options.noNarrow }
-    )
+    const result = options.days
+      ? await fetchAnnouncementsOverDays({ deptId: env.egpDeptId, announceType }, { days: options.days })
+      : await fetchAnnouncements(
+          { deptId: env.egpDeptId, announceType },
+          { narrowOnTruncation: options.narrow }
+        )
     requests += result.requests
 
-    // countByDay is today's total (§4.7); the items can exceed it because the
-    // feed backfills up to seven days to reach twenty (§4.2). So it is only
-    // worth printing when the feed admits it held something back, or when the
-    // sweep cost something, or when it could not finish.
+    // countByDay is the day's total (§4.7), summed over the days walked. Items
+    // can exceed it on an undated query, because the feed backfills up to seven
+    // days to reach twenty (§4.2) — so it is only worth printing when the feed
+    // admits it held something back, or when a request could not be made.
     const notes: string[] = []
-    if (result.truncated) {
-      notes.push(`${result.countByDay} published today, still short after ${result.requests} request(s)`)
-    } else if (result.requests > 1) {
-      notes.push(`${result.countByDay} published today, reached by narrowing (${result.requests} requests)`)
+    if (result.cappedDays?.length) {
+      // The cap is per day and cannot be split further: methodId is measured
+      // not to work, leaving only deptSubId.
+      notes.push(
+        `${result.countByDay} published over those days, ` +
+          `${result.cappedDays.length} day(s) over the cap (${result.cappedDays.slice(0, 3).join(", ")}${
+            result.cappedDays.length > 3 ? ", …" : ""
+          })`
+      )
+    } else if (result.truncated) {
+      notes.push(`${result.countByDay} published today, ${result.items.length} returned`)
     }
-    // Over the cap within a single method: method is the only axis this sweep
-    // splits on, so what is left needs announceDate (§4.6) or deptSubId.
+    if (result.failedDays?.length) {
+      notes.push(`${result.failedDays.length} day(s) failed`)
+    }
     if (result.saturatedMethods.length) {
       notes.push(`method ${result.saturatedMethods.join("/")} over the cap on its own`)
     }
@@ -285,8 +345,26 @@ async function main() {
               : action.kind === "links"
                 ? `${rows.added.length} new link(s)`
                 : "median price"
+      const lead = primary(entry)
       console.log(
-        `  [${action.kind.padEnd(13)}] ${entry.projectNo}  ${types.padEnd(8)} ${detail.padEnd(26)} ${primary(entry).title.slice(0, 44)}`
+        `  [${action.kind.padEnd(13)}] ${entry.projectNo}  ${types.padEnd(8)} ` +
+          `${(lead.publishedDate || "no date").padEnd(11)} ${detail.padEnd(26)} ${lead.title.slice(0, 40)}`
+      )
+    }
+
+    // With --days the feed hands over weeks of history, and an announcement
+    // from last month extracts exactly like today's while its bidding has
+    // almost certainly closed. The dates above are what that costs, so they
+    // are summarised rather than left to be read off the list.
+    const extracts = planned.filter((item) => item.action.kind === "extract")
+    if (options.days && extracts.length) {
+      const cutoff = announceDateCode(STALE_AFTER_DAYS)
+      const stale = extracts.filter(
+        (item) => (primary(item.entry).publishedDate ?? "").replace(/-/g, "") < cutoff
+      )
+      console.log(
+        `\n[rss] ${extracts.length} extraction(s) planned, ${stale.length} of them from announcements ` +
+          `older than ${STALE_AFTER_DAYS} days — their bidding has probably closed`
       )
     }
     await disconnectDB()
