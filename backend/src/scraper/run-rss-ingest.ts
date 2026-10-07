@@ -65,6 +65,7 @@ import {
   applyMedianPrice,
   applyStatus,
 } from "@/services/announcement-lifecycle.service"
+import { ageStatuses } from "@/services/deadline-status.service"
 import { resolveDetailUrls } from "@/scraper/bma-detail-link"
 import type { ExtractionContext } from "@/scraper/extract"
 import {
@@ -454,10 +455,18 @@ async function main() {
     }
   }
 
+  // A deadline passes without anything being announced, and this run has just
+  // published invitations that may already be weeks old — so the statuses are
+  // brought up to date here rather than waiting for a separate job.
+  const aged = await ageStatuses()
+  for (const change of aged) {
+    console.log(`[rss] ${change.announcementNo} -> ${change.to} (deadline ${change.deadline})`)
+  }
+
   console.log(
     `
 [rss] done — ${extracting.length} extracted, ${statusChanges} status change(s), ` +
-      `${linkUpdates} link update(s)`
+      `${linkUpdates} link update(s), ${aged.length} aged by deadline`
   )
   await disconnectDB()
 }
