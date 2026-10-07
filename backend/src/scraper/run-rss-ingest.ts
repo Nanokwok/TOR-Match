@@ -192,7 +192,9 @@ async function ingestNew(
   rows: readonly AnnouncementLink[],
   stored?: { pdfUrl?: string; invitationUrl?: string },
   /** The announcement's page on the agency's site, when one was resolved. */
-  detailUrl?: string
+  detailUrl?: string,
+  /** Whether the title reads like IT work — stored as a label for /browse. */
+  softwareRelated = false
 ): Promise<void> {
   const lead = primary(entry)
   const links = linksFor(entry, stored)
@@ -210,6 +212,7 @@ async function ingestNew(
       // must not replace the tender's qualifications with its own deferral.
       from: action.from,
       announcements: rows,
+      softwareRelated,
     })
     const types = [...new Set(entry.all.map((item) => item.announceType))].join("+")
     console.log(
@@ -297,16 +300,28 @@ async function main() {
 
   const sources = groupByProject(byType)
 
+  // The software heuristic is recorded on every project it reaches, and only
+  // *selects* when --all is absent. Keeping the verdict rather than acting on
+  // it alone means a project the title heuristic misjudged is still on file.
+  const softwareBy = new Map(
+    [...sources.values()].map((entry) => [
+      entry.projectNo,
+      titleSuggestsSoftware({ title: primary(entry).title }),
+    ])
+  )
+
   const candidates = [...sources.values()].filter((entry) => {
     // --only narrows a run to named projects, so a handful of extractions can
     // be paid for and inspected without ingesting everything the feed offered.
     if (options.only && !options.only.has(entry.projectNo)) return false
     if (options.allCategories) return true
-    return titleSuggestsSoftware({ title: primary(entry).title })
+    return softwareBy.get(entry.projectNo) ?? false
   })
 
+  const software = [...softwareBy.values()].filter(Boolean).length
   console.log(
-    `[rss] ${sources.size} unique projects, ${candidates.length} pass the software filter`
+    `[rss] ${sources.size} unique projects, ${software} look like software` +
+      (options.allCategories ? ` — ingesting all ${candidates.length}` : `, and only those are ingested`)
   )
 
   const existing = await TorDraft.find(
@@ -449,7 +464,8 @@ async function main() {
           threshold,
           rows.rows,
           stored ?? undefined,
-          detailUrls.get(entry.projectNo)
+          detailUrls.get(entry.projectNo),
+          softwareBy.get(entry.projectNo) ?? false
         )
         break
     }

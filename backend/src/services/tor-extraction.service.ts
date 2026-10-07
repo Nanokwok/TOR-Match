@@ -74,6 +74,8 @@ export async function extractAndStore(params: {
   from?: AnnounceType
   /** Every announcement known for this project, stored alongside the content. */
   announcements?: readonly AnnouncementLink[]
+  /** Whether the title reads like IT work — a label for /browse, not a gate. */
+  softwareRelated?: boolean
 }): Promise<ExtractionOutcome> {
   const { announcementNo, pdfUrl, invitationUrl, detailUrl, publishedDate, context, threshold } = params
   const from = params.from ?? ANNOUNCE_TYPES.draft
@@ -155,6 +157,9 @@ export async function extractAndStore(params: {
       detailUrl: detailUrl ?? stored?.detailUrl ?? "",
       aiConfidence: extraction.aiConfidence,
       sourceJobId: job._id,
+      // Recomputed from the title each run rather than merged: this is our own
+      // heuristic, owned by neither the model nor a reviewer.
+      softwareRelated: params.softwareRelated ?? false,
       ...(params.announcements?.length ? { announcements: [...params.announcements] } : {}),
     }
 

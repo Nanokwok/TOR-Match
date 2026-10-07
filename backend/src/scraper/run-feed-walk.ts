@@ -52,6 +52,16 @@ import { readFlag } from "@/utils/cli-flags"
 const REQUEST_GAP_MS = 300
 
 /**
+ * How long to wait after a day's request failed.
+ *
+ * A long walk is hundreds of requests against someone else's public service,
+ * and it starts refusing them well before the history runs out. Slowing down
+ * on a refusal is what lets the walk reach the end of the feed rather than the
+ * end of its own welcome.
+ */
+const FAILURE_BACKOFF_MS = 5_000
+
+/**
  * How many consecutive empty days end the walk. Two covers a weekend; Thai
  * public holidays can bridge a weekend into four or five days, and Songkran
  * closes most of a week. Ten is comfortably past that without spending
@@ -133,6 +143,7 @@ async function walk(options: Options) {
   const days: DayReport[] = []
   let requests = 0
   let dryStreak = 0
+  let failedRuns = 0
   let oldestWithItems: string | undefined
 
   for (let back = 0; back < options.maxDays; back += 1) {
@@ -171,8 +182,7 @@ async function walk(options: Options) {
         }
       } catch (error) {
         // One day's one type failing must not end a walk that may already have
-        // collected hundreds of announcements. It is counted as a failure, not
-        // as an empty day, so it cannot shorten the dry streak either way.
+        // collected hundreds of announcements.
         slots.push({
           type: announceType,
           items: 0,
@@ -199,6 +209,15 @@ async function walk(options: Options) {
     if (items) {
       oldestWithItems = announceDate
       dryStreak = 0
+    } else if (slots.some((slot) => slot.failed)) {
+      // A day that errored is not a day the feed has nothing for, and counting
+      // it as one ends the walk at the wrong place: a burst of refusals after a
+      // few hundred rapid requests once made this report the feed as ending in
+      // June, when it answers for January perfectly well a moment later.
+      dryStreak = 0
+      failedRuns += 1
+      // Back off, because the far likelier cause is this walk's own pace.
+      await new Promise((resolve) => setTimeout(resolve, FAILURE_BACKOFF_MS))
     } else {
       dryStreak += 1
       if (dryStreak >= options.stopAfter) {
@@ -212,7 +231,7 @@ async function walk(options: Options) {
     project.types = [...project.typeSet].sort()
   }
 
-  return { projects, days, requests, oldestWithItems }
+  return { projects, days, requests, oldestWithItems, failedRuns }
 }
 
 async function main() {
@@ -231,7 +250,7 @@ async function main() {
       `${options.types.length} request(s) per day · stopping after ${options.stopAfter} empty days`
   )
 
-  const { projects, days, requests, oldestWithItems } = await walk(options)
+  const { projects, days, requests, oldestWithItems, failedRuns } = await walk(options)
 
   const all = [...projects.values()]
   const software = all.filter((project) => project.software)
@@ -261,6 +280,7 @@ async function main() {
 [walk] oldest day the feed answered with items: ${oldestWithItems ?? "none"}
 [walk] ${all.length} unique projects, ${software.length} pass the software filter
 [walk] ${fresh.length} of those ${software.length} are not in TorDraft yet
+[walk] ${failedRuns} day(s) the feed refused and were backed off, not counted as empty
 [walk] ${lost} announcement(s) still lost to the 20-item cap on busy days${
     plans
       ? `\n[walk] note: ${plans} of them are P0 plans, keyed by plan number — they cannot match a draft, so they inflate the line above`

@@ -17,6 +17,7 @@ export const EMPTY_DETAIL_FILTERS: TorDetailFilters = {
   deadlineTo: "",
   fiscalYear: "all",
   localOffices: [],
+  softwareOnly: false,
 }
 
 export const PROJECT_SCALE_OPTIONS: {

@@ -275,7 +275,9 @@
       "applyFiltersCountPlural": "Apply Filters ({count} Results Found)",
       "counting": "Counting...",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "category": "Category",
+      "softwareOnly": "Software and IT work only"
     },
     "qualificationUnavailable": "Qualification results are unavailable.",
     "qualificationStatus": {

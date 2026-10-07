@@ -275,7 +275,9 @@
       "applyFiltersCountPlural": "ใช้ตัวกรอง (พบ {count} รายการ)",
       "counting": "กำลังนับ...",
       "from": "จาก",
-      "to": "ถึง"
+      "to": "ถึง",
+      "category": "ประเภทงาน",
+      "softwareOnly": "เฉพาะงานซอฟต์แวร์และไอที"
     },
     "qualificationUnavailable": "ไม่สามารถแสดงผลตรวจคุณสมบัติได้",
     "qualificationStatus": {

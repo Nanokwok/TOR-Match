@@ -13,6 +13,13 @@ export const detailFiltersSchema = z.object({
   deadlineTo: z.string().default(""),
   fiscalYear: z.string().default("all"),
   localOffices: z.array(z.string()).default([]),
+  /**
+   * Show only announcements whose title reads like IT work.
+   *
+   * Ingestion stores every kind of procurement now, so without this a bidder
+   * looking for software wades through refuse collection and hospital meals.
+   */
+  softwareOnly: z.boolean().default(false),
 }).strict()
 type TorDetailFilters = z.infer<typeof detailFiltersSchema>
 type TorDurationPreset = TorDetailFilters["durationPresets"][number]
@@ -24,6 +31,7 @@ type FilterableTor = {
   deadline: string
   announcementDate: string
   localOffice: { en: string }
+  softwareRelated?: boolean
 }
 
 function matchesDurationPreset(days: number, preset: TorDurationPreset) {
@@ -53,6 +61,8 @@ export function matchesDetailFilters(
   detail?: TorDetailFilters | null
 ) {
   if (!detail) return true
+
+  if (detail.softwareOnly && !tor.softwareRelated) return false
 
   if (
     detail.projectScales.length > 0 &&

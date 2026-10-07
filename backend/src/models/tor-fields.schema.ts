@@ -157,6 +157,16 @@ export const torContentFields = {
   sourceUrl: { type: String, default: "" },
   summary: { type: localizedTextSchema, required: true },
   deliverables: { type: localizedListSchema, default: () => ({}) },
+  /**
+   * Whether the announcement's title reads like IT work.
+   *
+   * A label, not a gate. Ingestion used to discard everything this said no to,
+   * which kept the database small but threw away the decision — so a project
+   * mis-read by a title heuristic was gone for good, and widening the net later
+   * meant re-ingesting months of announcements. Storing it instead lets
+   * /browse show only software work while the rest stays on file.
+   */
+  softwareRelated: { type: Boolean, default: false, index: true },
   techTags: { type: [String], default: [], index: true },
   listTags: { type: [String], default: [] },
   financials: { type: financialsSchema, required: true },

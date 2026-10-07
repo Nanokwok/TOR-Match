@@ -300,6 +300,9 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
 /** Spacing between feed requests, so a narrowing sweep is not a burst. */
 const REQUEST_GAP_MS = 300
 
+/** How long to wait before retrying a day the feed refused. */
+const FAILURE_BACKOFF_MS = 5_000
+
 /**
  * Fetches one announcement type, optionally re-querying per procurement method
  * when the 20-item cap (§4.2) hid part of the day.
@@ -438,19 +441,30 @@ export async function fetchAnnouncementsOverDays(
     const announceDate = announceDateCode(back)
     if (requests > 0) await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
     requests += 1
-    try {
-      const result = await fetchFeed({ ...query, announceDate })
-      countByDay += result.countByDay
-      if (result.truncated) cappedDays.push(announceDate)
-      for (const item of result.items) {
-        byIdentity.set(`${item.projectNo}\u0000${item.pdfUrl}`, item)
+    // A long walk is hundreds of requests, and the feed starts refusing them
+    // before its history runs out — so one refusal is retried after a pause
+    // rather than written off as a day with nothing in it. Losing a day here
+    // loses every announcement published on it.
+    let result: EgpFeedResult | undefined
+    for (let attempt = 0; attempt < 2 && !result; attempt += 1) {
+      if (attempt) await new Promise((resolve) => setTimeout(resolve, FAILURE_BACKOFF_MS))
+      try {
+        result = await fetchFeed({ ...query, announceDate })
+      } catch {
+        // Retried once, then recorded as a gap.
       }
-      onDay?.(announceDate, result)
-    } catch {
-      // One day failing must not end a walk that may already have collected
-      // weeks of announcements; the gap is named instead.
-      failedDays.push(announceDate)
     }
+    if (!result) {
+      failedDays.push(announceDate)
+      continue
+    }
+
+    countByDay += result.countByDay
+    if (result.truncated) cappedDays.push(announceDate)
+    for (const item of result.items) {
+      byIdentity.set(`${item.projectNo}\u0000${item.pdfUrl}`, item)
+    }
+    onDay?.(announceDate, result)
   }
 
   return {

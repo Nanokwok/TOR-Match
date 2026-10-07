@@ -144,6 +144,8 @@ export type Tor = {
   deliverables: LocalizedList
   techTags: string[]
   listTags: string[]
+  /** Whether the title reads like IT work. A label, not a guarantee. */
+  softwareRelated?: boolean
   financials: TorFinancials
   qualificationRequirements: TorQualificationRequirement[]
   timeline?: TorTimeline
@@ -205,6 +207,8 @@ export type TorDetailFilters = {
   deadlineTo: string
   fiscalYear: string
   localOffices: string[]
+  /** Show only announcements whose title reads like IT work. */
+  softwareOnly: boolean
 }
 
 export type TorListQuery = {
