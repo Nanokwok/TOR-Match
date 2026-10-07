@@ -66,6 +66,8 @@ export const env = {
   mailFrom: process.env.MAIL_FROM ?? process.env.SMTP_USER ?? "TOR Match <no-reply@localhost>",
   /** Base URL of the web app, used for the links inside emails. */
   appUrl: (process.env.APP_URL ?? (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(",")[0]).trim(),
+  /** Hourly deadline reminders inside the API server. Set DEADLINE_REMINDERS_ENABLED=false to turn off. */
+  deadlineRemindersEnabled: process.env.DEADLINE_REMINDERS_ENABLED !== "false",
   bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
   /**
    * The CGD e-GP RSS feed — the published channel for mirroring procurement

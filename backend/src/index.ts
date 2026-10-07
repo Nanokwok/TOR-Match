@@ -1,6 +1,7 @@
 import { createApp } from "@/app"
 import { connectDB } from "@/config/db"
 import { env } from "@/config/env"
+import { startDeadlineReminderScheduler } from "@/services/deadline-reminder.service"
 
 async function main() {
   await connectDB()
@@ -9,6 +10,8 @@ async function main() {
   const server = app.listen(env.port, () => {
     console.log(`[server] listening on http://localhost:${env.port} (${env.nodeEnv})`)
   })
+
+  if (env.deadlineRemindersEnabled) startDeadlineReminderScheduler()
 
   const shutdown = (signal: string) => {
     console.log(`[server] received ${signal}, shutting down`)

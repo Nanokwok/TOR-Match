@@ -16,6 +16,7 @@
     "backfill:links": "tsx src/scraper/run-backfill-links.ts",
     "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
+    "notify:deadlines": "tsx src/utils/run-deadline-reminders.ts",
     "email:test": "tsx src/utils/send-test-email.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",
     "lint": "eslint .",

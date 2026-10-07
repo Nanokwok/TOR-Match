@@ -17,7 +17,28 @@ export const HIGH_BUDGET_THRESHOLD_BAHT = 10_000_000
 type Requirements = Parameters<typeof matchCompanyToTor>[1]["qualificationRequirements"]
 
 /** The ids of NotificationSettings.events that this service raises. */
-export type NotificationEvent = "new-high-match" | "high-budget" | "deal-breaker"
+export type NotificationEvent =
+  | "new-high-match"
+  | "high-budget"
+  | "deal-breaker"
+  | "deadline-7-day"
+  | "deadline-3-day"
+  | "deadline-24-hour"
+
+/**
+ * What an event does for someone with no saved preference for it. Mirrors the
+ * defaults the settings screen shows (DEFAULT_NOTIFICATION_SETTINGS on the
+ * frontend): everything on except the 7-day deadline email, which is a nudge
+ * rather than something time-critical.
+ */
+const DEFAULT_EVENT_PREFERENCE: Record<NotificationEvent, { inApp: boolean; email: boolean }> = {
+  "new-high-match": { inApp: true, email: true },
+  "high-budget": { inApp: true, email: true },
+  "deal-breaker": { inApp: true, email: true },
+  "deadline-7-day": { inApp: true, email: false },
+  "deadline-3-day": { inApp: true, email: true },
+  "deadline-24-hour": { inApp: true, email: true },
+}
 
 type PreferenceSource = {
   inAppEnabled?: boolean
@@ -41,7 +62,7 @@ export function selectNewMatches(eligibleIds: string[], alreadyNotifiedIds: stri
 export function allowsInApp(settings: PreferenceSource, event: NotificationEvent): boolean {
   if (!settings) return true
   if (settings.inAppEnabled === false) return false
-  return settings.events?.[event]?.inApp !== false
+  return (settings.events?.[event]?.inApp ?? DEFAULT_EVENT_PREFERENCE[event].inApp) !== false
 }
 
 /**
@@ -51,9 +72,8 @@ export function allowsInApp(settings: PreferenceSource, event: NotificationEvent
  * gates it because digests (which would carry the rest) are not sent yet.
  */
 export function allowsEmail(settings: PreferenceSource, event: NotificationEvent): boolean {
-  if (!settings) return true
-  if (settings.emailEnabled === false || settings.instantEmailAlerts === false) return false
-  return settings.events?.[event]?.email !== false
+  if (settings?.emailEnabled === false || settings?.instantEmailAlerts === false) return false
+  return (settings?.events?.[event]?.email ?? DEFAULT_EVENT_PREFERENCE[event].email) !== false
 }
 
 /** An earlier build of the settings screen saved this sample address as if it were real. */
@@ -111,7 +131,7 @@ export function requirementsVersion(requirements: Requirements): string {
   return createHash("sha1").update(fingerprints.join("|")).digest("hex").slice(0, 12)
 }
 
-type NewNotification = {
+export type NewNotification = {
   userId: unknown
   dedupeKey: string
   title: { en: string; th: string }
@@ -126,7 +146,7 @@ type NewNotification = {
  * emails. A record is kept for email-only recipients too (hidden from the
  * bell), because it is what stops the next ingest run emailing them again.
  */
-async function deliver(event: NotificationEvent, notifications: NewNotification[]): Promise<void> {
+export async function deliver(event: NotificationEvent, notifications: NewNotification[]): Promise<void> {
   if (!notifications.length) return
 
   const userIds = [...new Set(notifications.map((n) => String(n.userId)))]
@@ -167,7 +187,7 @@ async function deliver(event: NotificationEvent, notifications: NewNotification[
   })
 }
 
-const torName = (tor: TorDoc, locale: "en" | "th") =>
+export const torName = (tor: TorDoc, locale: "en" | "th") =>
   locale === "en" ? tor.title.en || tor.title.th : tor.title.th || tor.title.en
 
 function buildMatchNotification(userId: unknown, tor: TorDoc) {
