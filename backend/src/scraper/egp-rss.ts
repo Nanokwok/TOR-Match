@@ -301,13 +301,20 @@ const REQUEST_GAP_MS = 300
  * Fetches one announcement type, working around the 20-item cap (§4.2).
  *
  * When the feed reports more announcements than it returned, the same query is
- * re-run per procurement method: each narrower query gets its own 20-item
- * allowance, so together they reach announcements the broad query hid.
+ * re-run once per procurement method: each narrower query gets its own 20-item
+ * allowance, so together they reach announcements the broad query hid. On a day
+ * where the feed admitted to 68 of 20 returned, that is the difference between
+ * losing two thirds of the day and losing none of it.
  *
- * That sweep costs twelve more requests, which is worth paying only where a
- * missed item decides whether a TOR exists at all — the tender and the notice.
- * For the rest, a missed announcement is a link row the next run picks up, and
- * the feed keeps seven days (§4.2). Hence `narrowOnTruncation`.
+ * The sweep costs up to twelve extra requests per type, and only on a truncated
+ * day — a day under the cap returns after one request as before. A narrowed
+ * query that is *itself* capped is reported in `saturatedMethods`: method is
+ * the only axis this splits on, so beyond that the rest of the day is reachable
+ * only by `announceDate` (§4.6) or by `deptSubId`.
+ *
+ * One method's request failing costs that method's share, not the type: the
+ * broad result is still returned, and the failure is named so a short count has
+ * a reason.
  */
 export async function fetchAnnouncements(
   query: EgpFeedQuery & { announceType: AnnounceType },
@@ -315,23 +322,39 @@ export async function fetchAnnouncements(
 ): Promise<FetchResult> {
   const broad = await fetchFeed(query)
   if (!broad.truncated || !narrowOnTruncation) {
-    return { items: broad.items, countByDay: broad.countByDay, truncated: broad.truncated }
+    return { ...broad, requests: 1, saturatedMethods: [], failedMethods: [] }
   }
 
   const byProjectNo = new Map(broad.items.map((item) => [item.projectNo, item]))
+  const saturatedMethods: MethodId[] = []
+  const failedMethods: MethodId[] = []
+  let requests = 1
 
   for (const methodId of Object.values(METHOD_IDS)) {
     await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
-    const narrowed = await fetchFeed({ ...query, methodId })
-    for (const item of narrowed.items) {
-      byProjectNo.set(item.projectNo, item)
+    requests += 1
+    try {
+      const narrowed = await fetchFeed({ ...query, methodId })
+      for (const item of narrowed.items) {
+        byProjectNo.set(item.projectNo, item)
+      }
+      if (narrowed.truncated) saturatedMethods.push(methodId)
+    } catch {
+      failedMethods.push(methodId)
     }
   }
 
   const items = [...byProjectNo.values()]
   // Still short of the day's total even after narrowing: the caller should say
   // so rather than report a number that silently omits announcements.
-  return { items, countByDay: broad.countByDay, truncated: broad.countByDay > items.length }
+  return {
+    items,
+    countByDay: broad.countByDay,
+    truncated: broad.countByDay > items.length,
+    requests,
+    saturatedMethods,
+    failedMethods,
+  }
 }
 
 /** What a fetch found, and whether the feed admitted to holding back more. */
@@ -340,4 +363,10 @@ export type FetchResult = {
   /** The day's real total as the feed reports it (§4.7), 0 when absent. */
   countByDay: number
   truncated: boolean
+  /** Feed requests this cost, so the price of the sweep stays visible. */
+  requests: number
+  /** Methods whose own narrowed query hit the cap — unsplittable by method. */
+  saturatedMethods: MethodId[]
+  /** Methods whose narrowed request failed, so a short count has a reason. */
+  failedMethods: MethodId[]
 }

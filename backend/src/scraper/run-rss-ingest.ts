@@ -1,17 +1,25 @@
 /**
  * Ingests Bangkok procurement announcements from the CGD e-GP RSS feed.
  *
- *   npm run ingest                   # both announcement types
- *   npm run ingest "--" --dry-run    # show what would happen, touch nothing
- *   npm run ingest "--" --all        # keep non-software announcements too
- *   npm run ingest "--" --force      # re-extract announcements already stored
+ *   npm run ingest                      # every announcement type
+ *   npm run ingest "--" --dry-run       # show what would happen, touch nothing
+ *   npm run ingest "--" --all           # keep non-software announcements too
+ *   npm run ingest "--" --force         # re-extract announcements already stored
+ *   npm run ingest "--" --types B0,D0   # only these types
+ *   npm run ingest "--" --no-narrow     # one request per type, accept the 20-item cap
  *
  * The separator is quoted because PowerShell eats a bare `--`; see hasFlag.
+ *
+ * The feed caps a day at 20 announcements per type (§4.2) and says how many it
+ * held back, so a day with 68 plans returns 20 of them. Every type is therefore
+ * re-queried per procurement method when that happens — each narrower query has
+ * its own allowance — and what the sweep cost, plus whatever it still could not
+ * reach, is logged per type. `--no-narrow` buys a cheap run at the cap's price.
  *
  * The flow, cheapest step first so nothing expensive runs on an announcement
  * that will be discarded:
  *
- *   RSS (B0 draft + D0 invitation)
+ *   RSS (all nine announcement types, in lifecycle order)
  *     -> software filter, on the title alone          — free
  *     -> already in the database?
  *          yes -> update what changed, no AI          — free
@@ -63,6 +71,8 @@ type Options = {
   allCategories: boolean
   force: boolean
   announceTypes: AnnounceType[]
+  /** Skips the per-method sweep: one request per type, as before. */
+  noNarrow: boolean
   /** Restricts the run to one project number, for inspecting a single extraction. */
   only?: string
 }
@@ -75,6 +85,7 @@ function parseArgs(argv: string[]): Options {
     // project number does not change, and re-reading it costs a full extraction.
     force: hasFlag(argv, "force"),
     announceTypes: parseAnnounceTypes(readFlag(argv, "types")),
+    noNarrow: hasFlag(argv, "no-narrow"),
     only: readFlag(argv, "only"),
   }
 }
@@ -95,16 +106,6 @@ const LIFECYCLE_ORDER: AnnounceType[] = [
   ANNOUNCE_TYPES.winnerCancelled,
   ANNOUNCE_TYPES.winnerChanged,
 ]
-
-/**
- * Only these decide whether a TOR exists at all, so only these are worth the
- * twelve-request narrowing sweep when the feed truncates a day (§4.2).
- */
-const NARROW_ON_TRUNCATION = new Set<AnnounceType>([
-  ANNOUNCE_TYPES.draft,
-  ANNOUNCE_TYPES.invitation,
-  ANNOUNCE_TYPES.invitationChanged,
-])
 
 const ALL_ANNOUNCE_TYPES = new Set<string>(Object.values(ANNOUNCE_TYPES))
 
@@ -194,22 +195,37 @@ async function main() {
   // does give the deadline; D1/D2 and W0/W1/W2 say what became of the project.
   // Collapsing them threw away whichever lost.
   const byType = new Map<AnnounceType, EgpAnnouncement[]>()
+  let requests = 0
   for (const announceType of options.announceTypes) {
     const result = await fetchAnnouncements(
       { deptId: env.egpDeptId, announceType },
-      { narrowOnTruncation: NARROW_ON_TRUNCATION.has(announceType) }
+      { narrowOnTruncation: !options.noNarrow }
     )
+    requests += result.requests
+
     // countByDay is today's total (§4.7); the items can exceed it because the
     // feed backfills up to seven days to reach twenty (§4.2). So it is only
-    // worth printing when the feed admits it held something back.
-    const note = result.truncated
-      ? NARROW_ON_TRUNCATION.has(announceType)
-        ? ` — ${result.countByDay} published today, still short after narrowing by method`
-        : ` — ${result.countByDay} published today, not all of them returned`
-      : ""
+    // worth printing when the feed admits it held something back, or when the
+    // sweep cost something, or when it could not finish.
+    const notes: string[] = []
+    if (result.truncated) {
+      notes.push(`${result.countByDay} published today, still short after ${result.requests} request(s)`)
+    } else if (result.requests > 1) {
+      notes.push(`${result.countByDay} published today, reached by narrowing (${result.requests} requests)`)
+    }
+    // Over the cap within a single method: method is the only axis this sweep
+    // splits on, so what is left needs announceDate (§4.6) or deptSubId.
+    if (result.saturatedMethods.length) {
+      notes.push(`method ${result.saturatedMethods.join("/")} over the cap on its own`)
+    }
+    if (result.failedMethods.length) {
+      notes.push(`${result.failedMethods.length} narrowing request(s) failed`)
+    }
+    const note = notes.length ? ` — ${notes.join("; ")}` : ""
     console.log(`[rss] ${announceType}: ${result.items.length} announcements${note}`)
     byType.set(announceType, result.items)
   }
+  console.log(`[rss] ${requests} feed request(s) for ${options.announceTypes.length} type(s)`)
 
   const sources = groupByProject(byType)
 
