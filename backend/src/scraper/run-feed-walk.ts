@@ -7,6 +7,7 @@
  *   npm run walk:feed "--" --days 60          # hard stop after 60 days
  *   npm run walk:feed "--" --stop-after 15    # dry days tolerated before giving up
  *   npm run walk:feed "--" --out history.json # every announcement found, as JSON
+ *   npm run walk:feed "--" --gap 2000         # slow down; the feed 429s a fast walk
  *
  * The separator is quoted because PowerShell eats a bare `--`; see cli-flags.
  *
@@ -79,6 +80,8 @@ type Options = {
   maxDays: number
   stopAfter: number
   out?: string
+  /** Milliseconds between requests. Raise it for a long walk. */
+  gapMs: number
 }
 
 function parseTypes(raw: string | undefined): AnnounceType[] {
@@ -106,6 +109,7 @@ function parseArgs(argv: string[]): Options {
     maxDays: positiveInt(readFlag(argv, "days"), DEFAULT_MAX_DAYS, "days"),
     stopAfter: positiveInt(readFlag(argv, "stop-after"), DEFAULT_STOP_AFTER, "stop-after"),
     out: readFlag(argv, "out"),
+    gapMs: positiveInt(readFlag(argv, "gap"), REQUEST_GAP_MS, "gap"),
   }
 }
 
@@ -144,6 +148,7 @@ async function walk(options: Options) {
   let requests = 0
   let dryStreak = 0
   let failedRuns = 0
+  let rateLimited = false
   let oldestWithItems: string | undefined
 
   for (let back = 0; back < options.maxDays; back += 1) {
@@ -151,7 +156,7 @@ async function walk(options: Options) {
     const slots: Slot[] = []
 
     for (const announceType of options.types) {
-      if (requests > 0) await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
+      if (requests > 0) await new Promise((resolve) => setTimeout(resolve, options.gapMs))
       requests += 1
       try {
         const result = await fetchFeed({ deptId: env.egpDeptId, announceType, announceDate })
@@ -199,7 +204,11 @@ async function walk(options: Options) {
 
     const detail = slots
       .filter((slot) => slot.items || slot.failed)
-      .map((slot) => (slot.failed ? `${slot.type}:failed` : `${slot.type}:${slot.items}${slot.lost ? `/${slot.items + slot.lost}` : ""}`))
+      .map((slot) =>
+        slot.failed
+          ? `${slot.type}:${/HTTP (\d+)/.exec(slot.failed)?.[1] ?? "failed"}`
+          : `${slot.type}:${slot.items}${slot.lost ? `/${slot.items + slot.lost}` : ""}`
+      )
       .join(" ")
     console.log(
       `[walk] ${announceDate}  ${String(items).padStart(3)} items` +
@@ -209,6 +218,16 @@ async function walk(options: Options) {
     if (items) {
       oldestWithItems = announceDate
       dryStreak = 0
+    } else if (slots.some((slot) => slot.failed?.includes("HTTP 429"))) {
+      // The feed rate-limits a client after a few hundred requests and keeps
+      // doing so for a while. Carrying on just collects refusals, so the walk
+      // stops and says where it got to — resumable with --days from there.
+      console.log(
+        `[walk] the feed is rate-limiting (HTTP 429) after ${requests} request(s) — stopping at ${announceDate}.` +
+          `\n[walk] wait a while, then continue with a larger --gap, or walk fewer days at a time.`
+      )
+      rateLimited = true
+      break
     } else if (slots.some((slot) => slot.failed)) {
       // A day that errored is not a day the feed has nothing for, and counting
       // it as one ends the walk at the wrong place: a burst of refusals after a
@@ -231,7 +250,7 @@ async function walk(options: Options) {
     project.types = [...project.typeSet].sort()
   }
 
-  return { projects, days, requests, oldestWithItems, failedRuns }
+  return { projects, days, requests, oldestWithItems, failedRuns, rateLimited }
 }
 
 async function main() {
@@ -250,7 +269,7 @@ async function main() {
       `${options.types.length} request(s) per day · stopping after ${options.stopAfter} empty days`
   )
 
-  const { projects, days, requests, oldestWithItems, failedRuns } = await walk(options)
+  const { projects, days, requests, oldestWithItems, failedRuns, rateLimited } = await walk(options)
 
   const all = [...projects.values()]
   const software = all.filter((project) => project.software)
@@ -280,7 +299,9 @@ async function main() {
 [walk] oldest day the feed answered with items: ${oldestWithItems ?? "none"}
 [walk] ${all.length} unique projects, ${software.length} pass the software filter
 [walk] ${fresh.length} of those ${software.length} are not in TorDraft yet
-[walk] ${failedRuns} day(s) the feed refused and were backed off, not counted as empty
+[walk] ${failedRuns} day(s) the feed refused and were backed off, not counted as empty${
+    rateLimited ? "\n[walk] STOPPED EARLY by rate limiting — the history is not exhausted" : ""
+  }
 [walk] ${lost} announcement(s) still lost to the 20-item cap on busy days${
     plans
       ? `\n[walk] note: ${plans} of them are P0 plans, keyed by plan number — they cannot match a draft, so they inflate the line above`

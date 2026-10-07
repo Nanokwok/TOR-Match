@@ -68,6 +68,12 @@ const STRONG_TERMS = [
   "พัฒนาระบบ", "จัดทำระบบ", "ปรับปรุงระบบ", "บำรุงรักษาระบบ",
   "เทคโนโลยีสารสนเทศ", "คอมพิวเตอร์", "computer", "ไอที",
   "api", "ocr", "cloud", "คลาวด์",
+  // Closed-circuit television is systems-integration work — network cameras,
+  // recorders, storage and the software that reads them — and it is a large
+  // share of what the BMA buys from IT suppliers. Measured over 120 days, 8 of
+  // 22 CCTV projects were missed, including "ระบบวิเคราะห์ภาพจากกล้องโทรทัศน์วงจรปิด",
+  // because they say "บำรุงรักษากล้อง" rather than "บำรุงรักษาระบบ".
+  "กล้องโทรทัศน์วงจรปิด", "กล้องวงจรปิด", "cctv",
 ]
 
 /**
@@ -80,6 +86,9 @@ const STRONG_TERMS = [
 const WEAK_TERMS = [
   "ระบบ", "system", "ดิจิทัล", "ดิจิตอล", "digital",
   "ออนไลน์", "online", "เว็บ", "web", "แอป", "app", "ai",
+  // Weak, not strong: a lone "Network" also appears on laser printers, while
+  // real work pairs it with something — "ระบบป้องกันเครือข่าย" is two hits.
+  "เครือข่าย", "network",
 ]
 
 /** Is this announcement worth downloading a document for? */

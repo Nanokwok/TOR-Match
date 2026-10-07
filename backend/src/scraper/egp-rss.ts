@@ -282,7 +282,7 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
   })
 
   if (!response.ok) {
-    throw new Error(`Feed returned HTTP ${response.status} for ${url}`)
+    throw new FeedHttpError(response.status, url)
   }
 
   // Thai text, and the feed declares its charset twice — inconsistently. The
@@ -297,11 +297,38 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
   return parseFeed(xml)
 }
 
+/**
+ * A non-2xx answer from the feed, carrying the status so a caller can tell a
+ * rate limit from a broken request.
+ *
+ * The feed answers 429 once a client has made a few hundred requests, and it
+ * keeps answering 429 for a good while afterwards. Read as a plain failure that
+ * looks exactly like "this day has nothing", which is how a walk once reported
+ * the feed as ending in June while it served January perfectly well.
+ */
+export class FeedHttpError extends Error {
+  constructor(readonly status: number, url: string) {
+    super(`Feed returned HTTP ${status} for ${url}`)
+    this.name = "FeedHttpError"
+  }
+
+  /** Whether waiting longer is the right response. */
+  get isRateLimit(): boolean {
+    return this.status === 429 || this.status === 503
+  }
+}
+
 /** Spacing between feed requests, so a narrowing sweep is not a burst. */
 const REQUEST_GAP_MS = 300
 
 /** How long to wait before retrying a day the feed refused. */
 const FAILURE_BACKOFF_MS = 5_000
+
+/** First wait after a 429, doubled on each further refusal. */
+const RATE_LIMIT_BACKOFF_MS = 30_000
+
+/** Attempts per day, counting the first. */
+const RETRIES = 4
 
 /**
  * Fetches one announcement type, optionally re-querying per procurement method
@@ -446,12 +473,19 @@ export async function fetchAnnouncementsOverDays(
     // rather than written off as a day with nothing in it. Losing a day here
     // loses every announcement published on it.
     let result: EgpFeedResult | undefined
-    for (let attempt = 0; attempt < 2 && !result; attempt += 1) {
-      if (attempt) await new Promise((resolve) => setTimeout(resolve, FAILURE_BACKOFF_MS))
+    for (let attempt = 0; attempt < RETRIES && !result; attempt += 1) {
       try {
         result = await fetchFeed({ ...query, announceDate })
-      } catch {
-        // Retried once, then recorded as a gap.
+      } catch (error) {
+        const last = attempt === RETRIES - 1
+        if (last) break
+        // A rate limit is answered by waiting, and waiting longer each time;
+        // anything else is likelier transient and retried once, briefly.
+        const rateLimited = error instanceof FeedHttpError && error.isRateLimit
+        if (!rateLimited && attempt > 0) break
+        await new Promise((resolve) =>
+          setTimeout(resolve, rateLimited ? RATE_LIMIT_BACKOFF_MS * 2 ** attempt : FAILURE_BACKOFF_MS)
+        )
       }
     }
     if (!result) {
