@@ -87,6 +87,52 @@ test("a portal-linked invitation falls back to the stored tender rather than wai
   assert.deepEqual(action.kind === "extract" ? action.urls : [], ["b0.zip"])
 })
 
+test("a new project arriving with both tender and invitation is read as the invitation", () => {
+  // Day-walking brings weeks of history at once, so a project's B0 and D0
+  // normally arrive in the same run. `from` is what the merge consults: naming
+  // the tender makes it refuse the deadline, which only an invitation carries,
+  // and the TOR publishes reading "กำหนดยื่นข้อเสนอ -". Both documents are read
+  // either way, and carriesFullTender is what keeps the qualifications.
+  const action = planForProject({
+    entry: entryOf([ANNOUNCE_TYPES.draft, "b0.zip"], [ANNOUNCE_TYPES.invitation, "d0.pdf"]),
+  })
+
+  assert.equal(action.kind, "extract")
+  assert.equal(action.kind === "extract" ? action.from : "", ANNOUNCE_TYPES.invitation)
+  assert.deepEqual(action.kind === "extract" ? action.urls : [], ["b0.zip", "d0.pdf"])
+})
+
+test("an amendment outranks the invitation it amends", () => {
+  const action = planForProject({
+    entry: entryOf(
+      [ANNOUNCE_TYPES.draft, "b0.zip"],
+      [ANNOUNCE_TYPES.invitation, "d0.pdf"],
+      [ANNOUNCE_TYPES.invitationChanged, "d2.pdf"]
+    ),
+  })
+
+  assert.equal(action.kind === "extract" ? action.from : "", ANNOUNCE_TYPES.invitationChanged)
+})
+
+test("--force re-reads a stored project as its most advanced announcement", () => {
+  // The force path used to name the tender unconditionally, so re-extracting a
+  // project to repair it would drop the deadline all over again.
+  const action = planForProject({
+    entry: entryOf([ANNOUNCE_TYPES.draft, "b0.zip"], [ANNOUNCE_TYPES.invitation, "d0.pdf"]),
+    stored: {
+      pdfUrl: "b0.zip",
+      announcements: [
+        storedRow(ANNOUNCE_TYPES.draft, "b0.zip"),
+        storedRow(ANNOUNCE_TYPES.invitation, "d0.pdf"),
+      ],
+    },
+    force: true,
+  })
+
+  assert.equal(action.kind, "extract")
+  assert.equal(action.kind === "extract" ? action.from : "", ANNOUNCE_TYPES.invitation)
+})
+
 test("the invitation for a stored project is extracted — only it states the deadline", () => {
   const action = planForProject({
     entry: entryOf([ANNOUNCE_TYPES.invitation, "d0.pdf"]),

@@ -104,6 +104,30 @@ function newTypes(entry: AnnouncementSources, stored?: StoredProject): Set<Annou
 }
 
 /**
+ * Which announcement an extraction is read *as*, most advanced first.
+ *
+ * Every readable document goes to the model either way — `documentsToRead`
+ * returns the tender and the notice together — so this does not decide what is
+ * read. It decides what the merge will accept from the result: the deadline is
+ * taken only from an invitation (D0/D2), and the qualifications only from a
+ * tender or from a document set that proves to carry one (`fullTender`).
+ *
+ * Naming the tender when a notice is also present therefore throws the deadline
+ * away, which is what happened the first time a day-walking run brought a
+ * project's B0 and D0 in together: nine TORs published reading "กำหนดยื่นข้อเสนอ -".
+ * Before day-walking the two arrived a week apart and the bug could not show.
+ */
+const EXTRACT_ORDER: AnnounceType[] = [
+  ANNOUNCE_TYPES.invitationChanged,
+  ANNOUNCE_TYPES.invitation,
+  ANNOUNCE_TYPES.draft,
+]
+
+function leadFor(types: Set<AnnounceType>): AnnounceType | undefined {
+  return EXTRACT_ORDER.find((announceType) => types.has(announceType))
+}
+
+/**
  * An extraction, or nothing when there is no document behind it.
  *
  * The type being present is not the same as a file being available: a tender or
@@ -137,7 +161,7 @@ export function planForProject(input: {
   const fresh = newTypes(entry, stored)
 
   if (force && stored) {
-    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
+    return extractIfReadable(entry, stored, leadFor(seen) ?? ANNOUNCE_TYPES.draft)
   }
 
   // A project enters only through its tender document. An invitation alone
@@ -167,22 +191,12 @@ export function planForProject(input: {
     if (status) return { kind: "status", status, from: terminal }
   }
 
-  if (fresh.has(ANNOUNCE_TYPES.draft) && !stored) {
-    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
-  }
-
   // A notice is read even when it is only two pages: the deadline exists
   // nowhere else. Which of its fields may overwrite the tender's is the
-  // merge's decision, not this one.
-  for (const announceType of [ANNOUNCE_TYPES.invitationChanged, ANNOUNCE_TYPES.invitation]) {
-    if (fresh.has(announceType)) {
-      return extractIfReadable(entry, stored, announceType)
-    }
-  }
-
-  if (fresh.has(ANNOUNCE_TYPES.draft)) {
-    return extractIfReadable(entry, stored, ANNOUNCE_TYPES.draft)
-  }
+  // merge's decision, not this one — but the merge decides it from `from`, so
+  // naming the most advanced announcement is what lets it decide correctly.
+  const lead = leadFor(fresh)
+  if (lead) return extractIfReadable(entry, stored, lead)
 
   // The official median price is worth a small model call, but only for a
   // project we already hold: ราคากลาง announcements are among the feed's most

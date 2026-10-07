@@ -98,8 +98,8 @@ type Options = {
   days?: number
   /** Opts back into the per-method sweep, which measurement showed gains nothing. */
   narrow: boolean
-  /** Restricts the run to one project number, for inspecting a single extraction. */
-  only?: string
+  /** Restricts the run to these project numbers, for inspecting or repairing a few. */
+  only?: Set<string>
 }
 
 function parseArgs(argv: string[]): Options {
@@ -112,8 +112,15 @@ function parseArgs(argv: string[]): Options {
     announceTypes: parseAnnounceTypes(readFlag(argv, "types")),
     days: parseDays(readFlag(argv, "days")),
     narrow: hasFlag(argv, "narrow"),
-    only: readFlag(argv, "only"),
+    only: parseOnly(readFlag(argv, "only")),
   }
+}
+
+/** `--only 69109001213,69099357872` — one project number or several. */
+function parseOnly(raw: string | undefined): Set<string> | undefined {
+  if (!raw) return undefined
+  const wanted = raw.split(",").map((part) => part.trim()).filter(Boolean)
+  return wanted.length ? new Set(wanted) : undefined
 }
 
 function parseDays(raw: string | undefined): number | undefined {
@@ -290,9 +297,9 @@ async function main() {
   const sources = groupByProject(byType)
 
   const candidates = [...sources.values()].filter((entry) => {
-    // --only narrows a run to one project, so a single extraction can be paid
-    // for and inspected without ingesting everything the feed offered.
-    if (options.only && entry.projectNo !== options.only) return false
+    // --only narrows a run to named projects, so a handful of extractions can
+    // be paid for and inspected without ingesting everything the feed offered.
+    if (options.only && !options.only.has(entry.projectNo)) return false
     if (options.allCategories) return true
     return titleSuggestsSoftware({ title: primary(entry).title })
   })
