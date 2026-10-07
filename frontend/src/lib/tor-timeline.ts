@@ -36,9 +36,28 @@ const BRANCHES: Record<"D0" | "W0", TorStepCode[]> = {
 
 const CANCELLATIONS = new Set<TorStepCode>(["D1", "W1"])
 
-/** Newest first. A re-published amendment arrives as a second row. */
+/**
+ * Every type in the order a project passes through it, used to break ties.
+ *
+ * Two announcements are often published on the same day — a project's ราคากลาง
+ * and its ประกาศเชิญชวน routinely share a date. Ordering by date alone then
+ * leaves the winner to the order the rows happen to sit in, and picking the
+ * earlier stage makes the stepper mark the project as still at the median
+ * price while every later step greys out, invitation included.
+ */
+const LIFECYCLE_RANK: TorStepCode[] = ["P0", "15", "B0", "D0", "D2", "D1", "W0", "W2", "W1"]
+
+function rankOf(announceType: string): number {
+  const index = LIFECYCLE_RANK.indexOf(announceType as TorStepCode)
+  return index < 0 ? -1 : index
+}
+
+/** Newest first, and on the same day the later stage wins. */
 function byNewest(rows: readonly TorAnnouncement[]): TorAnnouncement[] {
-  return [...rows].sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""))
+  return [...rows].sort((a, b) => {
+    const byDate = (b.publishedDate ?? "").localeCompare(a.publishedDate ?? "")
+    return byDate !== 0 ? byDate : rankOf(b.announceType) - rankOf(a.announceType)
+  })
 }
 
 function rowsFor(announcements: readonly TorAnnouncement[], code: TorStepCode): TorAnnouncement[] {
