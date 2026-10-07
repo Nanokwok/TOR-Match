@@ -1,6 +1,7 @@
 import { localizedKey } from "@/models/localized.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import type { TorDraftDoc } from "@/models/TorDraft.model"
+import { notifyTorPublished } from "@/services/match-notification.service"
 
 /**
  * Copies a reviewed draft into the published `tors` collection.
@@ -46,8 +47,11 @@ export function publishBlocker(draft: TorDraftDoc): string | null {
 }
 
 /**
- * Writes the draft's content to `tors` and records the publication on the
- * draft. Callers decide the review status that goes with it.
+ * Writes the draft's content to `tors` and raises the notifications that
+ * publication triggers (new match, high budget, deal-breaker). Every publish
+ * path — the reviewer's button, auto-approval, the backfill script — goes
+ * through here, so none of them can forget to notify. Callers record the
+ * outcome on the draft and decide its review status.
  */
 export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
   // Copied field by field on purpose: the draft carries review bookkeeping
@@ -80,6 +84,12 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
     qualificationRequirements: draft.qualificationRequirements,
   }
 
+  // What the live TOR required before this publish, so a requirement change
+  // can be told apart from a first publication when alerts are raised.
+  const previous = await Tor.findOne({ announcementNo: draft.announcementNo })
+    .select("qualificationRequirements")
+    .lean()
+
   // Upsert by announcementNo — the natural key the seed and the ingestion
   // share — so re-publishing a corrected draft updates the live TOR instead of
   // duplicating it.
@@ -93,5 +103,11 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
       `Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`
     )
   }
+
+  // Awaited so a client refetching notifications right after the publish
+  // cannot race ahead of the write. Alerts must never fail the publish.
+  await notifyTorPublished(published, previous?.qualificationRequirements ?? null).catch(
+    (error) => console.error("notifyTorPublished failed", error)
+  )
   return published
 }

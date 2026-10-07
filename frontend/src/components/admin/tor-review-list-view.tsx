@@ -182,7 +182,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
         </Select>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      <div className="rounded-xl border bg-card overflow-hidden">
         <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>

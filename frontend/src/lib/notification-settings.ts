@@ -37,7 +37,8 @@ export const WEEKLY_DIGEST_DAYS = [
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   inAppEnabled: true,
   emailEnabled: true,
-  emailRecipient: "user@company.com",
+  /** Empty means "the account's own email" — the backend resolves it when sending. */
+  emailRecipient: "",
   events: {
     "new-high-match": { inApp: true, email: true },
     "high-budget": { inApp: true, email: true },

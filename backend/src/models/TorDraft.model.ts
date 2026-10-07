@@ -5,7 +5,6 @@ import {
   SystemSettings,
 } from "@/models/SystemSettings.model"
 import { torContentFields } from "@/models/tor-fields.schema"
-import { notifyCompaniesForTor } from "@/services/match-notification.service"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 
 /**
@@ -145,9 +144,6 @@ torDraftSchema.post("save", async function (doc) {
       publishedAt: new Date(),
     })
     await doc.save()
-    await notifyCompaniesForTor(published).catch((error) => {
-      console.error("notifyCompaniesForTor failed", error)
-    })
   } catch (error) {
     console.error(`[tor-draft] auto-publish failed for ${doc.announcementNo}`, error)
   }

@@ -21,5 +21,5 @@ export const defaultAdminSystemSettings: AdminSystemSettings = {
   notifyOnNewSignup: true,
   maintenanceMode: false,
   adminSessionMinutes: 30,
-  supportEmail: "support@tormatch.local",
+  supportEmail: "tormatch1234@gmail.com",
 }

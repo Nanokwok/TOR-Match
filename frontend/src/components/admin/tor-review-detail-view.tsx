@@ -35,6 +35,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDuration } from "@/lib/format"
@@ -472,9 +473,10 @@ export function TorReviewDetailView({
         <ResizablePanel
           defaultSize="50%"
           minSize="20%"
-          className="min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 lg:p-6 @container"
+          className="min-h-0"
         >
-          <form
+          <ScrollArea className="h-full w-full" viewportClassName="overscroll-contain p-3.5 sm:p-5 lg:p-6 @container">
+            <form
             className="@container space-y-8"
             onSubmit={(event) => {
               event.preventDefault()
@@ -1174,7 +1176,7 @@ export function TorReviewDetailView({
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border">
+                <ScrollArea orientation="horizontal" className="rounded-lg border">
                   <div className="min-w-[500px]">
                     <div className="grid grid-cols-[72px_1fr_88px_1fr_36px] gap-2 bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
                       <span>Day</span>
@@ -1258,7 +1260,7 @@ export function TorReviewDetailView({
                       )}
                     </div>
                   </div>
-                </div>
+                </ScrollArea>
                 <p className="text-xs text-muted-foreground">
                   Same payment timeline shown on the user browse Financials tab.
                   Amount auto-updates from budget × %.
@@ -1266,6 +1268,7 @@ export function TorReviewDetailView({
               </div>
             </section>
           </form>
+          </ScrollArea>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

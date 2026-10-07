@@ -8,6 +8,7 @@ import { SortableWorkspaceTorCard } from "@/components/workspace/sortable-worksp
 import { WorkspaceTorCard } from "@/components/workspace/workspace-tor-card"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { workspaceActions } from "@/lib/workspace-actions"
 import { cn } from "@/lib/utils"
 import type { WorkspaceCard, WorkspaceColumnId } from "@/types/workspace"
@@ -39,7 +40,7 @@ export function KanbanColumn({
         count={cards.length}
         onRequestAddTor={onRequestAddTor}
       >
-        <div className="flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2">
+        <ScrollArea className="flex min-h-[120px] flex-1 rounded-lg" viewportClassName="flex flex-col gap-2.5 pb-2">
           {cards.length === 0 ? (
             <KanbanColumnEmptyHint />
           ) : (
@@ -52,7 +53,7 @@ export function KanbanColumn({
               />
             ))
           )}
-        </div>
+        </ScrollArea>
       </KanbanColumnShell>
     )
   }
@@ -86,12 +87,13 @@ function DroppableKanbanColumn({
       count={cards.length}
       onRequestAddTor={onRequestAddTor}
     >
-      <div
-        ref={setNodeRef}
+      <ScrollArea
+        viewportRef={setNodeRef}
         className={cn(
-          "flex min-h-[120px] flex-1 flex-col gap-2.5 overflow-y-auto rounded-lg pb-2 transition-colors",
+          "flex min-h-[120px] flex-1 rounded-lg transition-colors",
           isOver && "bg-accent"
         )}
+        viewportClassName="flex flex-col gap-2.5 pb-2"
       >
         {cards.length === 0 ? (
           <KanbanColumnEmptyHint />
@@ -105,7 +107,7 @@ function DroppableKanbanColumn({
             />
           ))
         )}
-      </div>
+      </ScrollArea>
     </KanbanColumnShell>
   )
 }

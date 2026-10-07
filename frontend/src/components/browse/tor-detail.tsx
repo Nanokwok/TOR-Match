@@ -24,6 +24,7 @@ import {
 import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
 import { TorFinancialsPanel } from "@/components/browse/tor-financials-panel";
 import { TorQualificationPanel } from "@/components/browse/tor-qualification-panel";
+import { TorTimelineStepper } from "@/components/browse/tor-timeline-stepper";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,11 +43,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatBaht, formatShortDate, formatTorDeadline } from "@/lib/format"
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Locale } from "@/lib/i18n";
+import { formatBaht, formatShortDate } from "@/lib/format"
+import { getTorStatusBadgeInfo, getTorDeadlineInfo } from "@/lib/deadline"
 import {
   announceTypeLabel,
   procurementMethodLabel,
-  procurementStatusLabel,
   projectScaleLabel,
 } from "@/lib/browse-labels";
 import { localizeTor } from "@/lib/localized-tor";
@@ -79,6 +82,18 @@ export function TorDetail({ tor, onToggleBookmark, onDirtyChange }: TorDetailPro
   );
 }
 
+function formatCompactBaht(amountBaht: number, locale: Locale = "th") {
+  if (!amountBaht) return "-";
+  if (amountBaht >= 1_000_000) {
+    const millions = (amountBaht / 1_000_000).toLocaleString(
+      locale === "th" ? "th-TH" : "en-US",
+      { minimumFractionDigits: 0, maximumFractionDigits: 1 }
+    );
+    return locale === "th" ? `${millions} ล้านบาท` : `฿${millions}M`;
+  }
+  return formatBaht(amountBaht, locale);
+}
+
 function TorDetailContent({
   tor,
   onToggleBookmark,
@@ -98,10 +113,6 @@ function TorDetailContent({
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const localized = useMemo(() => localizeTor(tor, locale), [tor, locale]);
 
-  useEffect(() => {
-    onDirtyChange?.(isQualificationDirty);
-  }, [isQualificationDirty, onDirtyChange]);
-
   // A new TOR starts expanded. Adjusted during render rather than in an
   // effect: an effect runs after paint, so the new TOR's header would appear
   // collapsed for a frame and then jump open.
@@ -110,6 +121,10 @@ function TorDetailContent({
     setExpandedForTorId(tor.id);
     setIsCollapsed(false);
   }
+
+  useEffect(() => {
+    onDirtyChange?.(isQualificationDirty);
+  }, [isQualificationDirty, onDirtyChange]);
 
   // The scroll position is on a DOM node, not in React state, so resetting it
   // stays in an effect.
@@ -165,8 +180,6 @@ function TorDetailContent({
     }
   }
 
-
-  const deadlineText = formatTorDeadline(tor.deadline, locale, "-");
   const qualificationCheck = tor.qualification;
   const sourceHref = safeExternalUrl(tor.sourceUrl);
   // Newest first: a bidder opening a TOR wants the amendment or the award, not
@@ -175,74 +188,174 @@ function TorDetailContent({
     b.publishedDate.localeCompare(a.publishedDate),
   );
 
+  const statusBadge = getTorStatusBadgeInfo(tor, locale);
+  const deadlineInfo = getTorDeadlineInfo(tor, locale);
+
+  const failedCount =
+    qualificationCheck?.rows.filter((r) => r.status === "failed").length ?? 0;
+
+  function renderEligibilityBadge() {
+    if (failedCount > 0) {
+      return (
+        <Badge
+          variant="destructive"
+          className="h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800"
+        >
+          {locale === "th" ? `ไม่ผ่าน ${failedCount} ข้อ` : `${failedCount} Failed`}
+        </Badge>
+      );
+    }
+    if (tor.eligible || qualificationCheck?.status === "passed") {
+      return (
+        <Badge className="h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          {locale === "th" ? "ผ่าน" : t("common.eligible")}
+        </Badge>
+      );
+    }
+    return (
+      <Badge
+        variant="outline"
+        className="h-5 px-1.5 text-[11px] font-semibold shrink-0 text-muted-foreground"
+      >
+        {t(
+          `browse.qualificationStatus.${qualificationCheck?.status ?? "insufficient-data"}`
+        )}
+      </Badge>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
-      <div
-        className={cn(
-          "border-b border-border transition-[padding] duration-200 ease-out shrink-0 bg-card",
-          isCollapsed
-            ? "px-5 py-3 md:px-6 md:py-3.5"
-            : "p-5 md:p-6"
-        )}
-      >
-        <div
-          className={cn(
-            "grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out",
-            isCollapsed
-              ? "grid-rows-[0fr] opacity-0 mb-0"
-              : "grid-rows-[1fr] opacity-100 mb-2"
-          )}
-        >
-          <div className="overflow-hidden">
-            <div className="flex items-center justify-between gap-4 pb-0.5">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                {tor.eligible ? (
-                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-950">
-                    {t("common.eligible")}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    {t(
-                      `browse.qualificationStatus.${qualificationCheck?.status ?? "insufficient-data"}`
-                    )}
-                  </Badge>
+      {/* Top Header Section */}
+      <div className="border-b border-border shrink-0 bg-card">
+        {isCollapsed ? (
+          /* แถวบนสุด (Compact Project Bar): Layer 1 */
+          <div className="flex items-center justify-between gap-3 px-5 py-2 md:px-6 h-[40px]">
+            {/* ฝั่งซ้าย: ชื่อโครงการ (ตัดคำ/Truncate บรรทัดเดียว มี Tooltip ดูเต็ม) + แสดงงบประมาณกะทัดรัด เช่น | 6.4 ล้านบาท + Badge สถานะ เช่น [ ไม่ผ่าน 1 ข้อ ] */}
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              <TooltipProvider delay={100}>
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    onClick={() => {
+                      setIsCollapsed(false);
+                      contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="truncate text-left font-semibold text-foreground text-sm hover:text-primary transition-colors cursor-pointer shrink"
+                  >
+                    {localized.title}
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-md text-xs">
+                    {localized.title}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <span className="text-muted-foreground/40 shrink-0 select-none text-xs">|</span>
+
+              <span className="shrink-0 text-xs font-semibold text-foreground whitespace-nowrap">
+                {formatCompactBaht(tor.budgetBaht, locale)}
+              </span>
+
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-5 px-1.5 text-[11px] font-semibold shrink-0 border whitespace-nowrap",
+                  statusBadge.variantClasses
                 )}
-                <p className="text-sm text-muted-foreground">
-                  {localized.department}
-                </p>
-              </div>
-              <AnnouncementNoCopy announcementNo={tor.announcementNo} />
+              >
+                {statusBadge.shortLabel}
+              </Badge>
+
+              {renderEligibilityBadge()}
+            </div>
+
+            {/* ฝั่งขวา: ปุ่ม Action ขนาดเล็ก เช่น ไอคอน Bookmark, Share, ลิงก์ต้นฉบับ */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <TooltipProvider delay={100}>
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    className={cn(
+                      "inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+                      tor.bookmarked && "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                    )}
+                    aria-pressed={tor.bookmarked}
+                    onClick={() => onToggleBookmark(tor.id)}
+                    aria-label={tor.bookmarked ? t("common.bookmarked") : t("common.bookmark")}
+                  >
+                    <Bookmark className={cn("size-3.5", tor.bookmarked && "fill-current")} />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {tor.bookmarked ? t("common.bookmarked") : t("common.bookmark")}
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    onClick={() => setShareOpen(true)}
+                    aria-label={t("common.share")}
+                  >
+                    <Share2 className="size-3.5" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {t("common.share")}
+                  </TooltipContent>
+                </Tooltip>
+
+                {sourceHref ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <a
+                          href={sourceHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex size-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          aria-label={t("browse.viewSource")}
+                        />
+                      }
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {t("browse.viewSource")}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </TooltipProvider>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Expanded Header (when at top) */
+          <div className="p-5 md:p-6 space-y-5">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-4 pb-0.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-5 px-2 text-[11px] font-semibold shrink-0 border",
+                      statusBadge.variantClasses
+                    )}
+                  >
+                    {statusBadge.label}
+                  </Badge>
+                  {renderEligibilityBadge()}
+                  <p className="text-sm text-muted-foreground">
+                    {localized.localOffice || localized.department}
+                  </p>
+                </div>
+                <AnnouncementNoCopy announcementNo={tor.announcementNo} />
+              </div>
 
-        <h2
-          className={cn(
-            "font-semibold tracking-tight text-foreground transition-all duration-200",
-            isCollapsed
-              ? "text-base md:text-lg line-clamp-1 cursor-pointer hover:text-primary"
-              : "text-xl md:text-2xl"
-          )}
-          title={localized.title}
-          onClick={() => {
-            if (isCollapsed) {
-              setIsCollapsed(false);
-              contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
-        >
-          {localized.title}
-        </h2>
+              <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
+                {localized.title}
+              </h2>
+            </div>
 
-        <div
-          className={cn(
-            "grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out",
-            isCollapsed
-              ? "grid-rows-[0fr] opacity-0 mt-0"
-              : "grid-rows-[1fr] opacity-100 mt-5"
-          )}
-        >
-          <div className="overflow-hidden space-y-5">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <MetaItem
                 icon={Scale}
@@ -261,9 +374,9 @@ function TorDetailContent({
               />
               <MetaItem
                 icon={CalendarDays}
-                label={t("browse.submissionDeadline")}
+                label={deadlineInfo.label}
                 value={
-                  deadlineText === "-" ? (
+                  deadlineInfo.isPendingNotice ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span>-</span>
                       <TooltipProvider delay={100}>
@@ -271,7 +384,7 @@ function TorDetailContent({
                           <TooltipTrigger
                             type="button"
                             className="inline-flex cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
-                            aria-label={t("browse.submissionDeadlinePendingNotice")}
+                            aria-label={deadlineInfo.pendingNoticeText}
                           >
                             <Info className="size-3.5" />
                           </TooltipTrigger>
@@ -279,13 +392,13 @@ function TorDetailContent({
                             side="top"
                             className="max-w-xs text-xs font-normal"
                           >
-                            {t("browse.submissionDeadlinePendingNotice")}
+                            {deadlineInfo.pendingNoticeText}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </span>
                   ) : (
-                    deadlineText
+                    deadlineInfo.dateText
                   )
                 }
               />
@@ -342,7 +455,7 @@ function TorDetailContent({
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <Tabs
@@ -350,28 +463,38 @@ function TorDetailContent({
         onValueChange={handleTabChange}
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
-        <div className="border-b border-border px-5 md:px-6">
+        {/* แถวกลาง (Tabs Navigation): Layer 2 */}
+        <div className="border-b border-border px-5 md:px-6 shrink-0 bg-card">
           <TabsList
             variant="line"
-            className="h-auto w-full justify-start gap-6 rounded-none bg-transparent p-0"
+            className="h-auto w-full justify-start gap-4 sm:gap-6 rounded-none bg-transparent p-0"
           >
             <TabsTrigger
               value="summary"
-              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
+              className={cn(
+                "rounded-none px-0 transition-all data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary",
+                isCollapsed ? "py-2 text-xs sm:text-sm" : "py-3 text-sm"
+              )}
             >
               <ListChecks data-icon="inline-start" />
               {t("browse.summaryDeliverables")}
             </TabsTrigger>
             <TabsTrigger
               value="qualification"
-              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
+              className={cn(
+                "rounded-none px-0 transition-all data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary",
+                isCollapsed ? "py-2 text-xs sm:text-sm" : "py-3 text-sm"
+              )}
             >
               <FileCheck2 data-icon="inline-start" />
               {t("browse.qualificationCheck")}
             </TabsTrigger>
             <TabsTrigger
               value="financials"
-              className="rounded-none px-0 py-3 data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary"
+              className={cn(
+                "rounded-none px-0 transition-all data-active:text-primary group-data-[variant=line]/tabs-list:data-active:after:bg-primary",
+                isCollapsed ? "py-2 text-xs sm:text-sm" : "py-3 text-sm"
+              )}
             >
               <CircleDollarSign data-icon="inline-start" />
               {t("browse.financials")}
@@ -379,10 +502,42 @@ function TorDetailContent({
           </TabsList>
         </div>
 
-        <div
-          ref={contentScrollRef}
+        {/* แถวล่างสุด (Sticky Table Header): Layer 3 */}
+        {isCollapsed && activeTab === "qualification" ? (
+          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150">
+            <div className="flex w-full min-w-[640px] text-xs font-semibold py-2">
+              <div className="w-[25%] px-4 truncate">
+                {t("browse.qualificationPanel.requirement")}
+              </div>
+              <div className="w-[55%] px-4 truncate">
+                {t("browse.qualificationPanel.torCriteria")}
+              </div>
+              <div className="w-[20%] px-4 truncate">
+                {t("browse.qualificationPanel.companyProfile")}
+              </div>
+            </div>
+          </div>
+        ) : isCollapsed && activeTab === "financials" ? (
+          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150">
+            <div className="flex w-full text-xs font-semibold py-2">
+              <div className="w-28 px-4 sm:w-36 truncate shrink-0">
+                {t("browse.financialPanel.day")}
+              </div>
+              <div className="w-48 px-4 sm:w-56 truncate shrink-0">
+                {t("browse.financialPanel.paymentMilestones")}
+              </div>
+              <div className="flex-1 px-4 truncate min-w-0">
+                {t("browse.financialPanel.deliverable")}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <ScrollArea
+          viewportRef={contentScrollRef}
           onScroll={handleScroll}
-          className="min-h-0 flex-1 overflow-y-auto p-5 md:p-6"
+          className="min-h-0 flex-1"
+          viewportClassName="p-5 md:p-6"
         >
           <TabsContent value="summary" className="mt-0 space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -399,7 +554,7 @@ function TorDetailContent({
               <Metric
                 icon={Activity}
                 label={t("browse.procurementStatus")}
-                value={procurementStatusLabel(tor.status, t)}
+                value={statusBadge.label}
               />
               <Metric
                 icon={Building2}
@@ -416,6 +571,8 @@ function TorDetailContent({
                 {localized.summary || t("common.notSpecified")}
               </p>
             </section>
+
+            <TorTimelineStepper tor={tor} />
 
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">
@@ -506,6 +663,7 @@ function TorDetailContent({
                 torId={tor.id}
                 check={qualificationCheck}
                 onDirtyChange={setIsQualificationDirty}
+                isCollapsed={isCollapsed}
               />
             ) : (
               <p>{t("browse.qualificationUnavailable")}</p>
@@ -513,9 +671,12 @@ function TorDetailContent({
           </TabsContent>
 
           <TabsContent value="financials" className="mt-0">
-            <TorFinancialsPanel financials={localized.financials} />
+            <TorFinancialsPanel
+              financials={localized.financials}
+              isCollapsed={isCollapsed}
+            />
           </TabsContent>
-        </div>
+        </ScrollArea>
       </Tabs>
 
       <ShareTorDialog

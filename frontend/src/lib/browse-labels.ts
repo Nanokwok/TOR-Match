@@ -33,6 +33,7 @@ export function procurementStatusLabel(
 ): string {
   const key =
     {
+      draft: "browse.statusDraft",
       open: "browse.statusOpen",
       "closing-soon": "browse.statusClosingSoon",
       closed: "browse.statusClosed",

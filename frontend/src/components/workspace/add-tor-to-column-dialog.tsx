@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { formatThb } from "@/lib/format"
 import { pickLocalized } from "@/lib/localized-content"
@@ -145,7 +146,7 @@ function AddTorToColumnDialogBody({
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        <div className="max-h-[320px] overflow-y-auto rounded-lg border border-border">
+        <ScrollArea className="max-h-[320px] rounded-lg border border-border">
           {results.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">
               {isSearching
@@ -190,7 +191,7 @@ function AddTorToColumnDialogBody({
               })}
             </ul>
           )}
-        </div>
+        </ScrollArea>
       </div>
 
       <div className="flex justify-end border-t border-border px-5 py-3">

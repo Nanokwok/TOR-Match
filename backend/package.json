@@ -19,6 +19,8 @@
     "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "unpublish:pending": "tsx src/scraper/run-unpublish-pending.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
+    "notify:deadlines": "tsx src/utils/run-deadline-reminders.ts",
+    "email:test": "tsx src/utils/send-test-email.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts"
@@ -35,6 +37,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
+    "nodemailer": "^10.0.15",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -46,6 +49,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.9",
+    "@types/nodemailer": "^8.0.2",
     "eslint": "^9.9.0",
     "tsc-alias": "^1.8.10",
     "tsx": "^4.16.2",

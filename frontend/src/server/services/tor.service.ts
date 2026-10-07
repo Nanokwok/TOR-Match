@@ -2,12 +2,19 @@ import "server-only"
 
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { localizedKey } from "@/lib/localized-content"
+import { buildTorTimeline } from "@/server/db/mock/tor-timeline"
 import {
   getBookmarkedTorIndex,
   isTorBookmarked,
 } from "@/server/services/workspace.service"
 import type { LocalizedText } from "@/types/localized"
-import type { Tor, TorFinancials, TorListQuery, TorListResult, TorQualificationCheck } from "@/types/tor"
+import type {
+  Tor,
+  TorFinancials,
+  TorListQuery,
+  TorListResult,
+  TorQualificationCheck,
+} from "@/types/tor"
 
 /** The backend always returns `bookmarked: false`; bookmarks live on the workspace board. */
 async function withBookmarkedState(items: Tor[]): Promise<Tor[]> {
@@ -15,13 +22,17 @@ async function withBookmarkedState(items: Tor[]): Promise<Tor[]> {
   return items.map((tor) => ({
     ...tor,
     bookmarked: isTorBookmarked(tor, index),
+    // Attach mock e-GP timeline data only for the procurement stages stepper
+    timeline: tor.timeline ?? buildTorTimeline(tor),
   }))
 }
 
 export async function listTors(query: TorListQuery = {}): Promise<TorListResult> {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined) params.set(key, key === "detail" ? JSON.stringify(value) : String(value))
+    if (value !== undefined) {
+      params.set(key, key === "detail" ? JSON.stringify(value) : String(value))
+    }
   }
   const result = await apiFetch<TorListResult>(`/tors?${params}`)
   return { ...result, items: await withBookmarkedState(result.items) }
@@ -51,9 +62,13 @@ export async function getTorFinancials(torId: string): Promise<TorFinancials | n
   return (await getTorById(torId))?.financials ?? null
 }
 
-export async function getTorQualificationCheck(torId: string): Promise<TorQualificationCheck | null> {
+export async function getTorQualificationCheck(
+  torId: string
+): Promise<TorQualificationCheck | null> {
   try {
-    return await apiFetch<TorQualificationCheck>(`/tors/${encodeURIComponent(torId)}/qualification`)
+    return await apiFetch<TorQualificationCheck>(
+      `/tors/${encodeURIComponent(torId)}/qualification`
+    )
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 404) return null
     throw error

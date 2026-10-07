@@ -27,6 +27,7 @@ import {
   pinTorToFront,
   type BrowseDeepLinkMeta,
 } from "@/lib/browse-deep-link"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
@@ -256,14 +257,16 @@ export function BrowseView({
           isPending ? "opacity-70" : ""
         }`}
       >
-        <aside className="min-h-[320px] overflow-y-auto rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)]">
-          <TorList
-            items={items}
-            selectedId={selectedId}
-            linkedTorId={linkedTorId}
-            onSelect={selectTor}
-            onToggleBookmark={handleToggleBookmark}
-          />
+        <aside className="min-h-[320px] rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
+          <ScrollArea className="h-full w-full">
+            <TorList
+              items={items}
+              selectedId={selectedId}
+              linkedTorId={linkedTorId}
+              onSelect={selectTor}
+              onToggleBookmark={handleToggleBookmark}
+            />
+          </ScrollArea>
         </aside>
 
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">

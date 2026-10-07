@@ -24,15 +24,19 @@ export const PROCUREMENT_METHODS = [
 /**
  * Where a project stands, in the vocabulary the e-GP announcements use.
  *
- * The first four describe an open procurement; the last four are what later
- * announcements say became of it — D1 ยกเลิกประกาศเชิญชวน, D2 เปลี่ยนแปลงประกาศ,
- * W1 ยกเลิกประกาศผู้ชนะ, W2 เปลี่ยนแปลงประกาศผู้ชนะ. `awarded` is W0.
+ * `draft` is before bidding opens — B0 ร่างเอกสารประกวดราคา / ประชาพิจารณ์, which
+ * states no closing date; the timeline stepper reads it as its first stage
+ * (see frontend lib/deadline.ts). The next three describe an open procurement,
+ * and the last four are what later announcements say became of it — D1
+ * ยกเลิกประกาศเชิญชวน, D2 เปลี่ยนแปลงประกาศ, W1 ยกเลิกประกาศผู้ชนะ, W2
+ * เปลี่ยนแปลงประกาศผู้ชนะ. `awarded` is W0.
  *
  * Set from the announcement type, never from the extraction model: which
  * announcement was published is a fact, and a model reading a tender document
  * has no way to know one was cancelled a week later.
  */
 export const PROCUREMENT_STATUSES = [
+  "draft",
   "open",
   "closing-soon",
   "closed",
@@ -48,7 +52,7 @@ export const PROCUREMENT_STATUSES = [
  *
  * Match notifications and eligibility checking key on this rather than listing
  * statuses inline, so adding a lifecycle status cannot silently start
- * advertising a cancelled project.
+ * advertising a cancelled project — or one whose bidding has not opened.
  */
 export const BIDDABLE_STATUSES = ["open", "closing-soon"] as const
 
