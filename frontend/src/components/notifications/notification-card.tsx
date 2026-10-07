@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Bell, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Banknote, Bell, ShieldAlert, Sparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,14 @@ const CATEGORY_STYLES: Record<
   match: {
     icon: Sparkles,
     className: "text-emerald-600",
+  },
+  "high-budget": {
+    icon: Banknote,
+    className: "text-sky-600",
+  },
+  "deal-breaker": {
+    icon: ShieldAlert,
+    className: "text-red-600",
   },
   deadline: {
     icon: AlertTriangle,

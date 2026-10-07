@@ -2,6 +2,8 @@ import type { LocalizedText } from "@/types/localized"
 
 export type NotificationCategory =
   | "match"
+  | "high-budget"
+  | "deal-breaker"
   | "deadline"
   | "system"
 
@@ -20,7 +22,7 @@ export type AppNotification = {
   isRead: boolean
   /** True when the TOR matches automatically verified qualification criteria. */
   autoVerifiedMatch?: boolean
-  /** Set for "match" notifications; identifies which TOR this alert is about. */
+  /** Set for match, high-budget and deal-breaker notifications; identifies which TOR this alert is about. */
   torId?: string
   link?: string
   action?: NotificationAction

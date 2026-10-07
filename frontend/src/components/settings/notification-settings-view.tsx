@@ -153,9 +153,13 @@ export function NotificationSettingsView({
         <MasterSwitchCard
           icon={<Mail className="size-4" />}
           title={t("notificationSettings.emailTitle")}
-          description={t("notificationSettings.emailRecipient", {
-            email: settings.emailRecipient,
-          })}
+          description={
+            settings.emailRecipient
+              ? t("notificationSettings.emailRecipient", {
+                  email: settings.emailRecipient,
+                })
+              : t("notificationSettings.emailRecipientAccount")
+          }
           checked={settings.emailEnabled}
           onCheckedChange={(checked) => toggleMaster("emailEnabled", checked)}
         />

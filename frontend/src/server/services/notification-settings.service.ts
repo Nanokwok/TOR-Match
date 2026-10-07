@@ -21,11 +21,20 @@ type BackendNotificationSettings = NotificationSettings & {
   updatedAt: string
 }
 
-function fromBackend(settings: BackendNotificationSettings): NotificationSettings {
+type SettingsResponse = {
+  settings: BackendNotificationSettings | null
+  accountEmail: string
+}
+
+/** The recipient is not a setting: alerts go to the address the user signs in with. */
+function fromBackend({ settings, accountEmail }: SettingsResponse): NotificationSettings {
+  if (!settings) {
+    return { ...cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS), emailRecipient: accountEmail }
+  }
   return {
     inAppEnabled: settings.inAppEnabled,
     emailEnabled: settings.emailEnabled,
-    emailRecipient: settings.emailRecipient,
+    emailRecipient: accountEmail,
     events: settings.events,
     instantEmailAlerts: settings.instantEmailAlerts,
     dailyDigestEnabled: settings.dailyDigestEnabled,
@@ -39,14 +48,13 @@ function fromBackend(settings: BackendNotificationSettings): NotificationSetting
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   const headers = await authHeaders()
   if (!headers.Authorization) return cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
-  const settings = await apiFetch<BackendNotificationSettings | null>("/notification-settings", { headers })
-  return settings ? fromBackend(settings) : cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
+  return fromBackend(await apiFetch<SettingsResponse>("/notification-settings", { headers }))
 }
 
 export async function saveNotificationSettings(
   settings: NotificationSettings
 ): Promise<NotificationSettings> {
-  const saved = await apiFetch<BackendNotificationSettings>("/notification-settings", {
+  const saved = await apiFetch<SettingsResponse>("/notification-settings", {
     method: "PUT",
     headers: await authHeaders(),
     body: JSON.stringify(settings),

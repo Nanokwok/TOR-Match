@@ -5,7 +5,7 @@ import { asyncHandler } from "@/utils/asyncHandler"
 
 export const listNotifications = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
-  const items = await Notification.find({ userId: req.user.sub }).sort({ createdAt: -1 })
+  const items = await Notification.find({ userId: req.user.sub, inApp: { $ne: false } }).sort({ createdAt: -1 })
   res.status(200).json(items)
 })
 
