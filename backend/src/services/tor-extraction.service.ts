@@ -106,6 +106,7 @@ export async function extractAndStore(params: {
           deadline: extraction.deadline,
           announcementDate: extraction.announcementDate || publishedDate,
           sourceUrl,
+          source: "egp-rss",
           pdfUrl,
           invitationUrl: invitationUrl ?? "",
           detailUrl: detailUrl ?? "",

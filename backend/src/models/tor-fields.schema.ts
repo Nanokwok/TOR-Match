@@ -5,6 +5,7 @@ import {
 } from "@/models/localized.schema"
 import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
+import { TOR_SOURCES } from "@/domain/tor-source"
 
 /**
  * The content of a TOR, shared by the published {@link Tor} collection and the
@@ -92,6 +93,8 @@ export const torContentFields = {
   deadline: { type: String, default: "" },
   announcementDate: { type: String, default: "" },
   sourceUrl: { type: String, default: "" },
+  /** Which feed this came from. Absent on TORs stored before it existed; see resolveTorSource. */
+  source: { type: String, enum: TOR_SOURCES },
   summary: { type: localizedTextSchema, required: true },
   deliverables: { type: localizedListSchema, default: () => ({}) },
   techTags: { type: [String], default: [], index: true },
