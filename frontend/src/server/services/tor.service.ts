@@ -2,7 +2,7 @@ import "server-only"
 
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { localizedKey } from "@/lib/localized-content"
-import { buildTorTimeline } from "@/server/db/mock/tor-timeline"
+import { buildTorTimeline } from "@/lib/tor-timeline"
 import {
   getBookmarkedTorIndex,
   isTorBookmarked,
@@ -22,7 +22,9 @@ async function withBookmarkedState(items: Tor[]): Promise<Tor[]> {
   return items.map((tor) => ({
     ...tor,
     bookmarked: isTorBookmarked(tor, index),
-    // Attach mock e-GP timeline data only for the procurement stages stepper
+    // The procurement stepper, derived from the announcements e-GP published
+    // for this project. Undefined when none were stored, and the stepper then
+    // renders nothing rather than an invented sequence of stages.
     timeline: tor.timeline ?? buildTorTimeline(tor),
   }))
 }

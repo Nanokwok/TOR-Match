@@ -80,13 +80,31 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
     return null
   }
 
-  // Single file download handler
+  // Single file handler: download when we serve the file, open when e-GP does.
   const handleDownloadFile = (doc: TorStepDocument) => {
+    // Stored data, so only http(s) is followed — a `javascript:` url here would
+    // run in the viewer's session.
+    let href: URL
+    try {
+      href = new URL(doc.fileUrl, window.location.origin)
+      if (href.protocol !== "https:" && href.protocol !== "http:") return
+    } catch {
+      return
+    }
+
     setDownloadingId(doc.id)
 
     const link = document.createElement("a")
-    link.href = doc.fileUrl
-    link.download = doc.fileName
+    link.href = href.toString()
+    if (href.origin === window.location.origin) {
+      link.download = doc.fileName
+    } else {
+      // A cross-origin url ignores `download` and would navigate this tab away
+      // from the app instead. e-GP's documents are served from its own domain,
+      // so they open in a tab of their own.
+      link.target = "_blank"
+      link.rel = "noopener noreferrer"
+    }
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -356,13 +374,19 @@ export function TorTimelineStepper({ tor, timeline: initialTimeline }: TorTimeli
                             <p className="font-medium text-foreground text-xs leading-snug line-clamp-2" title={docTitle}>
                               {docTitle}
                             </p>
-                            <p className="font-mono text-[10px] text-muted-foreground truncate mt-0.5" title={doc.fileName}>
-                              {doc.fileName}
-                            </p>
+                            {/* e-GP publishes a link, not a file name or a size,
+                                so neither is shown for a real announcement. */}
+                            {doc.fileName ? (
+                              <p className="font-mono text-[10px] text-muted-foreground truncate mt-0.5" title={doc.fileName}>
+                                {doc.fileName}
+                              </p>
+                            ) : null}
                             <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                              <span className="font-mono bg-muted/80 px-1 py-0.2 rounded border border-border/40">
-                                {doc.fileSize}
-                              </span>
+                              {doc.fileSize ? (
+                                <span className="font-mono bg-muted/80 px-1 py-0.2 rounded border border-border/40">
+                                  {doc.fileSize}
+                                </span>
+                              ) : null}
                               {doc.publishDate ? (
                                 <span>{formatShortDate(doc.publishDate, locale)}</span>
                               ) : null}
