@@ -8,6 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 const LIST_CARDS = 6
 
+/** The list column's cards alone, for when only the results are on their way. */
+export function TorListSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Loading"
+      className="space-y-2 p-2"
+    >
+      {Array.from({ length: LIST_CARDS }, (_, index) => (
+        <TorCardSkeleton key={index} />
+      ))}
+    </div>
+  )
+}
+
 function FilterBarSkeleton() {
   return (
     <div className="border-b border-border bg-card px-4 py-3 md:px-6">
@@ -104,11 +120,7 @@ export function BrowseSkeleton() {
       <FilterBarSkeleton />
       <div className="grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4">
         <aside className="flex min-h-[320px] flex-col overflow-hidden rounded-xl border border-border bg-card md:max-h-[calc(100vh-12rem)] md:min-h-0">
-          <div className="space-y-2 p-2">
-            {Array.from({ length: LIST_CARDS }, (_, index) => (
-              <TorCardSkeleton key={index} />
-            ))}
-          </div>
+          <TorListSkeleton />
         </aside>
         <section className="min-h-[480px] md:max-h-[calc(100vh-12rem)] md:min-h-0">
           <DetailSkeleton />

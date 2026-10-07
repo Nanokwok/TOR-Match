@@ -1,6 +1,13 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react"
 import { ChevronLeft, ChevronRight, Link2, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
@@ -10,6 +17,7 @@ import {
   TorFilterBar,
   type BrowseFiltersState,
 } from "@/components/browse/tor-filter-bar"
+import { TorListSkeleton } from "@/components/browse/browse-skeleton"
 import { TorDetail } from "@/components/browse/tor-detail"
 import { TorList } from "@/components/browse/tor-list"
 import { useLocale } from "@/components/i18n/locale-provider"
@@ -27,12 +35,16 @@ import {
   DEFAULT_BROWSE_SORT,
   EMPTY_DETAIL_FILTERS,
 } from "@/lib/browse-filters"
+import {
+  getStoredBrowseFiltersSnapshot,
+  writeStoredBrowseFilters,
+} from "@/lib/browse-filter-storage"
 import { getTorStage } from "@/lib/deadline"
+import { BROWSE_OPEN_ONLY_COOKIE, writePreferenceCookie } from "@/lib/preferences"
 import {
   pinTorToFront,
   type BrowseDeepLinkMeta,
 } from "@/lib/browse-deep-link"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import type { LocalizedText } from "@/types/localized"
 import type { Tor } from "@/types/tor"
 
@@ -50,6 +62,7 @@ type BrowseViewProps = {
   initialItems: Tor[]
   initialSelectedId: string | null
   initialDeepLink: BrowseDeepLinkMeta | null
+  initialOpenOnly: boolean
   initialTotal: number
   initialTotalPages: number
   departments: LocalizedText[]
@@ -60,13 +73,27 @@ export function BrowseView({
   initialItems,
   initialSelectedId,
   initialDeepLink,
+  initialOpenOnly,
   initialTotal,
   initialTotalPages,
   departments,
   localOffices,
 }: BrowseViewProps) {
   const { t } = useLocale()
-  const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
+  // The filters on screen are what the user last set, or until they touch
+  // anything, the defaults with whatever was saved in localStorage laid over
+  // them. Reading storage through useSyncExternalStore lets the filter bar show
+  // the saved values on the first client render — the server has no storage, so
+  // it renders the defaults and hydration stays consistent.
+  const stored = useSyncExternalStore(
+    () => () => {},
+    getStoredBrowseFiltersSnapshot,
+    () => null
+  )
+  const defaultFilters = { ...initialFilters, openOnly: initialOpenOnly }
+  const [edited, setEdited] = useState<BrowseFiltersState | null>(null)
+  const filters: BrowseFiltersState =
+    edited ?? (stored ? { ...defaultFilters, ...stored } : defaultFilters)
   const [items, setItems] = useState(initialItems)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(initialTotal)
@@ -136,6 +163,9 @@ export function BrowseView({
 
   function runSearch(nextFilters: BrowseFiltersState, targetPage = 1) {
     startTransition(async () => {
+      // In the same transition as the results, so the filter bar and the list
+      // switch together — which also matters when saved filters are restored.
+      setEdited(nextFilters)
       const previousSelected =
         items.find((item) => item.id === selectedId) ?? anchorTor
       const result = await searchTorsAction({
@@ -174,14 +204,34 @@ export function BrowseView({
     runSearch(filters, targetPage)
   }
 
+  // The server's first page uses the defaults, so when saved filters differ the
+  // list is fetched again for them — once. `stored` is null while hydrating and
+  // only becomes the saved value on the render after, hence the dependency.
+  const restoredOnce = useRef(false)
+  // A layout effect, so the skeleton replaces the default page before it is painted.
+  useLayoutEffect(() => {
+    if (restoredOnce.current || !stored) return
+    restoredOnce.current = true
+    const restored = { ...defaultFilters, ...stored }
+    if (JSON.stringify(restored) === JSON.stringify(defaultFilters)) return
+    runSearch(restored)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the saved value arrives
+  }, [stored])
+
   function handleFiltersChange(next: BrowseFiltersState) {
     const detailChanged =
       JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
     // A switch or a sort reads as instant; waiting for Enter in the search box
     // made turning it off look like it did nothing.
-    const instantChanged =
-      next.openOnly !== filters.openOnly || next.sort !== filters.sort
-    setFilters(next)
+    const openOnlyChanged = next.openOnly !== filters.openOnly
+    const instantChanged = openOnlyChanged || next.sort !== filters.sort
+    // Remembered for the next visit. Only the switch itself writes the cookie:
+    // the "turn off Open only" shortcut on a linked TOR is a one-off, not a choice.
+    if (openOnlyChanged) {
+      writePreferenceCookie(BROWSE_OPEN_ONLY_COOKIE, String(next.openOnly))
+    }
+    writeStoredBrowseFilters(next)
+    setEdited(next)
     if (detailChanged || instantChanged) {
       runSearch(next)
     }
@@ -189,7 +239,7 @@ export function BrowseView({
 
   function handleShowAllTors() {
     const next = { ...filters, openOnly: false }
-    setFilters(next)
+    setEdited(next)
     setClosedHintDismissed(true)
     runSearch(next)
   }
@@ -278,21 +328,23 @@ export function BrowseView({
         </p>
       ) : null}
 
-      <div
-        className={`grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4 ${
-          isPending ? "opacity-70" : ""
-        }`}
-      >
+      <div className="grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4">
         <aside className="min-h-[320px] rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
-          <ScrollArea className="min-h-0 w-full flex-1">
-            <TorList
-              items={items}
-              selectedId={selectedId}
-              linkedTorId={linkedTorId}
-              onSelect={selectTor}
-              onToggleBookmark={handleToggleBookmark}
-            />
-          </ScrollArea>
+          {isPending ? (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <TorListSkeleton />
+            </div>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <TorList
+                items={items}
+                selectedId={selectedId}
+                linkedTorId={linkedTorId}
+                onSelect={selectTor}
+                onToggleBookmark={handleToggleBookmark}
+              />
+            </div>
+          )}
           <BrowsePager
             page={page}
             totalPages={totalPages}
