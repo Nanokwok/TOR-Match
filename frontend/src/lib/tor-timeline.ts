@@ -115,10 +115,16 @@ export function buildTorTimeline(tor: TimelineSource, now: Date = new Date()): T
     const branchCodes = (BRANCHES[code as "D0" | "W0"] ?? []).filter((branch) => present.has(branch))
 
     let status: TorStepStatus
-    if (!rows.length) {
-      status = "upcoming"
-    } else if (index < reachedIndex) {
+    if (index < reachedIndex) {
+      // Done, whether or not the announcement itself was captured. e-GP serves
+      // about a month of history, so a project whose แผนงาน or ราคากลาง was
+      // published last quarter has no row for it — and rendering that as
+      // "รอดำเนินการ" tells a bidder the stage is still to come when the
+      // project is already past submission. The step has no date and no
+      // document, which is the honest part: we know it happened, not when.
       status = "completed"
+    } else if (!rows.length) {
+      status = "upcoming"
     } else if (branchCodes.length) {
       // The trunk step was superseded: say which way.
       status = branchCodes.some((branch) => CANCELLATIONS.has(branch)) ? "cancelled" : "amended"
