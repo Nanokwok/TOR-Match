@@ -12,6 +12,7 @@
  * announcementNo.
  */
 import { connectDB, disconnectDB } from "@/config/db"
+import { Tor } from "@/models/Tor.model"
 import { TorDraft } from "@/models/TorDraft.model"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { hasFlag } from "@/utils/cli-flags"
@@ -21,13 +22,31 @@ async function main() {
 
   await connectDB()
 
-  // "approved" is excluded: a reviewer already published those, and their
-  // published TOR may carry hand corrections this script would overwrite.
-  const drafts = await TorDraft.find({ reviewStatus: "auto-approved" }).sort({
-    announcementNo: 1,
-  })
+  // A reviewer-approved draft is normally left alone, because its published TOR
+  // may carry hand corrections this would overwrite. That only holds while the
+  // TOR exists: one approved draft had been withdrawn before its invitation
+  // arrived and was never picked back up, so an open tender with three weeks to
+  // run was sitting in the drafts collection where nobody could bid on it.
+  //
+  // So "approved" is included when `tors` has nothing under that announcement
+  // number — there is no human work to overwrite. Membership is read from the
+  // collection rather than from draft.publishedTorId, which auto-publishing
+  // never writes back.
+  const [autoApproved, approved, live] = await Promise.all([
+    TorDraft.find({ reviewStatus: "auto-approved" }).sort({ announcementNo: 1 }),
+    TorDraft.find({ reviewStatus: "approved" }).sort({ announcementNo: 1 }),
+    Tor.find({}, { announcementNo: 1 }).lean(),
+  ])
+  const onBrowse = new Set(live.map((tor) => tor.announcementNo))
+  const unpublishedApproved = approved.filter((draft) => !onBrowse.has(draft.announcementNo))
+  const drafts = [...autoApproved, ...unpublishedApproved]
 
-  console.log(`[publish] ${drafts.length} auto-approved draft(s) awaiting publish`)
+  console.log(
+    `[publish] ${autoApproved.length} auto-approved draft(s)` +
+      (unpublishedApproved.length
+        ? `, and ${unpublishedApproved.length} approved draft(s) with no published TOR`
+        : "")
+  )
 
   let published = 0
   let skipped = 0
