@@ -10,9 +10,9 @@ import { env } from "@/config/env"
 import { CERTIFICATION_IDS, QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import {
   PROCUREMENT_METHODS,
-  PROCUREMENT_STATUSES,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { toArabicDigitsDeep } from "@/utils/thai-digits"
 import { withRetry } from "@/scraper/retry"
 import {
   repairQualifications,
@@ -53,12 +53,19 @@ export type ExtractionContext = {
  * Gemini occasionally ignores the JSON constraint and answers in prose; the
  * raw `JSON.parse` error ("Unexpected token 'H'") says nothing about what the
  * model actually said, so quote the start of the answer.
+ *
+ * Thai numerals are converted here, where every extraction passes through, so
+ * none of them can be forgotten: announcements are written with ๐-๙ and the
+ * model copies the Thai as written, which is what it is asked to do.
  */
 function parseJsonResponse(label: string, text: string): unknown {
   try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+    return toArabicDigitsDeep(JSON.parse(text))
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+    }
+    throw error
   }
 }
 
@@ -85,7 +92,6 @@ export const extractionSchema = z.object({
   projectScale: z.enum(PROJECT_SCALES),
   durationDays: z.number().describe("Contract length in days. 0 if not stated."),
   method: z.enum(PROCUREMENT_METHODS),
-  status: z.enum(PROCUREMENT_STATUSES),
   deadline: z.string().describe('Bid submission deadline, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if absent.'),
   announcementDate: z.string().describe('Same format as deadline.'),
   budgetBaht: z.number(),
@@ -281,4 +287,140 @@ export async function extractTorFromPdf(
     // of the clause. Anything the two disagree on becomes a manual row.
     qualificationRequirements: repairQualifications(parsed.qualificationRequirements),
   }
+}
+
+/**
+ * The official median price (ราคากลาง), read from a บก.06 announcement.
+ *
+ * Its own tiny extraction rather than the full one: the form is a page or two
+ * and states one number that outranks whatever a tender document happened to
+ * mention. Running the full schema over it would cost a hundred times as much
+ * to learn the same figure, and ราคากลาง is among the feed's most numerous
+ * announcement types.
+ */
+export const medianPriceSchema = z.object({
+  medianPriceBaht: z
+    .number()
+    .describe("ราคากลาง in baht as the form states it. 0 if the document states none."),
+  approvedDate: z
+    .string()
+    .describe('วันที่อนุมัติราคากลาง, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if absent.'),
+  aiConfidence: z.number().describe("0-100: how certain the figure above is."),
+})
+
+export type MedianPriceExtraction = z.infer<typeof medianPriceSchema>
+
+const MEDIAN_PRICE_PROMPT = `You read Thai government median-price announcements (ประกาศราคากลาง, form บก.06) for Bangkok Metropolitan Administration.
+
+Report only the official median price the document states and the date it was approved.
+- ราคากลาง is the approved reference price, not the budget (วงเงินงบประมาณ). When the document shows both, report ราคากลาง.
+- Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00.
+- State 0 rather than guessing when the document gives no figure.`
+
+export async function extractMedianPrice(
+  context: ExtractionContext,
+  documents: TorDocument[]
+): Promise<MedianPriceExtraction> {
+  if (documents.length === 0) throw new Error("No documents to read a median price from")
+
+  const ai = await getClient()
+  const response = await withRetry(`median price ${context.projectNo}`, () =>
+    ai.models.generateContent({
+      model: env.extractionModel,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            ...documents.map((document) => ({
+              inlineData: { mimeType: "application/pdf", data: document.pdf.toString("base64") },
+            })),
+            { text: `เลขที่โครงการ: ${context.projectNo}\n\nRead the median price.` },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: MEDIAN_PRICE_PROMPT,
+        temperature: 0,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+        responseJsonSchema: z.toJSONSchema(medianPriceSchema),
+      },
+    })
+  )
+
+  const text = response.text
+  if (!text) throw new Error("Median price extraction returned no output")
+
+  return medianPriceSchema.parse(parseJsonResponse("Median price extraction", text))
+}
+
+/**
+ * The bid submission deadline, read from the invitation and nothing else.
+ *
+ * The full extraction is handed every document an announcement has — a tender
+ * archive of a dozen files plus the two-page ประกาศเชิญชวน — and the deadline
+ * appears in exactly one of them. Asked to read everything at once the model
+ * sometimes returns no date at all, which published a TOR whose "กำหนดยื่นข้อเสนอ"
+ * read "-" even though the invitation stating it had been downloaded.
+ *
+ * So it is asked separately, against the invitation alone, the way the median
+ * price is. Two pages and one question is a fraction of the full call, and the
+ * answer cannot be diluted by a tender document that has no closing date to
+ * give.
+ */
+export const deadlineSchema = z.object({
+  deadline: z
+    .string()
+    .describe('กำหนดยื่นข้อเสนอ, "YYYY-MM-DDTHH:mm:ss+07:00". Empty string if the document states none.'),
+  announcementDate: z
+    .string()
+    .describe('วันที่ประกาศ, same format. Empty string if absent.'),
+  aiConfidence: z.number().describe("0-100: how certain the date above is."),
+})
+
+export type DeadlineExtraction = z.infer<typeof deadlineSchema>
+
+const DEADLINE_PROMPT = `You read Thai government invitations to bid (ประกาศเชิญชวน / ประกาศประกวดราคา) for Bangkok Metropolitan Administration.
+
+Report only when proposals are due, and the date of the announcement itself.
+- The submission deadline is written as "กำหนดยื่นข้อเสนอและเสนอราคา … ในวันที่ … ระหว่างเวลา … น. ถึง … น." Take the DATE proposals are submitted and the END of that time range.
+- Do not confuse it with other dates in the same document: ซื้อเอกสารประกวดราคา (buying the documents), ขอรับเอกสาร, the วิจารณ์ period of a draft, or the contract duration. Only กำหนดยื่นข้อเสนอ counts.
+- Convert Buddhist-era years to CE (2569 -> 2026) and emit dates as YYYY-MM-DDTHH:mm:ss+07:00. When no time is given, use 16:30:00.
+- Return an empty string rather than guessing when the document truly states no submission date.`
+
+export async function extractDeadline(
+  context: ExtractionContext,
+  documents: TorDocument[]
+): Promise<DeadlineExtraction> {
+  if (documents.length === 0) throw new Error("No documents to read a deadline from")
+
+  const ai = await getClient()
+  const response = await withRetry(`deadline ${context.projectNo}`, () =>
+    ai.models.generateContent({
+      model: env.extractionModel,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            ...documents.map((document) => ({
+              inlineData: { mimeType: "application/pdf", data: document.pdf.toString("base64") },
+            })),
+            { text: `เลขที่โครงการ: ${context.projectNo}\n\nRead the submission deadline.` },
+          ],
+        },
+      ],
+      config: {
+        systemInstruction: DEADLINE_PROMPT,
+        temperature: 0,
+        maxOutputTokens: 1024,
+        responseMimeType: "application/json",
+        responseJsonSchema: z.toJSONSchema(deadlineSchema),
+      },
+    })
+  )
+
+  const text = response.text
+  if (!text) throw new Error("Deadline extraction returned no output")
+
+  return deadlineSchema.parse(parseJsonResponse("Deadline extraction", text))
 }

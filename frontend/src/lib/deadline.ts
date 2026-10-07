@@ -109,10 +109,26 @@ function isValidIsoDate(isoDate?: string | null): boolean {
 }
 
 /**
+ * The statuses that are past the submission phase.
+ *
+ * The lifecycle statuses the e-GP announcements add are terminal — D1
+ * ยกเลิกประกาศเชิญชวน, W1 ยกเลิกผลการคัดเลือก, W2 แก้ไขรายชื่อผู้ชนะ — so they belong
+ * here rather than falling through to "open", which would show a cancelled
+ * project in the stepper as still accepting proposals. `changed` (D2
+ * เปลี่ยนแปลงประกาศเชิญชวน) is deliberately absent: an amended invitation is
+ * still an open one.
+ *
+ * The stepper has only three stages, so these read as "closed". A cancelled
+ * project is not literally "awaiting results", which is the label that stage
+ * carries — a stage of its own would be the fuller fix.
+ */
+const CLOSED_STATUSES = new Set(["closed", "awarded", "cancelled", "winner-cancelled", "winner-revised"])
+
+/**
  * Determine the procurement stage of a TOR:
  * 1. "draft": ร่าง TOR / ประชาพิจารณ์ (status === "draft" or missing/empty deadline)
- * 2. "open": เปิดรับซองข้อเสนอ (status === "open" | "closing-soon")
- * 3. "closed": สิ้นสุดการยื่น / รอประกาศผล (status === "closed" | "awarded")
+ * 2. "open": เปิดรับซองข้อเสนอ (status === "open" | "closing-soon" | "changed")
+ * 3. "closed": สิ้นสุดการยื่น / รอประกาศผล (see CLOSED_STATUSES)
  */
 export function getTorStage(tor: {
   status?: TorProcurementStatus | string
@@ -122,7 +138,7 @@ export function getTorStage(tor: {
   if (status === "draft" || !isValidIsoDate(tor.deadline)) {
     return "draft"
   }
-  if (status === "closed" || status === "awarded") {
+  if (CLOSED_STATUSES.has(status)) {
     return "closed"
   }
   return "open"

@@ -52,6 +52,16 @@ const EXCLUDED_SUBJECTS = [
   "รักษาความปลอดภัย", "ทำความสะอาด", "ซักฟอก",
   "ก่อสร้าง", "ปรับปรุงอาคาร", "ระบายน้ำ", "ประปา",
   "เครื่องปรับอากาศ", "ลิฟต์", "รถยนต์", "ยานพาหนะ", "มูลฝอย",
+  // "บำรุงรักษาระบบ" below is a strong term, and plant has systems too: an
+  // air-conditioner's cooling plant is "ระบบทำความเย็นของระบบปรับอากาศ", which
+  // read as IT work until this line. "ปรับอากาศ" rather than the narrower
+  // "เครื่องปรับอากาศ" so that the system wording is covered as well.
+  "ปรับอากาศ", "ทำความเย็น", "สาธารณูปโภค",
+  // Solar generation is an electrical installation, not a system to be written.
+  "โซลาร์", "solar", "พลังงานแสงอาทิตย์", "ผลิตไฟฟ้า",
+  // Medical devices sold on their digital readout — "ระบบดิจิตอล" is two weak
+  // hits on an ultrasound scanner.
+  "อัลตราซาวด์", "คลื่นเสียงความถี่สูง", "อวัยวะ", "ทันตกรรม",
 ]
 
 /**
@@ -68,6 +78,12 @@ const STRONG_TERMS = [
   "พัฒนาระบบ", "จัดทำระบบ", "ปรับปรุงระบบ", "บำรุงรักษาระบบ",
   "เทคโนโลยีสารสนเทศ", "คอมพิวเตอร์", "computer", "ไอที",
   "api", "ocr", "cloud", "คลาวด์",
+  // Closed-circuit television is systems-integration work — network cameras,
+  // recorders, storage and the software that reads them — and it is a large
+  // share of what the BMA buys from IT suppliers. Measured over 120 days, 8 of
+  // 22 CCTV projects were missed, including "ระบบวิเคราะห์ภาพจากกล้องโทรทัศน์วงจรปิด",
+  // because they say "บำรุงรักษากล้อง" rather than "บำรุงรักษาระบบ".
+  "กล้องโทรทัศน์วงจรปิด", "กล้องวงจรปิด", "cctv",
 ]
 
 /**
@@ -80,6 +96,9 @@ const STRONG_TERMS = [
 const WEAK_TERMS = [
   "ระบบ", "system", "ดิจิทัล", "ดิจิตอล", "digital",
   "ออนไลน์", "online", "เว็บ", "web", "แอป", "app", "ai",
+  // Weak, not strong: a lone "Network" also appears on laser printers, while
+  // real work pairs it with something — "ระบบป้องกันเครือข่าย" is two hits.
+  "เครือข่าย", "network",
 ]
 
 /** Is this announcement worth downloading a document for? */

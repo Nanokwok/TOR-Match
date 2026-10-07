@@ -38,6 +38,10 @@ export function procurementStatusLabel(
       "closing-soon": "browse.statusClosingSoon",
       closed: "browse.statusClosed",
       awarded: "browse.statusAwarded",
+      cancelled: "browse.statusCancelled",
+      changed: "browse.statusChanged",
+      "winner-cancelled": "browse.statusWinnerCancelled",
+      "winner-revised": "browse.statusWinnerRevised",
       all: "common.all",
     }[status] ?? status
   return key === status ? status : t(key)
@@ -105,4 +109,30 @@ export function listTagLabel(tag: string, t: TranslateFn) {
     return projectScaleLabel(tag as TorProjectScale, t)
   }
   return tag
+}
+
+/**
+ * The Thai/English name of an e-GP announcement type.
+ *
+ * Falls back to whatever wording the feed itself used, then to the raw code:
+ * the list is the CGD's and may gain entries we have not seen.
+ */
+export function announceTypeLabel(
+  announceType: string,
+  t: TranslateFn,
+  fallback = ""
+): string {
+  const key = {
+    P0: "browse.announceTypeP0",
+    "15": "browse.announceType15",
+    B0: "browse.announceTypeB0",
+    D0: "browse.announceTypeD0",
+    D1: "browse.announceTypeD1",
+    D2: "browse.announceTypeD2",
+    W0: "browse.announceTypeW0",
+    W1: "browse.announceTypeW1",
+    W2: "browse.announceTypeW2",
+  }[announceType]
+
+  return key ? t(key) : fallback || announceType
 }

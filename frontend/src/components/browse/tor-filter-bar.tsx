@@ -212,6 +212,10 @@ export function TorFilterBar({
               <SelectItem value="closing-soon">{t("browse.statusClosingSoon")}</SelectItem>
               <SelectItem value="closed">{t("browse.statusClosed")}</SelectItem>
               <SelectItem value="awarded">{t("browse.statusAwarded")}</SelectItem>
+              <SelectItem value="changed">{t("browse.statusChanged")}</SelectItem>
+              <SelectItem value="cancelled">{t("browse.statusCancelled")}</SelectItem>
+              <SelectItem value="winner-cancelled">{t("browse.statusWinnerCancelled")}</SelectItem>
+              <SelectItem value="winner-revised">{t("browse.statusWinnerRevised")}</SelectItem>
             </LabeledFilterSelect>
 
             <LabeledFilterSelect

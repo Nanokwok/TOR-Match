@@ -12,12 +12,32 @@ export type TorProcurementMethod =
   | "specific"
   | "price-agreement"
 
+/** Mirrors PROCUREMENT_STATUSES in backend/src/models/tor-fields.schema.ts. */
+/**
+ * One announcement in a project's history, as the e-GP feed published it.
+ *
+ * Mirrors announcementLinkSchema in backend/src/models/tor-fields.schema.ts.
+ * `announceType` is the CGD code — B0 the tender, D0 the invitation, W0 the
+ * winner, and so on — which is what the UI labels it by.
+ */
+export type TorAnnouncement = {
+  announceType: string
+  announceLabel: string
+  url: string
+  publishedDate: string
+  title: string
+}
+
 export type TorProcurementStatus =
   | "draft"
   | "open"
   | "closing-soon"
   | "closed"
   | "awarded"
+  | "cancelled"
+  | "changed"
+  | "winner-cancelled"
+  | "winner-revised"
 
 export type TorDurationPreset =
   | "under-3m"
@@ -118,12 +138,16 @@ export type Tor = {
   deadline: string
   announcementDate: string
   sourceUrl: string
+  /** Every announcement e-GP published for this project — see TorAnnouncement. */
+  announcements?: TorAnnouncement[]
   /** Which feed the TOR came from; absent only on the hand-written mock rows. */
   source?: TorSource
   summary: LocalizedText
   deliverables: LocalizedList
   techTags: string[]
   listTags: string[]
+  /** Whether the title reads like IT work. A label, not a guarantee. */
+  softwareRelated?: boolean
   financials: TorFinancials
   qualificationRequirements: TorQualificationRequirement[]
   timeline?: TorTimeline
@@ -187,6 +211,8 @@ export type TorDetailFilters = {
   deadlineTo: string
   fiscalYear: string
   localOffices: string[]
+  /** Show only announcements whose title reads like IT work. */
+  softwareOnly: boolean
 }
 
 /** "opened" is the announcement date: desc is newest first. */

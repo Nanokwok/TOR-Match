@@ -174,6 +174,16 @@ export function BrowseMoreFiltersDialog({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5">
+          <FilterSection title={t("browse.moreFiltersModal.category")}>
+            <CheckboxRow
+              checked={draft.softwareOnly}
+              label={t("browse.moreFiltersModal.softwareOnly")}
+              onCheckedChange={() =>
+                setDraft((current) => ({ ...current, softwareOnly: !current.softwareOnly }))
+              }
+            />
+          </FilterSection>
+
           <FilterSection title={t("browse.moreFiltersModal.projectScale")}>
             <div className="grid gap-2 sm:grid-cols-2">
               {PROJECT_SCALE_OPTIONS.map((option) => (

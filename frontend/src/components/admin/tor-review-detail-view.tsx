@@ -92,6 +92,10 @@ const STATUSES: TorProcurementStatus[] = [
   "closing-soon",
   "closed",
   "awarded",
+  "changed",
+  "cancelled",
+  "winner-cancelled",
+  "winner-revised",
 ]
 
 function toDateTimeLocal(iso: string) {

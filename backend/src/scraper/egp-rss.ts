@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser"
 
 import { env } from "@/config/env"
+import { toArabicDigits } from "@/utils/thai-digits"
 
 /**
  * Reads procurement announcements from the Comptroller General's Department
@@ -42,6 +43,10 @@ export const ANNOUNCE_TYPES = {
   invitationCancelled: "D1",
   /** เปลี่ยนแปลงประกาศเชิญชวน */
   invitationChanged: "D2",
+  /** ยกเลิกประกาศรายชื่อผู้ชนะ / ผู้ได้รับการคัดเลือก */
+  winnerCancelled: "W1",
+  /** เปลี่ยนแปลงประกาศรายชื่อผู้ชนะ */
+  winnerChanged: "W2",
 } as const
 
 export type AnnounceType = (typeof ANNOUNCE_TYPES)[keyof typeof ANNOUNCE_TYPES]
@@ -88,6 +93,15 @@ export type EgpAnnouncement = {
   announceLabel: string
   /** YYYY-MM-DD as published. */
   publishedDate: string
+  /**
+   * Whether `pdfUrl` is the document itself rather than a portal page.
+   *
+   * Cancellations and award notices are published with a link to e-GP's own
+   * search page, which carries no file. Those announcements still matter —
+   * their *type* is the news — so they are kept, and only the types something
+   * actually reads are required to carry a document.
+   */
+  isDocument: boolean
 }
 
 /**
@@ -216,17 +230,22 @@ export function parseFeed(xml: string): EgpFeedResult {
         asText(raw.description)
       )
       return {
-        title: asText(raw.title),
+        // The feed writes Thai numerals, and this title is shown on the TOR
+        // page beside the documents as well as being read by the extraction.
+        title: toArabicDigits(asText(raw.title)),
         pdfUrl: asText(raw.link),
         projectNo,
         methodLabel,
         announceLabel,
         publishedDate: asText(raw.pubDate),
+        isDocument: isDocumentLink(asText(raw.link)),
       }
     })
-    // An item with no project number cannot be keyed against the database,
-    // and one whose link is not the document itself cannot be extracted.
-    .filter((item) => item.projectNo && isDocumentLink(item.pdfUrl))
+    // An item with no project number cannot be keyed against the database.
+    // A portal link is kept: D1 ยกเลิกประกาศเชิญชวน and W1 are published that
+    // way, and dropping them here meant a cancelled project stayed "open"
+    // for ever — the status is in the announcement's type, not its file.
+    .filter((item) => item.projectNo)
 
   const countByDay = Number(channel.countbyday ?? 0) || 0
 
@@ -263,7 +282,7 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
   })
 
   if (!response.ok) {
-    throw new Error(`Feed returned HTTP ${response.status} for ${url}`)
+    throw new FeedHttpError(response.status, url)
   }
 
   // Thai text, and the feed declares its charset twice — inconsistently. The
@@ -279,26 +298,231 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
 }
 
 /**
- * Fetches one announcement type, working around the 20-item cap (§4.2).
+ * A non-2xx answer from the feed, carrying the status so a caller can tell a
+ * rate limit from a broken request.
  *
- * When the feed reports more announcements than it returned, the same query is
- * re-run per procurement method: each narrower query gets its own 20-item
- * allowance, so together they reach announcements the broad query hid.
+ * The feed answers 429 once a client has made a few hundred requests, and it
+ * keeps answering 429 for a good while afterwards. Read as a plain failure that
+ * looks exactly like "this day has nothing", which is how a walk once reported
+ * the feed as ending in June while it served January perfectly well.
+ */
+export class FeedHttpError extends Error {
+  constructor(readonly status: number, url: string) {
+    super(`Feed returned HTTP ${status} for ${url}`)
+    this.name = "FeedHttpError"
+  }
+
+  /** Whether waiting longer is the right response. */
+  get isRateLimit(): boolean {
+    return this.status === 429 || this.status === 503
+  }
+}
+
+/** Spacing between feed requests, so a narrowing sweep is not a burst. */
+const REQUEST_GAP_MS = 300
+
+/** How long to wait before retrying a day the feed refused. */
+const FAILURE_BACKOFF_MS = 5_000
+
+/** First wait after a 429, doubled on each further refusal. */
+const RATE_LIMIT_BACKOFF_MS = 30_000
+
+/** Attempts per day, counting the first. */
+const RETRIES = 4
+
+/**
+ * Fetches one announcement type, optionally re-querying per procurement method
+ * when the 20-item cap (§4.2) hid part of the day.
+ *
+ * **Measured on 2026-10-07: the method sweep does not work, and callers should
+ * leave `narrowOnTruncation` off.** It was built on the assumption that each
+ * narrower query gets its own 20-item allowance. Against the live feed:
+ *
+ *  - for `P0` the parameter is ignored outright — all twelve methods returned
+ *    byte-identical responses (20 items, countbyday 84, same first items), and
+ *    the twelve extra requests gained zero announcements;
+ *  - for `D0` it *is* honoured (`02`/`18`/`19` returned nothing, `16` returned
+ *    everything) but cannot split the day, because nearly every BMA
+ *    announcement is e-bidding and therefore in the one bucket.
+ *
+ * {@link fetchAnnouncementsOverDays} is the axis that does work. This is kept
+ * because `methodId` is honoured for some types and a future agency mix could
+ * differ, and because `saturatedMethods` is what proves the ceiling is real.
+ *
+ * One method's request failing costs that method's share, not the type: the
+ * broad result is still returned, and the failure is named so a short count has
+ * a reason.
  */
 export async function fetchAnnouncements(
-  query: EgpFeedQuery & { announceType: AnnounceType }
-): Promise<EgpAnnouncement[]> {
+  query: EgpFeedQuery & { announceType: AnnounceType },
+  { narrowOnTruncation = true }: { narrowOnTruncation?: boolean } = {}
+): Promise<FetchResult> {
   const broad = await fetchFeed(query)
-  if (!broad.truncated) return broad.items
+  if (!broad.truncated || !narrowOnTruncation) {
+    return { ...broad, requests: 1, saturatedMethods: [], failedMethods: [] }
+  }
 
   const byProjectNo = new Map(broad.items.map((item) => [item.projectNo, item]))
+  const saturatedMethods: MethodId[] = []
+  const failedMethods: MethodId[] = []
+  let requests = 1
 
   for (const methodId of Object.values(METHOD_IDS)) {
-    const narrowed = await fetchFeed({ ...query, methodId })
-    for (const item of narrowed.items) {
-      byProjectNo.set(item.projectNo, item)
+    await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
+    requests += 1
+    try {
+      const narrowed = await fetchFeed({ ...query, methodId })
+      for (const item of narrowed.items) {
+        byProjectNo.set(item.projectNo, item)
+      }
+      if (narrowed.truncated) saturatedMethods.push(methodId)
+    } catch {
+      failedMethods.push(methodId)
     }
   }
 
-  return [...byProjectNo.values()]
+  const items = [...byProjectNo.values()]
+  // Still short of the day's total even after narrowing: the caller should say
+  // so rather than report a number that silently omits announcements.
+  return {
+    items,
+    countByDay: broad.countByDay,
+    truncated: broad.countByDay > items.length,
+    requests,
+    saturatedMethods,
+    failedMethods,
+  }
+}
+
+/** What a fetch found, and whether the feed admitted to holding back more. */
+export type FetchResult = {
+  items: EgpAnnouncement[]
+  /**
+   * The day's real total as the feed reports it (§4.7), 0 when absent. Summed
+   * across the days walked when the result came from
+   * {@link fetchAnnouncementsOverDays}.
+   */
+  countByDay: number
+  truncated: boolean
+  /** Feed requests this cost, so the price of the sweep stays visible. */
+  requests: number
+  /** Methods whose own narrowed query hit the cap — unsplittable by method. */
+  saturatedMethods: MethodId[]
+  /** Methods whose narrowed request failed, so a short count has a reason. */
+  failedMethods: MethodId[]
+  /** Day-walk only: days the cap truncated, newest first. */
+  cappedDays?: string[]
+  /** Day-walk only: days whose request failed, newest first. */
+  failedDays?: string[]
+}
+
+/**
+ * The `announceDate` code (YYYYMMDD) for `back` days before `now`.
+ *
+ * Read in Asia/Bangkok, not the host's zone: the feed's day boundary is Thai
+ * local, so a machine set to UTC would ask for the wrong day through most of
+ * its evening — which is exactly when the feed is open (§4.8).
+ */
+export function announceDateCode(back: number, now = new Date()): string {
+  const at = new Date(now.getTime() - back * 86_400_000)
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .format(at)
+    .replace(/-/g, "")
+}
+
+/**
+ * Fetches one announcement type day by day, which is how the 20-item cap is
+ * actually escaped.
+ *
+ * Setting `announceDate` disables the feed's own 7-day backfill (§4.6), and in
+ * exchange each day queried gets its own 20-item allowance. The feed also
+ * answers for days well outside those seven: walking back 45 days on
+ * 2026-10-07 was still returning announcements at 2026-08-24, where the
+ * undated query returned 20 items in total. Measured for B0+D0 over those 45
+ * days: 405 projects, 72 of them software, against 20 from one undated query.
+ *
+ * A day over the cap is still capped — the axis multiplies allowances, it does
+ * not lift the limit — so `cappedDays` names the days that lost announcements.
+ * For B0/D0 that is rare (5-20 published a day); for P0 it is most days.
+ *
+ * Items are kept from every day and deduplicated by project *and url*, not by
+ * project alone: a re-published tender is genuinely two documents, and
+ * `mergeAnnouncementLinks` wants both.
+ */
+export async function fetchAnnouncementsOverDays(
+  query: EgpFeedQuery & { announceType: AnnounceType },
+  {
+    days,
+    offset = 0,
+    onDay,
+  }: {
+    days: number
+    /**
+     * Days to skip before starting, so a later run can continue where an
+     * earlier one stopped instead of re-reading what it already has. The feed
+     * rate-limits a client after a few hundred requests, which is the whole
+     * reason history is collected in sections.
+     */
+    offset?: number
+    onDay?: (date: string, result: EgpFeedResult) => void
+  }
+): Promise<FetchResult> {
+  const byIdentity = new Map<string, EgpAnnouncement>()
+  const cappedDays: string[] = []
+  const failedDays: string[] = []
+  let countByDay = 0
+  let requests = 0
+
+  for (let back = offset; back < offset + days; back += 1) {
+    const announceDate = announceDateCode(back)
+    if (requests > 0) await new Promise((resolve) => setTimeout(resolve, REQUEST_GAP_MS))
+    requests += 1
+    // A long walk is hundreds of requests, and the feed starts refusing them
+    // before its history runs out — so one refusal is retried after a pause
+    // rather than written off as a day with nothing in it. Losing a day here
+    // loses every announcement published on it.
+    let result: EgpFeedResult | undefined
+    for (let attempt = 0; attempt < RETRIES && !result; attempt += 1) {
+      try {
+        result = await fetchFeed({ ...query, announceDate })
+      } catch (error) {
+        const last = attempt === RETRIES - 1
+        if (last) break
+        // A rate limit is answered by waiting, and waiting longer each time;
+        // anything else is likelier transient and retried once, briefly.
+        const rateLimited = error instanceof FeedHttpError && error.isRateLimit
+        if (!rateLimited && attempt > 0) break
+        await new Promise((resolve) =>
+          setTimeout(resolve, rateLimited ? RATE_LIMIT_BACKOFF_MS * 2 ** attempt : FAILURE_BACKOFF_MS)
+        )
+      }
+    }
+    if (!result) {
+      failedDays.push(announceDate)
+      continue
+    }
+
+    countByDay += result.countByDay
+    if (result.truncated) cappedDays.push(announceDate)
+    for (const item of result.items) {
+      byIdentity.set(`${item.projectNo}\u0000${item.pdfUrl}`, item)
+    }
+    onDay?.(announceDate, result)
+  }
+
+  return {
+    items: [...byIdentity.values()],
+    countByDay,
+    truncated: cappedDays.length > 0,
+    requests,
+    saturatedMethods: [],
+    failedMethods: [],
+    cappedDays,
+    failedDays,
+  }
 }

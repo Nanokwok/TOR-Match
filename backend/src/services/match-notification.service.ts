@@ -5,6 +5,7 @@ import type { CompanyDoc } from "@/models/Company.model"
 import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
 import { NotificationSettings } from "@/models/NotificationSettings.model"
+import { BIDDABLE_STATUSES } from "@/models/tor-fields.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import { User } from "@/models/User.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
@@ -257,7 +258,7 @@ function buildDealBreakerNotification(userId: unknown, tor: TorDoc, version: str
  * is a historical fact, not a live status).
  */
 export async function notifyNewMatches(userId: string, company: CompanyDoc): Promise<void> {
-  const tors = await Tor.find({ status: { $in: ["open", "closing-soon"] } })
+  const tors = await Tor.find({ status: { $in: BIDDABLE_STATUSES } })
   if (!tors.length) return
 
   const eligibleTors = tors.filter((tor: TorDoc) => matchCompanyToTor(company, tor).eligible)
@@ -288,7 +289,9 @@ export async function notifyNewMatches(userId: string, company: CompanyDoc): Pro
  * notification for any company newly eligible for it.
  */
 export async function notifyCompaniesForTor(tor: TorDoc): Promise<void> {
-  if (!["open", "closing-soon"].includes(tor.status)) return
+  // A cancelled project, or one that already has a winner, is not something a
+  // company can act on — telling them they now qualify for it would be noise.
+  if (!BIDDABLE_STATUSES.includes(tor.status as (typeof BIDDABLE_STATUSES)[number])) return
 
   const companies = await Company.find()
   if (!companies.length) return
@@ -322,7 +325,7 @@ export async function notifyCompaniesForTor(tor: TorDoc): Promise<void> {
  * noise, not an opportunity.
  */
 export async function notifyHighBudget(tor: TorDoc): Promise<void> {
-  if (!["open", "closing-soon"].includes(tor.status)) return
+  if (!BIDDABLE_STATUSES.includes(tor.status as (typeof BIDDABLE_STATUSES)[number])) return
   if (!isHighBudget(tor)) return
 
   const companies = (await Company.find()).filter(

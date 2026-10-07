@@ -18,6 +18,10 @@ export const EMPTY_DETAIL_FILTERS: TorDetailFilters = {
   deadlineTo: "",
   fiscalYear: "all",
   localOffices: [],
+  // On by default: this is a board for IT suppliers, and ingestion now stores
+  // every kind of BMA procurement — refuse collection, hospital drugs, road
+  // works. They stay on file, and unticking this shows them.
+  softwareOnly: true,
 }
 
 export const PROJECT_SCALE_OPTIONS: {
