@@ -17,6 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
   SelectContent,
@@ -134,7 +135,7 @@ export function CompaniesView({
   ]
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+    <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
 
       {error ? (
@@ -356,6 +357,6 @@ export function CompaniesView({
           </PaginationContent>
         </Pagination>
       </div>
-    </div>
+    </ScrollArea>
   )
 }

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import type { AdminSystemSettings } from "@/server/db/mock/admin-settings"
@@ -65,7 +66,7 @@ export function SystemSettingsView({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+    <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -272,7 +273,7 @@ export function SystemSettingsView({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </ScrollArea>
   )
 }
 

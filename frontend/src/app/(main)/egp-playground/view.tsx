@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const DEPT_PRESETS = [
   { id: "0304", name: "กรมบัญชีกลาง (CGD)" },
@@ -572,9 +573,11 @@ export function EgpPlaygroundView() {
                       {copied ? "คัดลอกแล้ว!" : "คัดลอก XML"}
                     </Button>
                   </div>
-                  <pre className="max-h-[500px] overflow-auto rounded-lg bg-muted p-4 font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                    {result?.data?.rawXml || "ไม่มีข้อมูล XML"}
-                  </pre>
+                  <ScrollArea className="max-h-[500px] rounded-lg bg-muted p-4">
+                    <pre className="font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                      {result?.data?.rawXml || "ไม่มีข้อมูล XML"}
+                    </pre>
+                  </ScrollArea>
                 </div>
               )}
 
@@ -585,8 +588,8 @@ export function EgpPlaygroundView() {
                     เปรียบเทียบ: e-GP RSS Feed API vs. BMA Playwright Scraper
                   </h3>
 
-                  <div className="overflow-x-auto rounded-lg border">
-                    <table className="w-full text-left text-xs">
+                  <ScrollArea orientation="horizontal" className="rounded-lg border">
+                    <table className="w-full min-w-[540px] text-left text-xs">
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
                           <th className="p-3">หัวข้อ</th>
@@ -642,7 +645,7 @@ export function EgpPlaygroundView() {
                         </tr>
                       </tbody>
                     </table>
-                  </div>
+                  </ScrollArea>
 
                   <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
                     <p className="font-semibold text-foreground">💡 ข้อสรุปสำหรับทีมพัฒนา:</p>

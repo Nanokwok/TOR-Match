@@ -7,6 +7,7 @@ import { useState } from "react"
 import { bookmarkTorAction } from "@/actions/workspace"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { pickLocalized } from "@/lib/localized-content"
 import { formatDaysLeft, formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -370,7 +371,7 @@ function DistrictDistributionChart({
             ({rest.length} more)
           </span>
         </summary>
-        <div className="mt-4 max-h-64 space-y-2.5 overflow-y-auto border-t border-border pt-4">
+        <ScrollArea className="mt-4 max-h-64 border-t border-border pt-4" viewportClassName="space-y-2.5">
           {rest.map((point) => {
             const width = (point.projectCount / maxCount) * 100
             return (
@@ -393,7 +394,7 @@ function DistrictDistributionChart({
               </div>
             )
           })}
-        </div>
+        </ScrollArea>
       </details>
     </div>
   )

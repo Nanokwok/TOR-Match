@@ -15,6 +15,7 @@ import {
   WorkspaceFilterBar,
   type WorkspaceFiltersState,
 } from "@/components/workspace/workspace-filter-bar"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { filterWorkspaceCards, flattenBoardColumns } from "@/lib/workspace-board"
 import type {
   WorkspaceBoardResult,
@@ -118,7 +119,7 @@ export function WorkspaceView({
         onSearch={() => undefined}
       />
 
-      <div className="min-h-0 flex-1 overflow-x-auto p-4 md:p-6">
+      <ScrollArea orientation="horizontal" className="min-h-0 flex-1" viewportClassName="p-4 md:p-6">
         {allCards.length === 0 ? (
           <WorkspaceEmptyState
             variant="board"
@@ -141,7 +142,7 @@ export function WorkspaceView({
             onRequestAddTor={setAddColumnId}
           />
         )}
-      </div>
+      </ScrollArea>
 
       <WorkspaceCardDetailDialog
         open={selectedCardId !== null}

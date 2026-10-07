@@ -9,6 +9,7 @@ import { updateAdminCompanyStatusAction } from "@/actions/admin-companies"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import {
   getCertificationLabel,
@@ -71,7 +72,7 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+    <ScrollArea className="min-h-0 flex-1" viewportClassName="flex flex-col">
       <div className="flex flex-col gap-3 border-b bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="min-w-0 space-y-1">
           <Button
@@ -201,7 +202,7 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </ScrollArea>
   )
 }
 

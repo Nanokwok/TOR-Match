@@ -8,6 +8,7 @@ import { saveNotificationSettingsAction } from "@/actions/notification-settings"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -170,7 +171,7 @@ export function NotificationSettingsView({
           </p>
         </div>
 
-        <div className="overflow-x-auto">
+        <ScrollArea orientation="horizontal" className="w-full">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/80 text-left text-xs tracking-wide text-muted-foreground uppercase">
@@ -237,7 +238,7 @@ export function NotificationSettingsView({
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       </section>
 
       <section className="space-y-3">

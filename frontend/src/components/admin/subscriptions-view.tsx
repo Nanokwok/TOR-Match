@@ -22,6 +22,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
   SelectContent,
@@ -123,7 +124,7 @@ export function SubscriptionsView({
   ]
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+    <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold tracking-tight">Subscriptions</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -325,6 +326,6 @@ export function SubscriptionsView({
           </PaginationContent>
         </Pagination>
       </div>
-    </div>
+    </ScrollArea>
   )
 }

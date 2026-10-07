@@ -20,6 +20,7 @@ import "./globals.css";
 const googleSans = Google_Sans({
   variable: "--font-google-sans",
   subsets: ["latin", "thai"],
+  adjustFontFallback: false,
 });
 
 const coveredByYourGrace = Covered_By_Your_Grace({

@@ -17,9 +17,13 @@ import type { LocalizedTorView } from "@/lib/localized-tor"
 type TorFinancialsPanelProps = {
   /** Already flattened to the active locale by `localizeTor`. */
   financials: LocalizedTorView["financials"]
+  isCollapsed?: boolean
 }
 
-export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
+export function TorFinancialsPanel({
+  financials,
+  isCollapsed = false,
+}: TorFinancialsPanelProps) {
   const { locale, t } = useLocale()
 
   return (
@@ -55,17 +59,17 @@ export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
         </div>
 
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="bg-primary text-primary-foreground">
-                <th className="w-28 px-4 py-3 font-medium sm:w-36">
-                  {t("browse.financialPanel.day")}
+          <table className="w-full table-fixed border-collapse text-left text-sm">
+            <thead className={cn(isCollapsed && "invisible")}>
+              <tr className={cn(isCollapsed ? "h-0" : "bg-primary text-primary-foreground")}>
+                <th className={cn("w-28 sm:w-36", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                  {!isCollapsed && t("browse.financialPanel.day")}
                 </th>
-                <th className="w-48 px-4 py-3 font-medium sm:w-56">
-                  {t("browse.financialPanel.milestone")}
+                <th className={cn("w-48 sm:w-56", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                  {!isCollapsed && t("browse.financialPanel.paymentMilestones")}
                 </th>
-                <th className="px-4 py-3 font-medium">
-                  {t("browse.financialPanel.deliverable")}
+                <th className={cn(isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                  {!isCollapsed && t("browse.financialPanel.deliverable")}
                 </th>
               </tr>
             </thead>
@@ -85,14 +89,14 @@ export function TorFinancialsPanel({ financials }: TorFinancialsPanelProps) {
                     key={`${milestone.milestoneNumber}-${milestone.day}`}
                     className="border-t border-border bg-card transition-colors hover:bg-muted/30"
                   >
-                    <td className="px-4 py-3.5 whitespace-nowrap align-top">
+                    <td className="w-28 sm:w-36 px-4 py-3.5 whitespace-nowrap align-top">
                       <span className="inline-block rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground">
                         {t("browse.financialPanel.days", {
                           count: milestone.day,
                         })}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap align-top">
+                    <td className="w-48 sm:w-56 px-4 py-3.5 whitespace-nowrap align-top">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">

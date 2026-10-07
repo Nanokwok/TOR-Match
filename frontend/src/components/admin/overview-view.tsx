@@ -12,6 +12,7 @@ import type {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
 type OverviewViewProps = {
@@ -132,7 +133,7 @@ export function OverviewView({
   ]
 
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+    <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
         <p className="text-sm text-muted-foreground">
@@ -242,6 +243,6 @@ export function OverviewView({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </ScrollArea>
   )
 }

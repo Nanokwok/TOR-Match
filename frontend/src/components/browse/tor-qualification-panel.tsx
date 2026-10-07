@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { TorQualificationCheck, TorQualificationRow } from "@/types/tor"
 import { pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,7 @@ type TorQualificationPanelProps = {
   torId: string
   check: TorQualificationCheck
   onDirtyChange?: (isDirty: boolean) => void
+  isCollapsed?: boolean
 }
 
 type QualificationRow = TorQualificationRow
@@ -379,6 +381,7 @@ export function TorQualificationPanel({
   torId,
   check: initialCheck,
   onDirtyChange,
+  isCollapsed = false,
 }: TorQualificationPanelProps) {
   const router = useRouter()
   const { t } = useLocale()
@@ -471,7 +474,7 @@ export function TorQualificationPanel({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="rounded-lg border border-border overflow-hidden">
       <div className="space-y-1 border-b border-border bg-muted/50 p-4 text-sm">
         <p>
           {t("browse.qualificationPanel.scopeNote")}
@@ -485,53 +488,55 @@ export function TorQualificationPanel({
           </p>
         ) : null}
       </div>
-      <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
-        <thead>
-          <tr className="bg-primary text-primary-foreground">
-            <th className="w-[25%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.requirement")}
-            </th>
-            <th className="w-[55%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.torCriteria")}
-            </th>
-            <th className="w-[20%] px-4 py-3 font-medium">
-              {t("browse.qualificationPanel.companyProfile")}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {verifiedRows.length > 0 ? (
-            <>
-              <SectionHeaderRow
-                label={t("browse.qualificationPanel.autoVerified")}
-              />
-              <RequirementRows
-                rows={verifiedRows}
-                profileSetup={check.profileSetup}
-                showSetupPrompt={!check.profileSetup}
-                selfAssessedById={answers}
-                onSelfAssessChange={handleSelfAssessChange}
-                onNavigate={handleNavigate}
-              />
-            </>
-          ) : null}
+      <ScrollArea orientation="horizontal" className="w-full">
+        <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
+          <thead className={cn(isCollapsed && "invisible")}>
+            <tr className={cn(isCollapsed ? "h-0" : "bg-primary text-primary-foreground")}>
+              <th className={cn("w-[25%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                {!isCollapsed && t("browse.qualificationPanel.requirement")}
+              </th>
+              <th className={cn("w-[55%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                {!isCollapsed && t("browse.qualificationPanel.torCriteria")}
+              </th>
+              <th className={cn("w-[20%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+                {!isCollapsed && t("browse.qualificationPanel.companyProfile")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {verifiedRows.length > 0 ? (
+              <>
+                <SectionHeaderRow
+                  label={t("browse.qualificationPanel.autoVerified")}
+                />
+                <RequirementRows
+                  rows={verifiedRows}
+                  profileSetup={check.profileSetup}
+                  showSetupPrompt={!check.profileSetup}
+                  selfAssessedById={answers}
+                  onSelfAssessChange={handleSelfAssessChange}
+                  onNavigate={handleNavigate}
+                />
+              </>
+            ) : null}
 
-          {askedRows.length > 0 ? (
-            <>
-              <SectionHeaderRow
-                label={t("browse.qualificationPanel.manualReview")}
-              />
-              <RequirementRows
-                rows={askedRows}
-                profileSetup={check.profileSetup}
-                selfAssessedById={answers}
-                onSelfAssessChange={handleSelfAssessChange}
-                onNavigate={handleNavigate}
-              />
-            </>
-          ) : null}
-        </tbody>
-      </table>
+            {askedRows.length > 0 ? (
+              <>
+                <SectionHeaderRow
+                  label={t("browse.qualificationPanel.manualReview")}
+                />
+                <RequirementRows
+                  rows={askedRows}
+                  profileSetup={check.profileSetup}
+                  selfAssessedById={answers}
+                  onSelfAssessChange={handleSelfAssessChange}
+                  onNavigate={handleNavigate}
+                />
+              </>
+            ) : null}
+          </tbody>
+        </table>
+      </ScrollArea>
 
       {askedRows.length > 0 && check.profileSetup ? (
         <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border bg-muted/40 px-4 py-3 text-sm">
