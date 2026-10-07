@@ -11,20 +11,37 @@ import type { TorDraftDoc } from "@/models/TorDraft.model"
  * of the fields or applying different rules about what is publishable.
  */
 
+/** D0 ประกาศเชิญชวน, and D2 เปลี่ยนแปลงประกาศเชิญชวน, which supersedes it. */
+const INVITATION_TYPES = new Set(["D0", "D2"])
+
+/** Whether the invitation to bid has been published for this project. */
+export function hasInvitation(draft: Pick<TorDraftDoc, "announcements">): boolean {
+  return (draft.announcements ?? []).some((row) => INVITATION_TYPES.has(row.announceType))
+}
+
 /**
  * Why a draft cannot be published yet, or null when it can.
  *
- * TORs publish with whatever the source stated: summary, deadline and the rest
- * may be empty and render as "not specified". Only a title and a department are
- * required, and in either locale — Thai is the site's default language and an
- * announcement is published in Thai, so requiring English would leave every
- * ingested TOR unpublishable. Without those two a TOR is a blank card that no
- * department filter can reach, which is why they are the line.
+ * Two bars, and the second is about timing rather than content:
+ *
+ * A title and a department, in either locale — Thai is the site's default and
+ * announcements are published in Thai, so requiring English would leave every
+ * ingested TOR unpublishable. Without those two a TOR is a blank card no
+ * department filter can reach. Everything else may be empty and renders as
+ * "not specified".
+ *
+ * And an invitation. A project is first published as B0 ร่างเอกสารประกวดราคา,
+ * which states the qualifications but no closing date, because a draft tender
+ * has none to state — bidding has not opened. Showing it on /browse offers a
+ * bidder something they cannot act on and a deadline that reads "-". The
+ * draft is kept and waits: D0 arrives a week or two later, the ingest reads it
+ * for the deadline, and the TOR is published then.
  */
 export function publishBlocker(draft: TorDraftDoc): string | null {
   for (const field of ["title", "department"] as const) {
     if (!localizedKey(draft[field])) return `${field} is empty`
   }
+  if (!hasInvitation(draft)) return "no invitation announcement yet (D0)"
   return null
 }
 
