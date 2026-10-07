@@ -20,6 +20,7 @@
     "age:status": "tsx src/scraper/run-age-status.ts",
     "normalize:digits": "tsx src/scraper/run-normalize-digits.ts",
     "backfill:software": "tsx src/scraper/run-backfill-software-flag.ts",
+    "report:announcements": "tsx src/scraper/run-report-announcements.ts",
     "prune": "tsx src/scraper/run-prune-invitation-only.ts",
     "unpublish:pending": "tsx src/scraper/run-unpublish-pending.ts",
     "reextract": "tsx src/scraper/run-reextract.ts",
