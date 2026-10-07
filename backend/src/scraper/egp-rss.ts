@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser"
 
 import { env } from "@/config/env"
+import { toArabicDigits } from "@/utils/thai-digits"
 
 /**
  * Reads procurement announcements from the Comptroller General's Department
@@ -229,7 +230,9 @@ export function parseFeed(xml: string): EgpFeedResult {
         asText(raw.description)
       )
       return {
-        title: asText(raw.title),
+        // The feed writes Thai numerals, and this title is shown on the TOR
+        // page beside the documents as well as being read by the extraction.
+        title: toArabicDigits(asText(raw.title)),
         pdfUrl: asText(raw.link),
         projectNo,
         methodLabel,

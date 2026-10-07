@@ -12,6 +12,7 @@ import {
   PROCUREMENT_METHODS,
   PROJECT_SCALES,
 } from "@/models/tor-fields.schema"
+import { toArabicDigitsDeep } from "@/utils/thai-digits"
 import { withRetry } from "@/scraper/retry"
 import {
   repairQualifications,
@@ -52,12 +53,19 @@ export type ExtractionContext = {
  * Gemini occasionally ignores the JSON constraint and answers in prose; the
  * raw `JSON.parse` error ("Unexpected token 'H'") says nothing about what the
  * model actually said, so quote the start of the answer.
+ *
+ * Thai numerals are converted here, where every extraction passes through, so
+ * none of them can be forgotten: announcements are written with ๐-๙ and the
+ * model copies the Thai as written, which is what it is asked to do.
  */
 function parseJsonResponse(label: string, text: string): unknown {
   try {
-    return JSON.parse(text)
-  } catch {
-    throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+    return toArabicDigitsDeep(JSON.parse(text))
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`${label} did not return JSON. Model said: ${text.slice(0, 300)}`)
+    }
+    throw error
   }
 }
 
