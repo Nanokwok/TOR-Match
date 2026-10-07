@@ -127,7 +127,14 @@
     "budget": "งบประมาณ",
     "announcementDate": "วันที่ประกาศ",
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
-    "eligibleOnly": "เฉพาะที่ผ่านเกณฑ์อัตโนมัติ",
+    "openOnly": "เฉพาะที่ยังเปิดอยู่",
+    "sortBy": "เรียงตาม",
+    "sort": {
+      "opened-desc": "โครงการจัดซื้อจัดจ้างล่าสุด",
+        "opened-asc": "โครงการจัดซื้อจัดจ้างเก่าสุด",
+        "budget-desc": "จำนวนงบประมาณสูงสุด",
+        "budget-asc": "จำนวนงบประมาณต่ำสุด"
+    },
     "budgetRange": "ช่วงงบประมาณ",
     "procurementStatus": "สถานะการจัดซื้อจัดจ้าง",
     "department": "หน่วยงาน",
@@ -139,8 +146,8 @@
     "deepLink": {
       "openedFromLink": "เปิดจากลิงก์",
       "notFound": "ไม่พบ TOR นี้ กำลังแสดงรายการ Browse ตามปกติ",
-      "ineligibleHint": "ไม่มีสิทธิ์ — แสดงเพราะคุณเปิดจากลิงก์",
-      "showAllEligible": "ปิดตัวกรองเฉพาะที่มีสิทธิ์",
+      "closedHint": "TOR นี้ปิดรับแล้ว — แสดงเพราะคุณเปิดจากลิงก์",
+      "showAllTors": "ปิดตัวกรองเฉพาะที่ยังเปิดอยู่",
       "hiddenFromResults": "TOR ที่เลือกถูกซ่อนด้วยตัวกรองปัจจุบัน",
       "showSelectedInList": "แสดง TOR ที่เลือก"
     },
@@ -158,6 +165,17 @@
     "duration": "ระยะเวลา",
     "method": "วิธีการ",
     "viewSource": "ดูหน้าต้นฉบับ",
+    "pagination": {
+      "label": "เลื่อนหน้า",
+      "previous": "หน้าก่อนหน้า",
+      "next": "หน้าถัดไป",
+      "status": "หน้า {page} จาก {totalPages} · {total} รายการ"
+    },
+    "source": {
+      "label": "แหล่งที่มา",
+      "egp-rss": "e-GP RSS (กรมบัญชีกลาง)",
+      "seed": "ข้อมูลตัวอย่าง"
+    },
     "summaryDeliverables": "สรุปและขอบเขตงานหลัก",
     "qualificationCheck": "ตรวจสอบคุณสมบัติ",
     "qualificationPanel": {

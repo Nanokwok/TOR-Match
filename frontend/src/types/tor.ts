@@ -118,6 +118,8 @@ export type Tor = {
   deadline: string
   announcementDate: string
   sourceUrl: string
+  /** Which feed the TOR came from; absent only on the hand-written mock rows. */
+  source?: TorSource
   summary: LocalizedText
   deliverables: LocalizedList
   techTags: string[]
@@ -126,6 +128,8 @@ export type Tor = {
   qualificationRequirements: TorQualificationRequirement[]
   timeline?: TorTimeline
 }
+
+export type TorSource = "egp-rss" | "seed"
 
 export type QualificationStatus = "passed" | "failed" | "insufficient-data" | "manual-review"
 
@@ -185,16 +189,29 @@ export type TorDetailFilters = {
   localOffices: string[]
 }
 
+/** "opened" is the announcement date: desc is newest first. */
+export type TorSort = "opened-desc" | "opened-asc" | "budget-desc" | "budget-asc"
+
 export type TorListQuery = {
   keyword?: string
-  eligibleOnly?: boolean
+  /** Only TORs still taking bids: open status and a deadline that has not passed. */
+  openOnly?: boolean
+  sort?: TorSort
   budgetRange?: string
   status?: TorProcurementStatus | "all"
   department?: string | "all"
   detail?: TorDetailFilters
+  /** 1-based. Send with `pageSize` to get one page; omit both for the whole list. */
+  page?: number
+  pageSize?: number
 }
 
 export type TorListResult = {
   items: Tor[]
+  /** Matches across every page, after all filters. */
   total: number
+  /** Present only on a paged request. */
+  page?: number
+  pageSize?: number
+  totalPages?: number
 }

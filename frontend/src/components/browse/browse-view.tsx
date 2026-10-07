@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
-import { Link2, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Link2, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
 import { bookmarkTorAction } from "@/actions/workspace"
@@ -22,7 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { EMPTY_DETAIL_FILTERS } from "@/lib/browse-filters"
+import {
+  BROWSE_PAGE_SIZE,
+  DEFAULT_BROWSE_SORT,
+  EMPTY_DETAIL_FILTERS,
+} from "@/lib/browse-filters"
+import { getTorStage } from "@/lib/deadline"
 import {
   pinTorToFront,
   type BrowseDeepLinkMeta,
@@ -33,7 +38,8 @@ import type { Tor } from "@/types/tor"
 
 const initialFilters: BrowseFiltersState = {
   keyword: "",
-  eligibleOnly: true,
+  openOnly: true,
+  sort: DEFAULT_BROWSE_SORT,
   budgetRange: "all",
   status: "all",
   department: "all",
@@ -44,6 +50,8 @@ type BrowseViewProps = {
   initialItems: Tor[]
   initialSelectedId: string | null
   initialDeepLink: BrowseDeepLinkMeta | null
+  initialTotal: number
+  initialTotalPages: number
   departments: LocalizedText[]
   localOffices: string[]
 }
@@ -52,12 +60,17 @@ export function BrowseView({
   initialItems,
   initialSelectedId,
   initialDeepLink,
+  initialTotal,
+  initialTotalPages,
   departments,
   localOffices,
 }: BrowseViewProps) {
   const { t } = useLocale()
   const [filters, setFilters] = useState<BrowseFiltersState>(initialFilters)
   const [items, setItems] = useState(initialItems)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(initialTotal)
+  const [totalPages, setTotalPages] = useState(initialTotalPages)
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId)
   /** Keeps detail available when the current selection drops out of search results. */
   const [anchorTor, setAnchorTor] = useState<Tor | null>(
@@ -65,7 +78,7 @@ export function BrowseView({
   )
   const [isPending, startTransition] = useTransition()
   const [notFoundDismissed, setNotFoundDismissed] = useState(false)
-  const [ineligibleHintDismissed, setIneligibleHintDismissed] = useState(false)
+  const [closedHintDismissed, setClosedHintDismissed] = useState(false)
   const [bookmarkError, setBookmarkError] = useState<string | null>(null)
   const [isDetailDirty, setIsDetailDirty] = useState(false)
   const [pendingTorId, setPendingTorId] = useState<string | null>(null)
@@ -88,12 +101,12 @@ export function BrowseView({
   const showNotFoundBanner =
     initialDeepLink?.found === false && !notFoundDismissed
 
-  const showIneligibleHint = Boolean(
+  const showClosedHint = Boolean(
     linkedTorId &&
       selectedTor?.id === linkedTorId &&
       selectedTor &&
-      !selectedTor.eligible &&
-      !ineligibleHintDismissed
+      getTorStage(selectedTor) !== "open" &&
+      !closedHintDismissed
   )
 
   function doSelectTor(id: string) {
@@ -121,12 +134,20 @@ export function BrowseView({
     }
   }
 
-  function runSearch(nextFilters: BrowseFiltersState) {
+  function runSearch(nextFilters: BrowseFiltersState, targetPage = 1) {
     startTransition(async () => {
       const previousSelected =
         items.find((item) => item.id === selectedId) ?? anchorTor
-      const result = await searchTorsAction(filtersToQuery(nextFilters))
+      const result = await searchTorsAction({
+        ...filtersToQuery(nextFilters),
+        page: targetPage,
+        pageSize: BROWSE_PAGE_SIZE,
+      })
       setItems(result.items)
+      // The server clamps a page past the end, so trust what it answered.
+      setPage(result.page ?? 1)
+      setTotal(result.total)
+      setTotalPages(result.totalPages ?? 1)
 
       if (selectedId && result.items.some((item) => item.id === selectedId)) {
         const stillThere = result.items.find((item) => item.id === selectedId)
@@ -149,22 +170,27 @@ export function BrowseView({
     runSearch(filters)
   }
 
+  function goToPage(targetPage: number) {
+    runSearch(filters, targetPage)
+  }
+
   function handleFiltersChange(next: BrowseFiltersState) {
     const detailChanged =
       JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
-    // A switch reads as instant; waiting for Enter in the search box made
-    // turning it off look like it did nothing.
-    const eligibleOnlyChanged = next.eligibleOnly !== filters.eligibleOnly
+    // A switch or a sort reads as instant; waiting for Enter in the search box
+    // made turning it off look like it did nothing.
+    const instantChanged =
+      next.openOnly !== filters.openOnly || next.sort !== filters.sort
     setFilters(next)
-    if (detailChanged || eligibleOnlyChanged) {
+    if (detailChanged || instantChanged) {
       runSearch(next)
     }
   }
 
-  function handleShowEligibleAll() {
-    const next = { ...filters, eligibleOnly: false }
+  function handleShowAllTors() {
+    const next = { ...filters, openOnly: false }
     setFilters(next)
-    setIneligibleHintDismissed(true)
+    setClosedHintDismissed(true)
     runSearch(next)
   }
 
@@ -217,12 +243,12 @@ export function BrowseView({
         />
       ) : null}
 
-      {showIneligibleHint ? (
+      {showClosedHint ? (
         <BrowseNotice
-          message={t("browse.deepLink.ineligibleHint")}
-          actionLabel={t("browse.deepLink.showAllEligible")}
-          onAction={handleShowEligibleAll}
-          onDismiss={() => setIneligibleHintDismissed(true)}
+          message={t("browse.deepLink.closedHint")}
+          actionLabel={t("browse.deepLink.showAllTors")}
+          onAction={handleShowAllTors}
+          onDismiss={() => setClosedHintDismissed(true)}
         />
       ) : null}
 
@@ -258,7 +284,7 @@ export function BrowseView({
         }`}
       >
         <aside className="min-h-[320px] rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
-          <ScrollArea className="h-full w-full">
+          <ScrollArea className="min-h-0 w-full flex-1">
             <TorList
               items={items}
               selectedId={selectedId}
@@ -267,6 +293,13 @@ export function BrowseView({
               onToggleBookmark={handleToggleBookmark}
             />
           </ScrollArea>
+          <BrowsePager
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            disabled={isPending}
+            onPageChange={goToPage}
+          />
         </aside>
 
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
@@ -310,6 +343,54 @@ export function BrowseView({
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function BrowsePager({
+  page,
+  totalPages,
+  total,
+  disabled,
+  onPageChange,
+}: {
+  page: number
+  totalPages: number
+  total: number
+  disabled: boolean
+  onPageChange: (page: number) => void
+}) {
+  const { t } = useLocale()
+  if (total === 0) return null
+
+  return (
+    <nav
+      aria-label={t("browse.pagination.label")}
+      className="flex items-center justify-between gap-2 border-t border-border px-3 py-2"
+    >
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="outline"
+        disabled={disabled || page <= 1}
+        aria-label={t("browse.pagination.previous")}
+        onClick={() => onPageChange(page - 1)}
+      >
+        <ChevronLeft className="size-4" />
+      </Button>
+      <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+        {t("browse.pagination.status", { page, totalPages, total })}
+      </p>
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="outline"
+        disabled={disabled || page >= totalPages}
+        aria-label={t("browse.pagination.next")}
+        onClick={() => onPageChange(page + 1)}
+      >
+        <ChevronRight className="size-4" />
+      </Button>
+    </nav>
   )
 }
 

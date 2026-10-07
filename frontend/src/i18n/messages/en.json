@@ -127,7 +127,14 @@
     "budget": "Budget",
     "announcementDate": "Announced",
     "searchPlaceholder": "Search your keyword...",
-    "eligibleOnly": "Automated criteria met only",
+    "openOnly": "Open for bids only",
+    "sortBy": "Sort by",
+    "sort": {
+      "opened-desc": "Newest projects",
+        "opened-asc": "Oldest projects",
+        "budget-desc": "Highest budget",
+        "budget-asc": "Lowest budget"
+    },
     "budgetRange": "Budget Range",
     "procurementStatus": "Procurement Status",
     "department": "Department",
@@ -139,8 +146,8 @@
     "deepLink": {
       "openedFromLink": "Opened from link",
       "notFound": "That TOR wasn’t found. Showing your usual browse list instead.",
-      "ineligibleHint": "Not eligible — shown because you opened a link.",
-      "showAllEligible": "Turn off Eligible only",
+      "closedHint": "This TOR is no longer open — shown because you opened a link.",
+      "showAllTors": "Turn off Open only",
       "hiddenFromResults": "Selected TOR is hidden by your current filters.",
       "showSelectedInList": "Show selected TOR"
     },
@@ -158,6 +165,17 @@
     "duration": "Duration",
     "method": "Method",
     "viewSource": "View Original Source Page",
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "next": "Next page",
+      "status": "Page {page} of {totalPages} · {total} TORs"
+    },
+    "source": {
+      "label": "Source",
+      "egp-rss": "e-GP RSS (Comptroller General's Department)",
+      "seed": "Sample data"
+    },
     "summaryDeliverables": "Summary & Key Deliverables",
     "qualificationCheck": "Qualification Check",
     "qualificationPanel": {

@@ -1,4 +1,5 @@
 import { BrowseView } from "@/components/browse/browse-view"
+import { BROWSE_PAGE_SIZE, DEFAULT_BROWSE_SORT } from "@/lib/browse-filters"
 import { resolveBrowseDeepLink } from "@/lib/browse-deep-link.server"
 import {
   listTorDepartments,
@@ -12,15 +13,20 @@ type BrowsePageProps = {
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const params = await searchParams
-  const [{ items: listed }, departments, localOffices] = await Promise.all([
-    listTors({ eligibleOnly: true }),
+  const [listing, departments, localOffices] = await Promise.all([
+    listTors({
+      openOnly: true,
+      sort: DEFAULT_BROWSE_SORT,
+      page: 1,
+      pageSize: BROWSE_PAGE_SIZE,
+    }),
     listTorDepartments(),
     listTorLocalOffices(),
   ])
 
   const { items, selectedId, deepLink } = await resolveBrowseDeepLink(
     params.tor,
-    listed
+    listing.items
   )
 
   return (
@@ -29,6 +35,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         initialItems={items}
         initialSelectedId={selectedId}
         initialDeepLink={deepLink}
+        initialTotal={listing.total}
+        initialTotalPages={listing.totalPages ?? 1}
         departments={departments}
         localOffices={localOffices}
       />

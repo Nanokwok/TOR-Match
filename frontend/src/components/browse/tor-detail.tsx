@@ -19,6 +19,7 @@ import {
   Scale,
   Share2,
   Wallet,
+  Database,
 } from "lucide-react";
 
 import { ShareTorDialog } from "@/components/browse/share-tor-dialog";
@@ -181,6 +182,7 @@ function TorDetailContent({
 
   const qualificationCheck = tor.qualification;
   const sourceHref = safeExternalUrl(tor.sourceUrl);
+  const sourceHost = sourceHref ? new URL(sourceHref).hostname : "";
 
   const statusBadge = getTorStatusBadgeInfo(tor, locale);
   const deadlineInfo = getTorDeadlineInfo(tor, locale);
@@ -348,6 +350,16 @@ function TorDetailContent({
               <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground">
                 {localized.title}
               </h2>
+
+              {tor.source ? (
+                <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  <Database className="size-3.5 shrink-0" aria-hidden />
+                  <span>
+                    {t("browse.source.label")}: {t(`browse.source.${tor.source}`)}
+                  </span>
+                  {sourceHost ? <span>· {sourceHost}</span> : null}
+                </p>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
