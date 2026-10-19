@@ -33,7 +33,8 @@ export async function ensureAdminUserFromEnv(): Promise<void> {
   if (existing.role !== "admin") updates.role = "admin"
   if (existing.name !== name) updates.name = name
 
-  const matches = await bcrypt.compare(password, existing.passwordHash)
+  // A Google-only account has no password yet; seeding one is what lets this admin use the admin login.
+  const matches = existing.passwordHash ? await bcrypt.compare(password, existing.passwordHash) : false
   if (!matches) updates.passwordHash = passwordHash
 
   if (Object.keys(updates).length === 0) {

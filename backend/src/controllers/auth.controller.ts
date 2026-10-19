@@ -62,6 +62,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash")
   if (!user) throw ApiError.unauthorized("Invalid email or password")
 
+  if (!user.passwordHash) {
+    throw ApiError.unauthorized("This account signs in with Google. Use the Google button.")
+  }
   const matches = await bcrypt.compare(password, user.passwordHash)
   if (!matches) throw ApiError.unauthorized("Invalid email or password")
 

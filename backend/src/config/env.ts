@@ -68,6 +68,14 @@ export const env = {
   appUrl: (process.env.APP_URL ?? (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(",")[0]).trim(),
   /** Hourly deadline reminders inside the API server. Set DEADLINE_REMINDERS_ENABLED=false to turn off. */
   deadlineRemindersEnabled: process.env.DEADLINE_REMINDERS_ENABLED !== "false",
+  /**
+   * Google sign-in ("Log in with Google"). Optional: with no client id the
+   * button reports that Google sign-in is not configured and email login is
+   * unaffected. Create an OAuth client (type "Web application") in Google Cloud
+   * Console and allow `<APP_URL>/auth/google/callback` as its redirect URI.
+   */
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   bmaBaseUrl: process.env.BMA_BASE_URL ?? "https://egp2.bangkok.go.th",
   /**
    * The CGD e-GP RSS feed — the published channel for mirroring procurement
