@@ -13,13 +13,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginWithEmailAction, loginWithGoogleAction } from "@/actions/auth"
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** Set by routes that send the user back here after a failed Google sign-in. */
+  initialError?: string
+}
+
+export function LoginForm({ initialError }: LoginFormProps) {
   const router = useRouter()
   const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(
+    initialError === "google-cancelled"
+      ? t("auth.googleCancelled")
+      : initialError === "google-failed"
+        ? t("auth.googleFailed")
+        : null
+  )
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -39,12 +50,9 @@ export function LoginForm() {
   function handleGoogleLogin() {
     setError(null)
     startTransition(async () => {
+      // Goes to Google and does not return; it only comes back when it could not start.
       const result = await loginWithGoogleAction()
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.push("/")
+      if (!result.ok) setError(result.error)
     })
   }
 

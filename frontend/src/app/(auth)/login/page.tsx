@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Log In | TOR Match",
 }
 
-export default function LoginPage() {
-  return <LoginForm />
+type LoginPageProps = {
+  searchParams: Promise<{ error?: string }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error } = await searchParams
+  return <LoginForm initialError={error} />
 }

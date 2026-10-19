@@ -390,6 +390,8 @@
     "loginTitle": "Log In",
     "loginSubtitle": "Welcome back. Let me help your work!",
     "loginGoogle": "Login with Google",
+    "googleCancelled": "Google sign-in was cancelled.",
+    "googleFailed": "Google sign-in failed. Please try again or use your email.",
     "rememberMe": "Remember me",
     "signingIn": "Signing in...",
     "loginButton": "Log In",

@@ -1,11 +1,12 @@
 "use server"
 
-import { cookies } from "next/headers"
-import { ApiRequestError, apiFetch } from "@/lib/api-client"
-import { required } from "@/lib/env"
+import { randomUUID } from "node:crypto"
 
-const AUTH_COOKIE_NAME = required("AUTH_COOKIE_NAME")
-const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60 // matches backend/src/controllers/auth.controller.ts
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { ApiRequestError, apiFetch } from "@/lib/api-client"
+import { AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth-cookie"
+import { GOOGLE_STATE_COOKIE, googleStateCookieOptions } from "@/lib/google-auth"
 
 export type AuthResult = { ok: true } | { ok: false; error: string }
 
@@ -26,14 +27,7 @@ type EmailRegisterInput = {
 
 async function setAuthCookie(token: string, rememberMe = true) {
   const cookieStore = await cookies()
-  cookieStore.set(AUTH_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    // rememberMe=false -> session cookie, cleared when the browser closes
-    ...(rememberMe ? { maxAge: SESSION_MAX_AGE_SECONDS } : {}),
-  })
+  cookieStore.set(AUTH_COOKIE_NAME, token, authCookieOptions(rememberMe))
 }
 
 function messageFromError(error: unknown, fallback: string): string {
@@ -64,8 +58,31 @@ export async function loginWithEmailAction({
   }
 }
 
+/**
+ * Starts Google sign-in by sending the browser to Google. Only comes back with
+ * a result when it could not start; on success the redirect never returns, and
+ * the user re-enters the app through /auth/google/callback.
+ */
+async function startGoogleAuth(): Promise<AuthResult> {
+  let url: string
+  try {
+    // The state ties the callback to this browser: Google echoes it back and
+    // the callback only accepts it when it matches the cookie set here.
+    const state = randomUUID()
+    const data = await apiFetch<{ url: string }>(
+      `/auth/google/url?state=${encodeURIComponent(state)}`,
+      { auth: false }
+    )
+    ;(await cookies()).set(GOOGLE_STATE_COOKIE, state, googleStateCookieOptions())
+    url = data.url
+  } catch (error) {
+    return { ok: false, error: messageFromError(error, "startGoogleAuth failed") }
+  }
+  redirect(url)
+}
+
 export async function loginWithGoogleAction(): Promise<AuthResult> {
-  return { ok: false, error: "Google login is not available yet." }
+  return startGoogleAuth()
 }
 
 export async function registerWithEmailAction({
@@ -93,8 +110,9 @@ export async function registerWithEmailAction({
   }
 }
 
+/** Signing up and logging in are one flow: a new Google account is created on first use. */
 export async function registerWithGoogleAction(): Promise<AuthResult> {
-  return { ok: false, error: "Google signup is not available yet." }
+  return startGoogleAuth()
 }
 
 export async function logoutAction(): Promise<void> {

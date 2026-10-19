@@ -47,12 +47,9 @@ export function SignupForm() {
   function handleGoogleRegister() {
     setError(null)
     startTransition(async () => {
+      // Goes to Google and does not return; it only comes back when it could not start.
       const result = await registerWithGoogleAction()
-      if (!result.ok) {
-        setError(result.error)
-        return
-      }
-      router.push("/company-setup")
+      if (!result.ok) setError(result.error)
     })
   }
 
