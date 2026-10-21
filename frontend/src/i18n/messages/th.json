@@ -390,6 +390,8 @@
     "loginTitle": "เข้าสู่ระบบ",
     "loginSubtitle": "ยินดีต้อนรับกลับ มาเริ่มงานกันเลย!",
     "loginGoogle": "เข้าสู่ระบบด้วย Google",
+    "googleCancelled": "ยกเลิกการเข้าสู่ระบบด้วย Google",
+    "googleFailed": "เข้าสู่ระบบด้วย Google ไม่สำเร็จ ลองอีกครั้งหรือใช้อีเมล",
     "rememberMe": "จดจำฉัน",
     "signingIn": "กำลังเข้าสู่ระบบ...",
     "loginButton": "เข้าสู่ระบบ",
