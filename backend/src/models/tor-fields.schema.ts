@@ -156,6 +156,19 @@ export const torContentFields = {
   deadline: { type: String, default: "" },
   announcementDate: { type: String, default: "" },
   sourceUrl: { type: String, default: "" },
+  /**
+   * The e-GP agency whose feed this announcement came from.
+   *
+   * Separate from `department`, which is whatever the model read off the
+   * document and already drifts: one agency produced both "กรุงเทพมหานคร" and
+   * "กรุงเทพมหานคร (โรงพยาบาลกลาง)". This is the code the feed was queried
+   * with, so it is a fact rather than a reading, and it is what a filter by
+   * agency can rely on. Empty on TORs ingested before the ingest read more
+   * than one agency.
+   */
+  agencyDeptId: { type: String, default: "", index: true },
+  /** Official name for that code, as the published code table writes it. */
+  agencyName: { type: String, default: "" },
   /** Which feed this came from. Absent on TORs stored before it existed; see resolveTorSource. */
   source: { type: String, enum: TOR_SOURCES },
   summary: { type: localizedTextSchema, required: true },

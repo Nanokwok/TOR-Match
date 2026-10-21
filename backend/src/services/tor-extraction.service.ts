@@ -76,6 +76,8 @@ export async function extractAndStore(params: {
   announcements?: readonly AnnouncementLink[]
   /** Whether the title reads like IT work — a label for /browse, not a gate. */
   softwareRelated?: boolean
+  /** The e-GP agency whose feed this came from. */
+  agency?: { deptId: string; name: string }
 }): Promise<ExtractionOutcome> {
   const { announcementNo, pdfUrl, invitationUrl, detailUrl, publishedDate, context, threshold } = params
   const from = params.from ?? ANNOUNCE_TYPES.draft
@@ -163,6 +165,8 @@ export async function extractAndStore(params: {
       // Recomputed from the title each run rather than merged: this is our own
       // heuristic, owned by neither the model nor a reviewer.
       softwareRelated: params.softwareRelated ?? false,
+      // Which feed this was read from, which is known rather than extracted.
+      ...(params.agency ? { agencyDeptId: params.agency.deptId, agencyName: params.agency.name } : {}),
       ...(params.announcements?.length ? { announcements: [...params.announcements] } : {}),
     }
 
