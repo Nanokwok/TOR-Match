@@ -7,11 +7,13 @@
  */
 import { connectDB, disconnectDB } from "@/config/db"
 import { notifyDeadlineReminders } from "@/services/deadline-reminder.service"
+import { notifyCertificateExpiry } from "@/services/profile-notification.service"
 
 async function main() {
   await connectDB()
   const tracked = await notifyDeadlineReminders()
-  console.log(`[deadline-reminders] checked ${tracked} tracked card(s) with a deadline in range`)
+  const certificates = await notifyCertificateExpiry()
+  console.log(`[deadline-reminders] checked ${tracked} tracked card(s) with a deadline in range, ${certificates} certificate alert(s)`)
   await disconnectDB()
 }
 

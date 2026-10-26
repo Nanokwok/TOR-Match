@@ -1,3 +1,4 @@
+import { notifyCertificateExpiry } from "@/services/profile-notification.service"
 import { parseThaiDateTime } from "@/utils/thai-time"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
@@ -113,8 +114,12 @@ let timer: NodeJS.Timeout | undefined
  */
 export function startDeadlineReminderScheduler(): void {
   if (timer) return
+  // The certificate check rides on the same hourly tick: both are "something
+  // changed with time passing" and both alert once however often they run.
   const run = () =>
-    notifyDeadlineReminders().catch((error) => console.error("[deadline-reminders] failed", error))
+    Promise.all([notifyDeadlineReminders(), notifyCertificateExpiry()]).catch((error) =>
+      console.error("[deadline-reminders] failed", error)
+    )
   setTimeout(run, 15_000).unref()
   timer = setInterval(run, HOUR_MS)
   timer.unref()
