@@ -1,6 +1,7 @@
 import { createApp } from "@/app"
 import { connectDB } from "@/config/db"
 import { env } from "@/config/env"
+import { startDigestScheduler } from "@/services/digest.service"
 import { startDeadlineReminderScheduler } from "@/services/deadline-reminder.service"
 
 async function main() {
@@ -12,6 +13,7 @@ async function main() {
   })
 
   if (env.deadlineRemindersEnabled) startDeadlineReminderScheduler()
+  if (env.digestsEnabled) startDigestScheduler()
 
   const shutdown = (signal: string) => {
     console.log(`[server] received ${signal}, shutting down`)

@@ -25,6 +25,7 @@ export type NotificationEvent =
   | "deadline-7-day"
   | "deadline-3-day"
   | "deadline-24-hour"
+  | "system-profile"
 
 /**
  * What an event does for someone with no saved preference for it. Mirrors the
@@ -39,6 +40,7 @@ const DEFAULT_EVENT_PREFERENCE: Record<NotificationEvent, { inApp: boolean; emai
   "deadline-7-day": { inApp: true, email: false },
   "deadline-3-day": { inApp: true, email: true },
   "deadline-24-hour": { inApp: true, email: true },
+  "system-profile": { inApp: true, email: true },
 }
 
 type PreferenceSource = {
@@ -86,7 +88,7 @@ export function emailRecipient(settings: PreferenceSource, accountEmail?: string
   return (saved && saved !== PLACEHOLDER_RECIPIENT ? saved : "") || accountEmail?.trim() || ""
 }
 
-const escapeHtml = (value: string) =>
+export const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 
 /** Pure: the bilingual email for one notification. Titles come from scraped text, so the HTML is escaped. */

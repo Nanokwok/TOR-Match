@@ -487,7 +487,7 @@
     "digestTitle": "Email Delivery Frequency & Digests",
     "digestSubtitle": "Configure instant alerts and bundled digest emails.",
     "instantTitle": "Instant Email Alerts",
-    "instantDesc": "Send immediate emails for Match Scores ≥ 90% and 24-Hour Final Call warnings.",
+    "instantDesc": "Send an email as soon as something happens for each event you turned on above. Turn this off to get only the digests below.",
     "dailyTitle": "Daily TOR Digest Email",
     "dailyDesc": "Bundles all newly scraped BMA TORs matching your profile into a single daily email.",
     "weeklyTitle": "Weekly Performance Summary Email",
