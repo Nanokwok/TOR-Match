@@ -1,4 +1,5 @@
-import { escapeHtml } from "@/services/match-notification.service"
+import { EMAIL_COLORS, emailLayout, emailSectionTitle } from "@/domain/email-layout"
+import { escapeHtml } from "@/utils/html"
 
 /** What a digest says about one TOR; plain data so the emails can be built and tested without a database. */
 export type DigestTor = {
@@ -12,30 +13,40 @@ export type DigestTor = {
 }
 
 const MAX_LISTED = 12
+const { primary, ink, muted, border } = EMAIL_COLORS
 
 const baht = (value: number) => `฿${value.toLocaleString("en-US")}`
 const base = (appUrl: string) => appUrl.replace(/\/$/, "")
 
 function torLines(tors: DigestTor[], appUrl: string) {
   const shown = tors.slice(0, MAX_LISTED)
-  const text = shown
-    .map((tor) => `- ${tor.titleTh} / ${tor.titleEn} (${tor.department}, ${baht(tor.budgetBaht)}${tor.deadline ? `, ${tor.deadline}` : ""})\n  ${base(appUrl)}/browse?tor=${tor.id}`)
-    .join("\n")
-  const html = shown
+  const more = tors.length - shown.length
+
+  const text =
+    shown
+      .map(
+        (tor) =>
+          `- ${tor.titleTh} / ${tor.titleEn} (${tor.department}, ${baht(tor.budgetBaht)}${tor.deadline ? `, ${tor.deadline}` : ""})\n  ${base(appUrl)}/browse?tor=${tor.id}`
+      )
+      .join("\n") + (more > 0 ? `\n…และอีก ${more} รายการ / and ${more} more\n` : "")
+
+  const rows = shown
     .map((tor) => {
       const url = `${base(appUrl)}/browse?tor=${tor.id}`
       return (
-        `<li style="margin-bottom:10px"><a href="${escapeHtml(url)}"><strong>${escapeHtml(tor.titleTh)}</strong></a><br>` +
-        `${escapeHtml(tor.titleEn)}<br>` +
-        `<small>${escapeHtml(tor.department)} · ${escapeHtml(baht(tor.budgetBaht))}${tor.deadline ? ` · ${escapeHtml(tor.deadline)}` : ""}</small></li>`
+        `<div style="padding:12px 0;border-bottom:1px solid ${border}">` +
+        `<a href="${escapeHtml(url)}" style="font-size:15px;font-weight:600;color:${ink};text-decoration:none">${escapeHtml(tor.titleTh)}</a>` +
+        `<div style="font-size:13px;color:${muted};margin-top:2px">${escapeHtml(tor.titleEn)}</div>` +
+        `<div style="font-size:13px;margin-top:6px">` +
+        `<span style="color:${ink};font-weight:600">${escapeHtml(baht(tor.budgetBaht))}</span>` +
+        `<span style="color:${muted}"> · ${escapeHtml(tor.department)}${tor.deadline ? ` · ปิดรับ ${escapeHtml(tor.deadline)}` : ""}</span></div></div>`
       )
     })
     .join("")
-  const more = tors.length - shown.length
-  return {
-    text: text + (more > 0 ? `\n…และอีก ${more} รายการ / and ${more} more\n` : ""),
-    html: `<ul style="padding-left:18px">${html}</ul>` + (more > 0 ? `<p>…และอีก ${more} รายการ / and ${more} more</p>` : ""),
-  }
+  const html =
+    rows +
+    (more > 0 ? `<p style="margin:12px 0 0;font-size:13px;color:${muted}">…และอีก ${more} รายการ / and ${more} more</p>` : "")
+  return { text, html }
 }
 
 /** Pure: the daily email of new TORs that fit the company's profile. */
@@ -45,8 +56,16 @@ export function renderDailyDigest(tors: DigestTor[], appUrl: string) {
   const headingEn = `${tors.length} new TOR${tors.length === 1 ? "" : "s"} that fit your company`
   return {
     subject: `${headingTh} / ${headingEn}`,
-    text: `${headingTh}\n${headingEn}\n\n${text}\n${base(appUrl)}/browse\n`,
-    html: `<h2>${escapeHtml(headingTh)}</h2><p>${escapeHtml(headingEn)}</p>${html}<p><a href="${escapeHtml(base(appUrl))}/browse">${escapeHtml(base(appUrl))}/browse</a></p>`,
+    text:
+      `${headingTh}\n${headingEn}\n\n${text}\n${base(appUrl)}/browse\n\n` +
+      `จัดการการแจ้งเตือน / Manage notifications: ${base(appUrl)}/settings/notifications\n`,
+    html: emailLayout({
+      headingTh,
+      headingEn,
+      bodyHtml: html,
+      cta: { label: "ดู TOR ทั้งหมด / Browse TORs", url: `${base(appUrl)}/browse` },
+      appUrl,
+    }),
   }
 }
 
@@ -76,6 +95,24 @@ const COLUMN_LABELS: Record<string, { th: string; en: string }> = {
   todo: { th: "รอทำ", en: "To do" },
   "in-progress": { th: "กำลังทำ", en: "In progress" },
   done: { th: "เสร็จแล้ว", en: "Done" },
+}
+
+/** A row of figures, like the stat tiles on the website. */
+function statTiles(tiles: { value: number; th: string; en: string }[]): string {
+  const width = Math.floor(100 / tiles.length)
+  return (
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${border};border-radius:10px;border-collapse:separate"><tr>` +
+    tiles
+      .map(
+        (tile, index) =>
+          `<td width="${width}%" align="center" style="padding:14px 6px;${index > 0 ? `border-left:1px solid ${border};` : ""}">` +
+          `<div style="font-size:24px;font-weight:700;color:${primary};line-height:1.1">${tile.value}</div>` +
+          `<div style="font-size:12px;color:${ink};margin-top:4px">${escapeHtml(tile.th)}</div>` +
+          `<div style="font-size:11px;color:${muted}">${escapeHtml(tile.en)}</div></td>`
+      )
+      .join("") +
+    `</tr></table>`
+  )
 }
 
 /** Pure: the weekly look at the workspace board. */
@@ -109,6 +146,13 @@ export function renderWeeklySummary(summary: WeeklySummary, appUrl: string) {
       en: `Cards with nobody assigned: ${team.unassigned}`,
     })
   }
+  // Always say something: a section that vanishes when the board is quiet looks like a feature that is missing.
+  if (teamLines.length === 0) {
+    teamLines.push({
+      th: "ยังไม่มีการ์ดที่กำลังดำเนินการในบอร์ดของคุณ",
+      en: "No active cards on your board yet",
+    })
+  }
   for (const person of team.assignees.slice(0, 5)) {
     teamLines.push({ th: `${person.name}: ${person.cards} ใบ`, en: `${person.name}: ${person.cards} card${person.cards === 1 ? "" : "s"}` })
   }
@@ -116,19 +160,34 @@ export function renderWeeklySummary(summary: WeeklySummary, appUrl: string) {
   const text =
     `${headingTh}\n${headingEn}\n\n${lineTh}\n${lineEn}\n\n` +
     (counts.length ? `Workspace: ${counts.map((c) => `${c.th} / ${c.en} ${c.count}`).join(", ")}\n\n` : "") +
-    (teamLines.length ? `สถานะทีม / Team status\n${teamLines.map((line) => `- ${line.th} / ${line.en}`).join("\n")}\n\n` : "") +
+    `สถานะทีม / Team status\n${teamLines.map((line) => `- ${line.th} / ${line.en}`).join("\n")}\n\n` +
     (summary.closingSoon.length ? `ปิดรับภายใน 7 วัน / Closing within 7 days\n${soonText}\n` : "") +
-    `${base(appUrl)}/workspace\n`
-  const html =
-    `<h2>${escapeHtml(headingTh)}</h2><p>${escapeHtml(headingEn)}</p>` +
-    `<p>${escapeHtml(lineTh)}<br>${escapeHtml(lineEn)}</p>` +
+    `${base(appUrl)}/workspace\n\n` +
+    `จัดการการแจ้งเตือน / Manage notifications: ${base(appUrl)}/settings/notifications\n`
+
+  const bodyHtml =
+    `<p style="margin:0 0 16px">${escapeHtml(lineTh)}<br><span style="color:${muted}">${escapeHtml(lineEn)}</span></p>` +
     (counts.length
-      ? `<p><strong>Workspace</strong><br>${counts.map((c) => `${escapeHtml(c.th)} / ${escapeHtml(c.en)}: ${c.count}`).join("<br>")}</p>`
+      ? statTiles(counts.map((c) => ({ value: c.count, th: c.th, en: c.en })))
       : "") +
-    (teamLines.length
-      ? `<h3>สถานะทีม / Team status</h3><ul style="padding-left:18px">${teamLines.map((line) => `<li>${escapeHtml(line.th)}<br><small>${escapeHtml(line.en)}</small></li>`).join("")}</ul>`
-      : "") +
-    (summary.closingSoon.length ? `<h3>ปิดรับภายใน 7 วัน / Closing within 7 days</h3>${soonHtml}` : "") +
-    `<p><a href="${escapeHtml(base(appUrl))}/workspace">${escapeHtml(base(appUrl))}/workspace</a></p>`
-  return { subject: `${headingTh} / ${headingEn}`, text, html }
+    emailSectionTitle("สถานะทีม", "Team status") +
+    teamLines
+      .map(
+        (line) =>
+          `<div style="padding:7px 0;border-bottom:1px solid ${border}">${escapeHtml(line.th)}<br><span style="font-size:12px;color:${muted}">${escapeHtml(line.en)}</span></div>`
+      )
+      .join("") +
+    (summary.closingSoon.length ? emailSectionTitle("ปิดรับภายใน 7 วัน", "Closing within 7 days") + soonHtml : "")
+
+  return {
+    subject: `${headingTh} / ${headingEn}`,
+    text,
+    html: emailLayout({
+      headingTh,
+      headingEn,
+      bodyHtml,
+      cta: { label: "เปิดพื้นที่ทำงานทีม / Open workspace", url: `${base(appUrl)}/workspace` },
+      appUrl,
+    }),
+  }
 }

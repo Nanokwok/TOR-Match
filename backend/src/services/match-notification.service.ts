@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto"
 
 import { env } from "@/config/env"
+import { emailLayout } from "@/domain/email-layout"
+import { escapeHtml } from "@/utils/html"
 import type { CompanyDoc } from "@/models/Company.model"
 import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
@@ -88,8 +90,7 @@ export function emailRecipient(settings: PreferenceSource, accountEmail?: string
   return (saved && saved !== PLACEHOLDER_RECIPIENT ? saved : "") || accountEmail?.trim() || ""
 }
 
-export const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+export { escapeHtml }
 
 /** Pure: the bilingual email for one notification. Titles come from scraped text, so the HTML is escaped. */
 export function renderEmail(
@@ -100,11 +101,16 @@ export function renderEmail(
   const { title, description } = notification
   return {
     subject: `${title.th} / ${title.en}`,
-    text: `${title.th}\n${description.th}\n\n${title.en}\n${description.en}\n\n${url}\n`,
-    html:
-      `<p><strong>${escapeHtml(title.th)}</strong><br>${escapeHtml(description.th)}</p>` +
-      `<p><strong>${escapeHtml(title.en)}</strong><br>${escapeHtml(description.en)}</p>` +
-      `<p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p>`,
+    text:
+      `${title.th}\n${description.th}\n\n${title.en}\n${description.en}\n\n${url}\n\n` +
+      `จัดการการแจ้งเตือน / Manage notifications: ${appUrl.replace(/\/$/, "")}/settings/notifications\n`,
+    html: emailLayout({
+      headingTh: title.th,
+      headingEn: title.en,
+      bodyHtml: `<p style="margin:0 0 10px">${escapeHtml(description.th)}</p><p style="margin:0;color:#737373">${escapeHtml(description.en)}</p>`,
+      cta: { label: "ดูรายละเอียด / View details", url },
+      appUrl,
+    }),
   }
 }
 

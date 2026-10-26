@@ -78,7 +78,39 @@ test("the weekly summary reports team progress: checklist, high priority, unassi
   assert.ok(!mail.text.includes("Somchai: 1 cards"))
 })
 
-test("a team with nothing to report adds no team section", () => {
+test("a quiet board still shows the team section, saying there is nothing active", () => {
   const mail = renderWeeklySummary({ columns: { todo: 1 }, closingSoon: [], newMatches: 1, team: noTeam }, "http://x")
-  assert.ok(!mail.text.includes("Team status"))
+  assert.ok(mail.text.includes("Team status"))
+  assert.ok(mail.text.includes("No active cards on your board yet"))
+  assert.ok(mail.html.includes("สถานะทีม"))
+})
+
+import { emailLayout } from "../src/domain/email-layout"
+import { renderEmail } from "../src/services/match-notification.service"
+
+test("every email shares the site's look: wordmark, primary button and a link to manage notifications", () => {
+  const notice = renderEmail(
+    { title: { en: "T", th: "ท" }, description: { en: "D", th: "ด" }, link: "/browse?tor=1" },
+    "http://localhost:3000/"
+  )
+  const daily = renderDailyDigest([tor(1)], "http://localhost:3000/")
+  for (const mail of [notice, daily]) {
+    assert.ok(mail.html.includes("#0088c9"), "primary colour")
+    assert.ok(mail.html.includes(">TOR</span>") && mail.html.includes(">Match</span>"), "wordmark")
+    assert.ok(mail.html.includes("http://localhost:3000/settings/notifications"), "settings link")
+    assert.ok(mail.text.includes("/settings/notifications"), "settings link in the plain text")
+  }
+  assert.ok(notice.html.includes("http://localhost:3000/browse?tor=1"))
+})
+
+test("the layout escapes whatever it is given", () => {
+  const html = emailLayout({
+    headingTh: "<b>x</b>",
+    headingEn: "y",
+    bodyHtml: "",
+    cta: { label: "go", url: 'http://x/"><script>' },
+    appUrl: "http://x",
+  })
+  assert.ok(!html.includes("<b>x</b>"))
+  assert.ok(!html.includes("<script>"))
 })
