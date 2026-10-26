@@ -1,4 +1,5 @@
 import { notifyCertificateExpiry } from "@/services/profile-notification.service"
+import { summarizeTor } from "@/domain/tor-summary"
 import { parseThaiDateTime } from "@/utils/thai-time"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
@@ -56,6 +57,7 @@ function buildReminder(userId: unknown, tor: TorDoc, event: DeadlineEvent, deadl
     userId,
     category: "deadline",
     torId: tor._id,
+    emailTor: summarizeTor(tor),
     dedupeKey: `${event}:${userId}:${tor._id}`,
     link: `/browse?tor=${tor._id}`,
     action: "view-tor",

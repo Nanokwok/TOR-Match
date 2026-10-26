@@ -1,4 +1,5 @@
 import { digestDue, type DigestKind } from "@/domain/digest-schedule"
+import { summarizeTor } from "@/domain/tor-summary"
 import { renderDailyDigest, renderWeeklySummary, type DigestTor } from "@/domain/digest-email"
 import { env } from "@/config/env"
 import { Company, type CompanyDoc } from "@/models/Company.model"
@@ -8,7 +9,7 @@ import { Tor, type TorDoc } from "@/models/Tor.model"
 import { User } from "@/models/User.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
 import { currentSender, sendEmail } from "@/services/email.service"
-import { emailRecipient, torName } from "@/services/match-notification.service"
+import { emailRecipient } from "@/services/match-notification.service"
 import { matchCompanyToTor } from "@/services/qualification.service"
 import { isOpenForBids } from "@/utils/tor-listing"
 import { parseThaiDateTime } from "@/utils/thai-time"
@@ -34,23 +35,7 @@ type SettingsLean = {
   weeklyDigestTime?: string
 }
 
-const deadlineText = (tor: { deadline?: string }) => {
-  const date = parseThaiDateTime(tor.deadline)
-  return date
-    ? date.toLocaleString("en-GB", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" })
-    : ""
-}
-
-function toDigestTor(tor: TorDoc): DigestTor {
-  return {
-    id: String(tor._id),
-    titleTh: torName(tor, "th"),
-    titleEn: torName(tor, "en"),
-    department: tor.department.en || tor.department.th,
-    budgetBaht: tor.budgetBaht,
-    deadline: deadlineText(tor),
-  }
-}
+const toDigestTor = (tor: TorDoc): DigestTor => summarizeTor(tor)
 
 /** Takes the right to send this digest. False when it already went out (or another run is sending it now). */
 async function claim(userId: unknown, kind: DigestKind, periodKey: string): Promise<boolean> {

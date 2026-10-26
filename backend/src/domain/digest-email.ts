@@ -18,31 +18,32 @@ const { primary, ink, muted, border } = EMAIL_COLORS
 const baht = (value: number) => `฿${value.toLocaleString("en-US")}`
 const base = (appUrl: string) => appUrl.replace(/\/$/, "")
 
+/** One TOR as a row: Thai title linking into the app, English title, then budget, department and deadline. */
+export function torRowHtml(tor: DigestTor, appUrl: string, last = false): string {
+  const url = `${base(appUrl)}/browse?tor=${tor.id}`
+  return (
+    `<div style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${border}`}">` +
+    `<a href="${escapeHtml(url)}" style="font-size:15px;font-weight:600;color:${ink};text-decoration:none">${escapeHtml(tor.titleTh)}</a>` +
+    `<div style="font-size:13px;color:${muted};margin-top:2px">${escapeHtml(tor.titleEn)}</div>` +
+    `<div style="font-size:13px;margin-top:6px">` +
+    `<span style="color:${ink};font-weight:600">${escapeHtml(baht(tor.budgetBaht))}</span>` +
+    `<span style="color:${muted}"> · ${escapeHtml(tor.department)}${tor.deadline ? ` · ปิดรับ ${escapeHtml(tor.deadline)}` : ""}</span></div></div>`
+  )
+}
+
+/** The same details as plain text, for the text part of an email. */
+export function torRowText(tor: DigestTor, appUrl: string): string {
+  return `- ${tor.titleTh} / ${tor.titleEn} (${tor.department}, ${baht(tor.budgetBaht)}${tor.deadline ? `, ${tor.deadline}` : ""})\n  ${base(appUrl)}/browse?tor=${tor.id}`
+}
+
 function torLines(tors: DigestTor[], appUrl: string) {
   const shown = tors.slice(0, MAX_LISTED)
   const more = tors.length - shown.length
 
   const text =
-    shown
-      .map(
-        (tor) =>
-          `- ${tor.titleTh} / ${tor.titleEn} (${tor.department}, ${baht(tor.budgetBaht)}${tor.deadline ? `, ${tor.deadline}` : ""})\n  ${base(appUrl)}/browse?tor=${tor.id}`
-      )
-      .join("\n") + (more > 0 ? `\n…และอีก ${more} รายการ / and ${more} more\n` : "")
+    shown.map((tor) => torRowText(tor, appUrl)).join("\n") + (more > 0 ? `\n…และอีก ${more} รายการ / and ${more} more\n` : "")
 
-  const rows = shown
-    .map((tor) => {
-      const url = `${base(appUrl)}/browse?tor=${tor.id}`
-      return (
-        `<div style="padding:12px 0;border-bottom:1px solid ${border}">` +
-        `<a href="${escapeHtml(url)}" style="font-size:15px;font-weight:600;color:${ink};text-decoration:none">${escapeHtml(tor.titleTh)}</a>` +
-        `<div style="font-size:13px;color:${muted};margin-top:2px">${escapeHtml(tor.titleEn)}</div>` +
-        `<div style="font-size:13px;margin-top:6px">` +
-        `<span style="color:${ink};font-weight:600">${escapeHtml(baht(tor.budgetBaht))}</span>` +
-        `<span style="color:${muted}"> · ${escapeHtml(tor.department)}${tor.deadline ? ` · ปิดรับ ${escapeHtml(tor.deadline)}` : ""}</span></div></div>`
-      )
-    })
-    .join("")
+  const rows = shown.map((tor) => torRowHtml(tor, appUrl)).join("")
   const html =
     rows +
     (more > 0 ? `<p style="margin:12px 0 0;font-size:13px;color:${muted}">…และอีก ${more} รายการ / and ${more} more</p>` : "")

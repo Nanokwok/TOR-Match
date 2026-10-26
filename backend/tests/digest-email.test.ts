@@ -114,3 +114,40 @@ test("the layout escapes whatever it is given", () => {
   assert.ok(!html.includes("<b>x</b>"))
   assert.ok(!html.includes("<script>"))
 })
+
+import { summarizeTor } from "../src/domain/tor-summary"
+
+test("a notification email can carry a card describing its TOR", () => {
+  const mail = renderEmail(
+    {
+      title: { en: "You now qualify", th: "คุณมีคุณสมบัติ" },
+      description: { en: "d", th: "ด" },
+      link: "/browse?tor=a1",
+      emailTor: tor(1),
+    },
+    "http://x"
+  )
+  assert.ok(mail.html.includes("Project 1") && mail.html.includes("฿1,500,000") && mail.html.includes("BMA"))
+  assert.ok(mail.text.includes("Project 1") && mail.text.includes("http://x/browse?tor=id1"))
+})
+
+test("without a TOR the notification email is just the message", () => {
+  const mail = renderEmail({ title: { en: "T", th: "ท" }, description: { en: "D", th: "ด" } }, "http://x")
+  assert.ok(!mail.html.includes("฿"))
+})
+
+test("summarizeTor prefers each language where it exists, falls back to the other, and formats the deadline in Bangkok time", () => {
+  const summary = summarizeTor({
+    _id: "abc",
+    title: { en: "", th: "ชื่อ" },
+    department: { en: "Dept", th: "แผนก" },
+    budgetBaht: 5,
+    deadline: "2026-10-27T12:00:00+07:00",
+  })
+  assert.equal(summary.id, "abc")
+  assert.equal(summary.titleTh, "ชื่อ")
+  assert.equal(summary.titleEn, "ชื่อ")
+  assert.equal(summary.department, "Dept")
+  assert.ok(summary.deadline.includes("27 Oct 2026") && summary.deadline.includes("12:00"))
+  assert.equal(summarizeTor({ _id: "x", title: {}, department: {}, budgetBaht: 1, deadline: "" }).deadline, "")
+})
