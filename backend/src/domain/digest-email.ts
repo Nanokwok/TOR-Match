@@ -57,6 +57,18 @@ export type WeeklySummary = {
   closingSoon: DigestTor[]
   /** New TORs this week that fit the company's profile. */
   newMatches: number
+  /** How the team is getting through the work on the board. */
+  team: {
+    /** Checklist items ticked off / in total, across cards that are not done. */
+    checklistDone: number
+    checklistTotal: number
+    /** Cards marked high priority that are not done yet. */
+    highPriorityOpen: number
+    /** Cards that are not done and nobody is assigned to. */
+    unassigned: number
+    /** Who is carrying how many unfinished cards, most first. */
+    assignees: { name: string; cards: number }[]
+  }
 }
 
 const COLUMN_LABELS: Record<string, { th: string; en: string }> = {
@@ -77,9 +89,34 @@ export function renderWeeklySummary(summary: WeeklySummary, appUrl: string) {
   const lineTh = `TOR ใหม่ที่เหมาะกับคุณสัปดาห์นี้: ${summary.newMatches} รายการ`
   const lineEn = `New TORs that fit you this week: ${summary.newMatches}`
 
+  const { team } = summary
+  const teamLines: { th: string; en: string }[] = []
+  if (team.checklistTotal > 0) {
+    teamLines.push({
+      th: `งานย่อยเสร็จแล้ว ${team.checklistDone} จาก ${team.checklistTotal}`,
+      en: `Checklist items done: ${team.checklistDone} of ${team.checklistTotal}`,
+    })
+  }
+  if (team.highPriorityOpen > 0) {
+    teamLines.push({
+      th: `การ์ดสำคัญสูงที่ยังไม่เสร็จ ${team.highPriorityOpen} ใบ`,
+      en: `High-priority cards still open: ${team.highPriorityOpen}`,
+    })
+  }
+  if (team.unassigned > 0) {
+    teamLines.push({
+      th: `ยังไม่มีผู้รับผิดชอบ ${team.unassigned} ใบ`,
+      en: `Cards with nobody assigned: ${team.unassigned}`,
+    })
+  }
+  for (const person of team.assignees.slice(0, 5)) {
+    teamLines.push({ th: `${person.name}: ${person.cards} ใบ`, en: `${person.name}: ${person.cards} card${person.cards === 1 ? "" : "s"}` })
+  }
+
   const text =
     `${headingTh}\n${headingEn}\n\n${lineTh}\n${lineEn}\n\n` +
     (counts.length ? `Workspace: ${counts.map((c) => `${c.th} / ${c.en} ${c.count}`).join(", ")}\n\n` : "") +
+    (teamLines.length ? `สถานะทีม / Team status\n${teamLines.map((line) => `- ${line.th} / ${line.en}`).join("\n")}\n\n` : "") +
     (summary.closingSoon.length ? `ปิดรับภายใน 7 วัน / Closing within 7 days\n${soonText}\n` : "") +
     `${base(appUrl)}/workspace\n`
   const html =
@@ -87,6 +124,9 @@ export function renderWeeklySummary(summary: WeeklySummary, appUrl: string) {
     `<p>${escapeHtml(lineTh)}<br>${escapeHtml(lineEn)}</p>` +
     (counts.length
       ? `<p><strong>Workspace</strong><br>${counts.map((c) => `${escapeHtml(c.th)} / ${escapeHtml(c.en)}: ${c.count}`).join("<br>")}</p>`
+      : "") +
+    (teamLines.length
+      ? `<h3>สถานะทีม / Team status</h3><ul style="padding-left:18px">${teamLines.map((line) => `<li>${escapeHtml(line.th)}<br><small>${escapeHtml(line.en)}</small></li>`).join("")}</ul>`
       : "") +
     (summary.closingSoon.length ? `<h3>ปิดรับภายใน 7 วัน / Closing within 7 days</h3>${soonHtml}` : "") +
     `<p><a href="${escapeHtml(base(appUrl))}/workspace">${escapeHtml(base(appUrl))}/workspace</a></p>`

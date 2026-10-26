@@ -32,9 +32,11 @@ test("scraped text is escaped in the HTML", () => {
   assert.ok(mail.html.includes("&lt;script&gt;"))
 })
 
+const noTeam = { checklistDone: 0, checklistTotal: 0, highPriorityOpen: 0, unassigned: 0, assignees: [] }
+
 test("the weekly summary shows the board, what closes soon and new matches", () => {
   const mail = renderWeeklySummary(
-    { columns: { bookmark: 3, "in-progress": 1, done: 0 }, closingSoon: [tor(7)], newMatches: 4 },
+    { columns: { bookmark: 3, "in-progress": 1, done: 0 }, closingSoon: [tor(7)], newMatches: 4, team: noTeam },
     "http://x"
   )
   assert.ok(mail.text.includes("4"))
@@ -45,6 +47,38 @@ test("the weekly summary shows the board, what closes soon and new matches", () 
 })
 
 test("the weekly summary leaves out the closing-soon section when nothing closes", () => {
-  const mail = renderWeeklySummary({ columns: { todo: 2 }, closingSoon: [], newMatches: 0 }, "http://x")
+  const mail = renderWeeklySummary({ columns: { todo: 2 }, closingSoon: [], newMatches: 0, team: noTeam }, "http://x")
   assert.ok(!mail.text.includes("Closing within 7 days"))
+})
+
+test("the weekly summary reports team progress: checklist, high priority, unassigned and who has what", () => {
+  const mail = renderWeeklySummary(
+    {
+      columns: { todo: 4 },
+      closingSoon: [],
+      newMatches: 0,
+      team: {
+        checklistDone: 3,
+        checklistTotal: 8,
+        highPriorityOpen: 2,
+        unassigned: 1,
+        assignees: [
+          { name: "Mali", cards: 3 },
+          { name: "Somchai", cards: 1 },
+        ],
+      },
+    },
+    "http://x"
+  )
+  assert.ok(mail.text.includes("Checklist items done: 3 of 8"))
+  assert.ok(mail.text.includes("High-priority cards still open: 2"))
+  assert.ok(mail.text.includes("Cards with nobody assigned: 1"))
+  assert.ok(mail.text.includes("Mali: 3 cards"))
+  assert.ok(mail.text.includes("Somchai: 1 card"))
+  assert.ok(!mail.text.includes("Somchai: 1 cards"))
+})
+
+test("a team with nothing to report adds no team section", () => {
+  const mail = renderWeeklySummary({ columns: { todo: 1 }, closingSoon: [], newMatches: 1, team: noTeam }, "http://x")
+  assert.ok(!mail.text.includes("Team status"))
 })

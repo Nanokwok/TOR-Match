@@ -160,7 +160,28 @@ export async function sendDueDigests(options: DigestRunOptions = {}): Promise<{ 
 
         const newMatches = newThisWeek.filter((tor) => isOpenForBids(tor, now) && fitsProfile(company, tor)).length
         if (!cards.length && !newMatches) return null
-        return renderWeeklySummary({ columns, closingSoon, newMatches }, env.appUrl)
+
+        const active = cards.filter((card) => card.column !== "done")
+        const checklist = active.flatMap((card) => card.checklist ?? [])
+        const cardsByAssignee = new Map<string, number>()
+        for (const card of active) {
+          for (const id of new Set((card.assigneeIds ?? []).map(String))) {
+            cardsByAssignee.set(id, (cardsByAssignee.get(id) ?? 0) + 1)
+          }
+        }
+        const people = cardsByAssignee.size
+          ? await User.find({ _id: { $in: [...cardsByAssignee.keys()] } }).select("name").lean()
+          : []
+        const team = {
+          checklistDone: checklist.filter((item) => item.completed).length,
+          checklistTotal: checklist.length,
+          highPriorityOpen: active.filter((card) => card.priority === "HIGH").length,
+          unassigned: active.filter((card) => !card.assigneeIds?.length).length,
+          assignees: people
+            .map((person) => ({ name: person.name, cards: cardsByAssignee.get(String(person._id)) ?? 0 }))
+            .sort((a, b) => b.cards - a.cards),
+        }
+        return renderWeeklySummary({ columns, closingSoon, newMatches, team }, env.appUrl)
       }
     )
   }
