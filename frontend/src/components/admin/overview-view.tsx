@@ -6,9 +6,9 @@ import {
 } from "lucide-react"
 
 import type {
-  OverviewActivity,
-  OverviewActivityType,
-} from "@/server/db/mock/admin-overview"
+  AdminOverviewActivity,
+  AdminOverviewActivityType,
+} from "@/actions/admin-overview"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,19 +28,17 @@ type OverviewViewProps = {
    * stops opening it.
    */
   queue: readonly { label: string; value: number | string; href: string }[]
-  activity: OverviewActivity[]
+  activity: readonly AdminOverviewActivity[]
 }
 
-const activityStyles: Record<OverviewActivityType, string> = {
-  review: "border-transparent bg-sky-100 text-sky-800",
+const activityStyles: Record<AdminOverviewActivityType, string> = {
+  ingest: "border-transparent bg-sky-100 text-sky-800",
   company: "border-transparent bg-violet-100 text-violet-800",
-  subscription: "border-transparent bg-emerald-100 text-emerald-800",
 }
 
-const activityLabels: Record<OverviewActivityType, string> = {
-  review: "Review",
+const activityLabels: Record<AdminOverviewActivityType, string> = {
+  ingest: "Ingest",
   company: "Company",
-  subscription: "Billing",
 }
 
 function formatTime(value: string) {
@@ -200,7 +198,7 @@ export function OverviewView({
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
+      <div className="grid items-start gap-4 pb-2 xl:grid-cols-[1fr_1.2fr]">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Shortcuts</CardTitle>
@@ -225,7 +223,18 @@ export function OverviewView({
           <CardHeader>
             <CardTitle className="text-base">Recent Activity</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          {/*
+            The feed scrolls inside the card instead of growing it. Eight rows
+            are taller than the Shortcuts card beside it, so an unbounded list
+            pushes the dashboard past the fold and leaves the last row sitting
+            on the window edge.
+          */}
+          <CardContent className="max-h-80 space-y-3 overflow-y-auto pr-1">
+            {activity.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No activity recorded yet.
+              </p>
+            ) : null}
             {activity.map((item) => (
               <div
                 key={item.id}

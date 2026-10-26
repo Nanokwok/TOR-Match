@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
 import { getAdminCompanyStatsAction } from "@/actions/admin-companies"
+import type { AdminOverviewActivity } from "@/actions/admin-overview"
 import { getAdminOverviewAction } from "@/actions/admin-overview"
 import { OverviewView } from "@/components/admin/overview-view"
 import { AdminApiAuthError } from "@/lib/admin-api"
-import { overviewActivity } from "@/server/db/mock/admin-overview"
 
 export const metadata: Metadata = {
   title: "Overview | TOR Match Admin",
@@ -25,6 +25,7 @@ export default async function AdminOverviewPage() {
   let pendingCompanies = 0
   let torsNeedReview = "—"
   let trend: { label: string; tors: number; matches: number }[] = []
+  let activity: AdminOverviewActivity[] = []
 
   // Asked for separately so one failing panel does not blank the others: the
   // company counts and the TOR counts come from different parts of the API.
@@ -45,6 +46,7 @@ export default async function AdminOverviewPage() {
       tors: point.tors,
       matches: point.matches,
     }))
+    activity = overview.activity
   } catch (error) {
     if (error instanceof AdminApiAuthError) redirect("/admin/login")
     console.error("AdminOverviewPage overview failed", error)
@@ -62,7 +64,7 @@ export default async function AdminOverviewPage() {
       stats={{ activeCompanies, torsNeedReview }}
       trend={trend}
       queue={queue}
-      activity={overviewActivity}
+      activity={activity}
     />
   )
 }
