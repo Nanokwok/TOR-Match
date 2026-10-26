@@ -60,7 +60,7 @@ export function AdminAppSidebar({ user }: AdminAppSidebarProps) {
             className="h-8 w-8 object-contain"
           />
           <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            TORMatch {t("admin.settings")}
+            {t("admin.brand")}
           </span>
         </Link>
         <div className="mt-3 px-1 group-data-[collapsible=icon]:hidden">

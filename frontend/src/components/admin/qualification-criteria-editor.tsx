@@ -68,6 +68,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/components/i18n/locale-provider"
+
+const OP_KEY_MAP: Record<string, "lt" | "lte" | "eq" | "gte" | "gt"> = {
+  "<": "lt",
+  "<=": "lte",
+  "=": "eq",
+  ">=": "gte",
+  ">": "gt",
+}
+
+const SECTION_KEY_MAP: Record<string, "financialLegal" | "pastPerformance" | "certificationsStandards" | "generalInfo" | "capabilities"> = {
+  "Financial & Legal": "financialLegal",
+  "Past Performance": "pastPerformance",
+  "Certifications & Standards": "certificationsStandards",
+  "General Info": "generalInfo",
+  "Capabilities": "capabilities",
+}
 
 const EGP_STATUS_OPTIONS: { value: EgPRegistrationStatus; label: string }[] = [
   { value: "registered", label: "Registered on e-GP" },
@@ -96,15 +113,16 @@ function NumberCriteriaEditor({
   budgetBaht?: number
   onChange: (patch: { op?: NumericOperator; amountThb?: number }) => void
 }) {
+  const { t } = useLocale()
   const presets: { label: string; value: number }[] = []
 
   if (budgetBaht && budgetBaht > 0) {
     presets.push({
-      label: "50% Budget",
+      label: t("admin.qualificationCriteria.presets.percent50"),
       value: Math.round(budgetBaht * 0.5),
     })
     presets.push({
-      label: "100% Budget",
+      label: t("admin.qualificationCriteria.presets.percent100"),
       value: budgetBaht,
     })
   }
@@ -126,7 +144,7 @@ function NumberCriteriaEditor({
           <SelectContent>
             {NUMERIC_OPERATORS.map((o) => (
               <SelectItem key={o.value} value={o.value} className="text-xs">
-                {o.label}
+                {t(`admin.qualificationCriteria.numericOperators.${OP_KEY_MAP[o.value] ?? "eq"}` as any)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -140,14 +158,14 @@ function NumberCriteriaEditor({
             onChange={(e) => onChange({ amountThb: parseThb(e.target.value) })}
           />
           <span className="pointer-events-none absolute right-2.5 text-[11px] font-semibold text-muted-foreground">
-            THB
+            {t("admin.qualificationCriteria.thb")}
           </span>
         </div>
       </div>
 
       {/* Quick presets row */}
       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-        <span className="text-[10px] text-muted-foreground mr-0.5">Quick presets:</span>
+        <span className="text-[10px] text-muted-foreground mr-0.5">{t("admin.qualificationCriteria.quickPresets")}</span>
         {presets.map((p) => (
           <button
             key={p.label}
@@ -189,6 +207,7 @@ function MultiSelectCriteriaEditor({
   onAddCustom?: (id: string) => void
   onRemoveCustom?: (id: string) => void
 }) {
+  const { t } = useLocale()
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [customInput, setCustomInput] = useState("")
 
@@ -203,8 +222,8 @@ function MultiSelectCriteriaEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any" className="text-xs">Any one of</SelectItem>
-            <SelectItem value="all" className="text-xs">All of</SelectItem>
+            <SelectItem value="any" className="text-xs">{t("admin.qualificationCriteria.anyOneOf")}</SelectItem>
+            <SelectItem value="all" className="text-xs">{t("admin.qualificationCriteria.allOf")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -222,7 +241,7 @@ function MultiSelectCriteriaEditor({
                 type="button"
                 onClick={() => onToggleId(id)}
                 className="ml-0.5 rounded hover:text-destructive focus-visible:outline-none shrink-0"
-                aria-label={`Remove ${label}`}
+                aria-label={t("admin.qualificationCriteria.remove", { label })}
               >
                 <X className="size-3" />
               </button>
@@ -242,7 +261,7 @@ function MultiSelectCriteriaEditor({
               type="button"
               onClick={() => onRemoveCustom?.(id)}
               className="ml-0.5 rounded hover:text-destructive focus-visible:outline-none shrink-0"
-              aria-label={`Remove custom ${id}`}
+              aria-label={t("admin.qualificationCriteria.removeCustom", { id })}
             >
               <X className="size-3" />
             </button>
@@ -260,7 +279,7 @@ function MultiSelectCriteriaEditor({
                 className="h-7 gap-1 text-xs"
               >
                 <Plus className="size-3" />
-                Add
+                {t("admin.qualificationCriteria.add")}
                 <ChevronDown className="size-3" />
               </Button>
             }
@@ -311,7 +330,7 @@ function MultiSelectCriteriaEditor({
                   <div className="flex gap-1 px-1">
                     <Input
                       className="h-7 text-xs"
-                      placeholder="e.g. CMMI-3"
+                      placeholder={t("admin.qualificationCriteria.addCustomPlaceholder")}
                       value={customInput}
                       onChange={(e) => setCustomInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -333,7 +352,7 @@ function MultiSelectCriteriaEditor({
                         }
                       }}
                     >
-                      Add
+                      {t("admin.qualificationCriteria.add")}
                     </Button>
                   </div>
                 </div>
@@ -367,6 +386,7 @@ export function QualificationCriteriaEditor({
   onChange,
   onTypeChange,
 }: QualificationCriteriaEditorProps) {
+  const { t } = useLocale()
   // Normalize if incoming criteria is manual (auto items must have auto criteria)
   const criteria =
     rawCriteria.type === "manual"
@@ -400,7 +420,7 @@ export function QualificationCriteriaEditor({
           </div>
           <div className="flex flex-wrap items-center gap-2 min-w-0">
             <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              Company Field:
+              {t("admin.qualificationCriteria.companyField")}
             </span>
             <Select
               value={criteria.type}
@@ -409,7 +429,7 @@ export function QualificationCriteriaEditor({
               }
             >
               <SelectTrigger className="h-7 w-auto max-w-full text-xs font-medium bg-background">
-                <SelectValue placeholder="Select company field…" />
+                <SelectValue placeholder={t("admin.qualificationCriteria.selectCompanyField")} />
               </SelectTrigger>
               <SelectContent>
                 {CRITERIA_FIELD_OPTIONS.map((opt) => (
@@ -420,9 +440,11 @@ export function QualificationCriteriaEditor({
                   >
                     <div className="flex items-center gap-2">
                       <FieldIcon name={opt.iconName} className="size-3.5 text-muted-foreground" />
-                      <span className="font-medium">{opt.label}</span>
+                      <span className="font-medium">
+                        {t(`admin.qualificationCriteria.fieldOptions.${opt.id}` as any)}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">
-                        ({opt.companySection})
+                        ({t(`admin.qualificationCriteria.sections.${SECTION_KEY_MAP[opt.companySection] ?? "generalInfo"}` as any)})
                       </span>
                     </div>
                   </SelectItem>
@@ -437,13 +459,13 @@ export function QualificationCriteriaEditor({
           variant="outline"
           className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 text-xs font-semibold px-2.5 py-0.5 truncate max-w-full"
         >
-          {criteriaLabel(criteria)}
+          {criteriaLabel(criteria, t)}
         </Badge>
       </div>
 
       {criteria.type === "registered-capital" && (
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-muted-foreground">Condition (Minimum Capital)</Label>
+          <Label className="text-xs font-medium text-muted-foreground">{t("admin.qualificationCriteria.conditionCapital")}</Label>
           <NumberCriteriaEditor
             op={criteria.op}
             amountThb={criteria.amountThb}
@@ -458,7 +480,7 @@ export function QualificationCriteriaEditor({
       {criteria.type === "past-contract" && (
         <div className="space-y-1">
           <Label className="text-xs font-medium text-muted-foreground">
-            Condition (Highest single contract value in same domain)
+            {t("admin.qualificationCriteria.conditionContract")}
           </Label>
           <NumberCriteriaEditor
             op={criteria.op}
@@ -473,13 +495,13 @@ export function QualificationCriteriaEditor({
 
       {criteria.type === "certification" && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Required certificates</Label>
+          <Label className="text-xs text-muted-foreground">{t("admin.qualificationCriteria.requiredCertificates")}</Label>
           <MultiSelectCriteriaEditor
             mode={criteria.mode}
             selectedIds={criteria.ids}
             options={CERTIFICATION_OPTIONS.map((c) => ({
               id: c.id,
-              label: c.label,
+              label: t(`companySetup.certification.${c.id}` as any) || c.label,
             }))}
             customIds={criteria.customIds}
             showCustom
@@ -504,7 +526,7 @@ export function QualificationCriteriaEditor({
 
       {criteria.type === "egp-registered" && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Required e-GP status</Label>
+          <Label className="text-xs text-muted-foreground">{t("admin.qualificationCriteria.requiredEgpStatus")}</Label>
           <Select
             value={criteria.requiredStatus}
             onValueChange={(v) =>
@@ -520,7 +542,7 @@ export function QualificationCriteriaEditor({
             <SelectContent>
               {EGP_STATUS_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
+                  {t(`admin.qualificationCriteria.egpStatuses.${opt.value}` as any)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -530,7 +552,7 @@ export function QualificationCriteriaEditor({
 
       {criteria.type === "company-size" && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Condition</Label>
+          <Label className="text-xs text-muted-foreground">{t("admin.qualificationCriteria.condition")}</Label>
           <div className="flex flex-wrap items-center gap-2">
             <Select
               value={criteria.op}
@@ -544,7 +566,7 @@ export function QualificationCriteriaEditor({
               <SelectContent>
                 {SIZE_OPERATORS.map((o) => (
                   <SelectItem key={o.value} value={o.value} className="text-xs">
-                    {o.label}
+                    {t(`admin.qualificationCriteria.sizeOperators.${OP_KEY_MAP[o.value] ?? "eq"}` as any)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -568,7 +590,7 @@ export function QualificationCriteriaEditor({
                     value={opt.value}
                     className="text-xs"
                   >
-                    {opt.label}
+                    {t(`admin.companiesPage.size.${opt.value}` as any)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -579,13 +601,13 @@ export function QualificationCriteriaEditor({
 
       {criteria.type === "specialization" && (
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Required specializations</Label>
+          <Label className="text-xs text-muted-foreground">{t("admin.qualificationCriteria.requiredSpecializations")}</Label>
           <MultiSelectCriteriaEditor
             mode={criteria.mode}
             selectedIds={criteria.ids}
             options={SPECIALIZATION_OPTIONS.map((s) => ({
               id: s.id,
-              label: s.label,
+              label: t(`companySetup.specialization.${s.id}` as any) || s.label,
             }))}
             showCustom={false}
             onModeChange={(m) => onChange({ ...criteria, mode: m })}
@@ -601,7 +623,7 @@ export function QualificationCriteriaEditor({
 
       {criteria.type === "not-blacklisted" && (
         <p className="text-xs text-muted-foreground">
-          Company must declare they are <strong>not blacklisted</strong> on their profile.
+          {t("admin.qualificationCriteria.blacklistNote")}
         </p>
       )}
     </div>

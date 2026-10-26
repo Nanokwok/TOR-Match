@@ -51,6 +51,7 @@ import type {
   TorProjectScale,
 } from "@/types/tor"
 import { QualificationCriteriaEditor } from "@/components/admin/qualification-criteria-editor"
+import { useLocale } from "@/components/i18n/locale-provider"
 
 type TorReviewDetailViewProps = {
   tor: TorReviewDetail
@@ -133,6 +134,7 @@ export function TorReviewDetailView({
   tor,
   departments,
 }: TorReviewDetailViewProps) {
+  const { locale, t } = useLocale()
   const [projectTitleTh, setProjectTitleTh] = useState(tor.projectTitleTh)
   const [projectTitleEn, setProjectTitleEn] = useState(tor.projectTitleEn)
   const [announcementId, setAnnouncementId] = useState(tor.announcementId)
@@ -338,12 +340,12 @@ export function TorReviewDetailView({
         setReviewStatus(res.data.reviewStatus)
         setMessage(
           Object.keys(validationErrors).length > 0
-            ? "Draft saved with validation warnings."
-            : "Draft saved successfully."
+            ? t("admin.torReviewDetail.draftSavedWarnings")
+            : t("admin.torReviewDetail.draftSaved")
         )
       }
     } catch {
-      setMessage("Failed to save draft. Please try again.")
+      setMessage(t("admin.torReviewDetail.saveFailed"))
     } finally {
       setIsSavingDraft(false)
     }
@@ -353,7 +355,7 @@ export function TorReviewDetailView({
     const validationErrors = getValidationErrors()
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
-      setMessage("Please correct the validation errors before publishing.")
+      setMessage(t("admin.torReviewDetail.correctErrors"))
       return
     }
 
@@ -367,10 +369,10 @@ export function TorReviewDetailView({
         setMessage(res.error)
       } else {
         setReviewStatus(res.data.reviewStatus)
-        setMessage("Approved & published successfully.")
+        setMessage(t("admin.torReviewDetail.published"))
       }
     } catch {
-      setMessage("Failed to approve and publish. Please try again.")
+      setMessage(t("admin.torReviewDetail.publishFailed"))
     } finally {
       setIsPublishing(false)
     }
@@ -388,14 +390,14 @@ export function TorReviewDetailView({
             render={<Link href="/admin/tor-review" />}
           >
             <ArrowLeft data-icon="inline-start" />
-            Back to Review List
+            {t("admin.torReviewDetail.back")}
           </Button>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
               {announcementId}: {projectTitleEn}
             </h1>
             <Badge className={cn("shrink-0", statusStyles[reviewStatus])}>
-              {statusLabels[reviewStatus]}
+              {t(`admin.torReviewList.status.${reviewStatus}` as any)}
             </Badge>
           </div>
         </div>
@@ -406,14 +408,14 @@ export function TorReviewDetailView({
             onClick={handleSaveDraft}
             disabled={isSavingDraft || isPublishing}
           >
-            {isSavingDraft ? "Saving..." : "Save Draft"}
+            {isSavingDraft ? t("admin.torReviewDetail.saving") : t("admin.torReviewDetail.saveDraft")}
           </Button>
           <Button
             className="flex-1 sm:flex-initial"
             onClick={handleApprove}
             disabled={isSavingDraft || isPublishing}
           >
-            {isPublishing ? "Publishing..." : "Approve & Publish"}
+            {isPublishing ? t("admin.torReviewDetail.publishing") : t("admin.torReviewDetail.approveAndPublish")}
           </Button>
         </div>
       </div>
@@ -444,7 +446,7 @@ export function TorReviewDetailView({
           className="flex min-h-0 flex-col overflow-hidden bg-muted/30"
         >
           <div className="flex h-9 shrink-0 items-center justify-between border-b bg-muted/40 px-3 text-xs text-muted-foreground">
-            <span className="font-medium">Original TOR Document (PDF)</span>
+            <span className="font-medium">{t("admin.torReviewDetail.originalPdf")}</span>
           </div>
           <div className="relative min-h-0 flex-1 w-full">
             <iframe
@@ -485,11 +487,11 @@ export function TorReviewDetailView({
           >
             <section className="space-y-4">
               <h2 className="text-sm font-semibold tracking-tight">
-                1. General Metadata
+                {t("admin.torReviewDetail.secGeneral")}
               </h2>
               <div className="grid gap-4 grid-cols-1 @md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="announcement-id">Announcement No.</Label>
+                  <Label htmlFor="announcement-id">{t("admin.torReviewDetail.announcementNo")}</Label>
                   <Input
                     id="announcement-id"
                     value={announcementId}
@@ -497,7 +499,7 @@ export function TorReviewDetailView({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="source-url">Source URL</Label>
+                  <Label htmlFor="source-url">{t("admin.torReviewDetail.sourceUrl")}</Label>
                   <Input
                     id="source-url"
                     value={sourceUrl}
@@ -506,7 +508,7 @@ export function TorReviewDetailView({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="title-th">Project Title (TH)</Label>
+                <Label htmlFor="title-th">{t("admin.torReviewDetail.projectTitleTh")}</Label>
                 <Input
                   id="title-th"
                   value={projectTitleTh}
@@ -514,7 +516,7 @@ export function TorReviewDetailView({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="title-en">Project Title (EN)</Label>
+                <Label htmlFor="title-en">{t("admin.torReviewDetail.projectTitleEn")}</Label>
                 <Input
                   id="title-en"
                   value={projectTitleEn}
@@ -523,7 +525,7 @@ export function TorReviewDetailView({
               </div>
               <div className="grid gap-4 grid-cols-1 @md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Department</Label>
+                  <Label>{t("admin.torReviewDetail.department")}</Label>
                   <Select
                     value={department}
                     onValueChange={(value) => {
@@ -543,7 +545,7 @@ export function TorReviewDetailView({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="local-office">Local Office</Label>
+                  <Label htmlFor="local-office">{t("admin.torReviewDetail.localOffice")}</Label>
                   <Input
                     id="local-office"
                     value={localOffice}
@@ -553,7 +555,7 @@ export function TorReviewDetailView({
               </div>
               <div className="grid gap-4 grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Project Scale</Label>
+                  <Label>{t("admin.torReviewDetail.projectScale")}</Label>
                   <Select
                     value={projectScale}
                     onValueChange={(value) => {
@@ -561,19 +563,19 @@ export function TorReviewDetailView({
                     }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder={t("admin.torReviewDetail.scalePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {PROJECT_SCALES.map((scale) => (
                         <SelectItem key={scale} value={scale}>
-                          {scale}
+                          {t(`admin.torReviewDetail.scales.${scale}` as any)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Method</Label>
+                  <Label>{t("admin.torReviewDetail.procurementMethod")}</Label>
                   <Select
                     value={method}
                     onValueChange={(value) => {
@@ -581,19 +583,19 @@ export function TorReviewDetailView({
                     }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder={t("admin.torReviewDetail.methodPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {METHODS.map((item) => (
                         <SelectItem key={item} value={item}>
-                          {item}
+                          {t(`admin.torReviewDetail.methods.${item}` as any)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>{t("admin.torReviewDetail.procurementStatus")}</Label>
                   <Select
                     value={status}
                     onValueChange={(value) => {
@@ -601,12 +603,12 @@ export function TorReviewDetailView({
                     }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder={t("admin.torReviewDetail.statusPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {STATUSES.map((item) => (
                         <SelectItem key={item} value={item}>
-                          {item}
+                          {t(`admin.torReviewDetail.statuses.${item}` as any)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -615,7 +617,7 @@ export function TorReviewDetailView({
               </div>
               <div className="grid gap-4 grid-cols-1 @md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="duration-days">Duration (days)</Label>
+                  <Label htmlFor="duration-days">{t("admin.torReviewDetail.durationDays")}</Label>
                   <Input
                     id="duration-days"
                     inputMode="numeric"
@@ -632,12 +634,12 @@ export function TorReviewDetailView({
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration-preview">Duration Label</Label>
+                  <Label htmlFor="duration-preview">{t("admin.torReviewDetail.durationLabel")}</Label>
                   <Input
                     id="duration-preview"
                     value={
                       Number(durationDays) > 0
-                        ? formatDuration(Number(durationDays))
+                        ? formatDuration(Number(durationDays), locale)
                         : ""
                     }
                     readOnly
@@ -648,11 +650,11 @@ export function TorReviewDetailView({
                     id="duration-preview-hint"
                     className="text-xs text-muted-foreground"
                   >
-                    Derived from the day count — rendered per locale at display time.
+                    {t("admin.torReviewDetail.durationHint")}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="announced">Announcement Date</Label>
+                  <Label htmlFor="announced">{t("admin.torReviewDetail.announcementDate")}</Label>
                   <Input
                     id="announced"
                     type="datetime-local"
@@ -670,7 +672,7 @@ export function TorReviewDetailView({
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deadline">Submission Deadline</Label>
+                  <Label htmlFor="deadline">{t("admin.torReviewDetail.submissionDeadline")}</Label>
                   <Input
                     id="deadline"
                     type="datetime-local"
@@ -691,10 +693,10 @@ export function TorReviewDetailView({
 
             <section className="space-y-4">
               <h2 className="text-sm font-semibold tracking-tight">
-                2. Summary, Deliverables & Tech Tags
+                {t("admin.torReviewDetail.secScope")}
               </h2>
               <div className="space-y-2">
-                <Label htmlFor="summary">Summary</Label>
+                <Label htmlFor="summary">{t("admin.torReviewDetail.summary")}</Label>
                 <Textarea
                   id="summary"
                   value={summary}
@@ -703,7 +705,7 @@ export function TorReviewDetailView({
                 />
               </div>
               <div className="space-y-3">
-                <Label>Key Deliverables</Label>
+                <Label>{t("admin.torReviewDetail.keyDeliverables")}</Label>
                 <ol className="space-y-2">
                   {deliverables.map((item, index) => (
                     <li key={index} className="flex items-start gap-2">
@@ -725,7 +727,7 @@ export function TorReviewDetailView({
                             current.filter((_, i) => i !== index)
                           )
                         }
-                        aria-label="Remove deliverable"
+                        aria-label={t("admin.torReviewDetail.removeDeliverable")}
                       >
                         <Trash2 />
                       </Button>
@@ -741,12 +743,12 @@ export function TorReviewDetailView({
                   }
                 >
                   <Plus data-icon="inline-start" />
-                  Add deliverable
+                  {t("admin.torReviewDetail.addDeliverable")}
                 </Button>
               </div>
               <div className="grid gap-4 grid-cols-1 @md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="tech-stack">Tech Tags</Label>
+                  <Label htmlFor="tech-stack">{t("admin.torReviewDetail.techStackTags")}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="tech-stack"
@@ -758,10 +760,10 @@ export function TorReviewDetailView({
                           addTechTag()
                         }
                       }}
-                      placeholder="Add tech tag and press Enter"
+                      placeholder={t("admin.torReviewDetail.addTechPlaceholder")}
                     />
                     <Button type="button" variant="outline" onClick={addTechTag}>
-                      Add
+                      {t("admin.torReviewDetail.add")}
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -775,7 +777,7 @@ export function TorReviewDetailView({
                           type="button"
                           className="rounded-sm opacity-70 hover:opacity-100"
                           onClick={() => removeTechTag(tag)}
-                          aria-label={`Remove ${tag}`}
+                          aria-label={t("admin.torReviewDetail.removeTag", { tag })}
                         >
                           <X className="size-3" />
                         </button>
@@ -785,7 +787,7 @@ export function TorReviewDetailView({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="list-tags">List / Category Tags</Label>
+                  <Label htmlFor="list-tags">{t("admin.torReviewDetail.listTags")}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="list-tags"
@@ -797,10 +799,10 @@ export function TorReviewDetailView({
                           addListTag()
                         }
                       }}
-                      placeholder="Add category tag and press Enter"
+                      placeholder={t("admin.torReviewDetail.addCategoryPlaceholder")}
                     />
                     <Button type="button" variant="outline" onClick={addListTag}>
-                      Add
+                      {t("admin.torReviewDetail.add")}
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -815,7 +817,7 @@ export function TorReviewDetailView({
                           type="button"
                           className="rounded-sm opacity-70 hover:opacity-100"
                           onClick={() => removeListTag(tag)}
-                          aria-label={`Remove ${tag}`}
+                          aria-label={t("admin.torReviewDetail.removeTag", { tag })}
                         >
                           <X className="size-3" />
                         </button>
@@ -832,14 +834,14 @@ export function TorReviewDetailView({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-semibold tracking-tight">
-                      3. Qualification Requirements
+                      {t("admin.torReviewDetail.secQualifications")}
                     </h2>
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                      {qualifications.length} total
+                      {t("admin.torReviewDetail.totalCount", { count: qualifications.length })}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Auto-check criteria evaluate vendor profiles automatically. Manual criteria require vendor self-declaration.
+                    {t("admin.torReviewDetail.qualificationsSubtitle")}
                   </p>
                 </div>
               </div>
@@ -852,17 +854,17 @@ export function TorReviewDetailView({
                       <Zap className="size-3.5" />
                     </div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Auto-Check Criteria ({qualifications.filter((q) => q.autoCheckable).length})
+                      {t("admin.torReviewDetail.autoCheckCriteria", { count: qualifications.filter((q) => q.autoCheckable).length })}
                     </h3>
                     <span className="text-[11px] text-muted-foreground hidden @md:inline">
-                      — verified automatically against vendor company profile
+                      {t("admin.torReviewDetail.autoCheckHint")}
                     </span>
                   </div>
                 </div>
 
                 {qualifications.filter((q) => q.autoCheckable).length === 0 ? (
                   <div className="rounded-xl border border-dashed border-primary/25 bg-primary/[0.01] p-6 text-center text-xs text-muted-foreground space-y-2">
-                    <p>No auto-check criteria configured.</p>
+                    <p>{t("admin.torReviewDetail.noAutoCriteria")}</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -871,7 +873,7 @@ export function TorReviewDetailView({
                       className="gap-1 text-xs text-primary border-primary/30"
                     >
                       <Plus className="size-3.5" />
-                      Add First Auto Criteria
+                      {t("admin.torReviewDetail.addFirstAuto")}
                     </Button>
                   </div>
                 ) : (
@@ -887,11 +889,11 @@ export function TorReviewDetailView({
                           <div className="flex items-center justify-between gap-2 border-b pb-2.5">
                             <div className="flex items-center gap-2 min-w-0">
                               <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5 truncate max-w-[150px] @sm:max-w-xs">
-                                {item.requirement || "Auto-check field"}
+                                {item.requirement || t("admin.torReviewDetail.autoCheckField")}
                               </Badge>
                               {item.criteria && (
                                 <span className="text-xs text-muted-foreground hidden @md:inline truncate">
-                                  Rule: <strong className="text-foreground font-semibold">{criteriaLabel(item.criteria)}</strong>
+                                  {t("admin.torReviewDetail.rule")} <strong className="text-foreground font-semibold">{criteriaLabel(item.criteria, t)}</strong>
                                 </span>
                               )}
                             </div>
@@ -902,10 +904,10 @@ export function TorReviewDetailView({
                                 size="sm"
                                 className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
                                 onClick={() => switchToManual(item.id)}
-                                title="Move this requirement to Manual section"
+                                title={t("admin.torReviewDetail.moveToManual")}
                               >
                                 <ArrowRightLeft className="size-3" />
-                                <span className="hidden @sm:inline">Move to</span> Manual
+                                {t("admin.torReviewDetail.moveToManual")}
                               </Button>
                               <Button
                                 type="button"
@@ -913,7 +915,7 @@ export function TorReviewDetailView({
                                 size="icon-sm"
                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                 onClick={() => removeQualificationById(item.id)}
-                                aria-label="Remove qualification"
+                                aria-label={t("admin.torReviewDetail.removeQualification")}
                               >
                                 <Trash2 className="size-3.5" />
                               </Button>
@@ -925,15 +927,15 @@ export function TorReviewDetailView({
                             <div className="flex items-center justify-between">
                               <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                                 <FileText className="size-3.5 text-muted-foreground/70" />
-                                Original TOR Clause
+                                {t("admin.torReviewDetail.originalClause")}
                               </Label>
                               <span className="text-[10px] text-muted-foreground">
-                                Extracted text from document
+                                {t("admin.torReviewDetail.extractedText")}
                               </span>
                             </div>
                             <Input
                               className="h-8 text-xs font-normal"
-                              placeholder="Exact requirement text as extracted from the TOR document…"
+                              placeholder={t("admin.torReviewDetail.clausePlaceholder")}
                               value={item.torCriteria}
                               onChange={(e) =>
                                 updateQualificationById(item.id, {
@@ -946,7 +948,7 @@ export function TorReviewDetailView({
                           {/* Machine-checkable condition editor with budget presets */}
                           <div className="space-y-1.5 pt-0.5">
                             <Label className="text-xs font-medium text-muted-foreground">
-                              Matching Rule &amp; Condition
+                              {t("admin.torReviewDetail.matchingRule")}
                             </Label>
                             <QualificationCriteriaEditor
                               criteria={item.criteria ?? defaultCriteriaForType("registered-capital")}
@@ -970,7 +972,7 @@ export function TorReviewDetailView({
                       className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/5 w-full sm:w-auto"
                     >
                       <Plus className="size-3.5" />
-                      Add Auto Criteria
+                      {t("admin.torReviewDetail.addAuto")}
                     </Button>
                   </div>
                 )}
@@ -984,17 +986,17 @@ export function TorReviewDetailView({
                       <ClipboardList className="size-3.5" />
                     </div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Manual Requirements ({qualifications.filter((q) => !q.autoCheckable).length})
+                      {t("admin.torReviewDetail.manualRequirements", { count: qualifications.filter((q) => !q.autoCheckable).length })}
                     </h3>
                     <span className="text-[11px] text-muted-foreground hidden @md:inline">
-                      — qualitative clauses verified via vendor self-declaration
+                      {t("admin.torReviewDetail.manualHint")}
                     </span>
                   </div>
                 </div>
 
                 {qualifications.filter((q) => !q.autoCheckable).length === 0 ? (
                   <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center text-xs text-muted-foreground space-y-2">
-                    <p>No manual requirements configured.</p>
+                    <p>{t("admin.torReviewDetail.noManualRequirements")}</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -1003,7 +1005,7 @@ export function TorReviewDetailView({
                       className="gap-1 text-xs"
                     >
                       <Plus className="size-3.5" />
-                      Add First Manual Requirement
+                      {t("admin.torReviewDetail.addFirstManual")}
                     </Button>
                   </div>
                 ) : (
@@ -1019,10 +1021,10 @@ export function TorReviewDetailView({
                           <div className="flex items-center justify-between gap-2 border-b pb-2.5">
                             <div className="flex items-center gap-2 min-w-0">
                               <Badge variant="outline" className="text-[10px] text-muted-foreground font-medium shrink-0">
-                                Manual Self-Declaration
+                                {t("admin.torReviewDetail.manualSelfDeclaration")}
                               </Badge>
                               <span className="text-[11px] text-muted-foreground hidden @md:inline truncate">
-                                Vendor checks &ldquo;We comply&rdquo; on match page
+                                {t("admin.torReviewDetail.vendorChecksHint")}
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
@@ -1032,10 +1034,10 @@ export function TorReviewDetailView({
                                 size="sm"
                                 className="h-7 gap-1 text-xs text-primary hover:text-primary/80"
                                 onClick={() => switchToAuto(item.id)}
-                                title="Convert this requirement to an automated rule"
+                                title={t("admin.torReviewDetail.convertToAuto")}
                               >
                                 <ArrowRightLeft className="size-3" />
-                                <span className="hidden @sm:inline">Convert to</span> Auto Check
+                                {t("admin.torReviewDetail.convertToAuto")}
                               </Button>
                               <Button
                                 type="button"
@@ -1043,7 +1045,7 @@ export function TorReviewDetailView({
                                 size="icon-sm"
                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                 onClick={() => removeQualificationById(item.id)}
-                                aria-label="Remove qualification"
+                                aria-label={t("admin.torReviewDetail.removeQualification")}
                               >
                                 <Trash2 className="size-3.5" />
                               </Button>
@@ -1053,10 +1055,10 @@ export function TorReviewDetailView({
                           {/* Inputs: Requirement name & TOR criteria */}
                           <div className="grid gap-3 grid-cols-1 @md:grid-cols-2">
                             <div className="space-y-1.5">
-                              <Label className="text-xs font-medium">Requirement Title</Label>
+                              <Label className="text-xs font-medium">{t("admin.torReviewDetail.requirementTitle")}</Label>
                               <Input
                                 className="h-8 text-xs font-normal"
-                                placeholder="e.g. Government System Experience, Office in Bangkok…"
+                                placeholder={t("admin.torReviewDetail.requirementPlaceholder")}
                                 value={item.requirement}
                                 onChange={(e) =>
                                   updateQualificationById(item.id, {
@@ -1066,10 +1068,10 @@ export function TorReviewDetailView({
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <Label className="text-xs font-medium">Original TOR Clause (Verification details)</Label>
+                              <Label className="text-xs font-medium">{t("admin.torReviewDetail.verificationDetails")}</Label>
                               <Input
                                 className="h-8 text-xs font-normal"
-                                placeholder="e.g. Must have delivered 2+ government projects in past 3 years…"
+                                placeholder={t("admin.torReviewDetail.verificationPlaceholder")}
                                 value={item.torCriteria}
                                 onChange={(e) =>
                                   updateQualificationById(item.id, {
@@ -1090,7 +1092,7 @@ export function TorReviewDetailView({
                       className="gap-1.5 text-xs text-muted-foreground hover:text-foreground w-full sm:w-auto"
                     >
                       <Plus className="size-3.5" />
-                      Add Manual Requirement
+                      {t("admin.torReviewDetail.addManual")}
                     </Button>
                   </div>
                 )}
@@ -1099,11 +1101,11 @@ export function TorReviewDetailView({
 
             <section className="space-y-4">
               <h2 className="text-sm font-semibold tracking-tight">
-                4. Financials & Payment Timeline
+                {t("admin.torReviewDetail.secFinancials")}
               </h2>
               <div className="grid gap-4 grid-cols-1 @md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Total Budget (THB)</Label>
+                  <Label htmlFor="budget">{t("admin.torReviewDetail.budget")}</Label>
                   <Input
                     id="budget"
                     inputMode="numeric"
@@ -1130,7 +1132,7 @@ export function TorReviewDetailView({
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="median-price">Median Price (THB)</Label>
+                  <Label htmlFor="median-price">{t("admin.torReviewDetail.medianPrice")}</Label>
                   <Input
                     id="median-price"
                     inputMode="numeric"
@@ -1151,7 +1153,7 @@ export function TorReviewDetailView({
               <div className="space-y-3">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <Label>Payment Milestones (Timeline)</Label>
+                    <Label>{t("admin.torReviewDetail.paymentMilestones")}</Label>
                     {errors.milestones ? (
                       <p className="text-xs text-destructive">{errors.milestones}</p>
                     ) : null}
@@ -1172,23 +1174,23 @@ export function TorReviewDetailView({
                     }}
                   >
                     <Plus data-icon="inline-start" />
-                    Add milestone
+                    {t("admin.torReviewDetail.addMilestone")}
                   </Button>
                 </div>
 
                 <ScrollArea orientation="horizontal" className="rounded-lg border">
                   <div className="min-w-[500px]">
                     <div className="grid grid-cols-[72px_1fr_88px_1fr_36px] gap-2 bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
-                      <span>Day</span>
-                      <span>Milestone</span>
-                      <span>%</span>
-                      <span>Deliverable</span>
+                      <span>{t("admin.torReviewDetail.day")}</span>
+                      <span>{t("admin.torReviewDetail.milestone")}</span>
+                      <span>{t("admin.torReviewDetail.percent")}</span>
+                      <span>{t("admin.torReviewDetail.deliverable")}</span>
                       <span />
                     </div>
                     <div className="divide-y">
                       {milestones.length === 0 ? (
                         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                          No milestones yet.
+                          {t("admin.torReviewDetail.noMilestones")}
                         </p>
                       ) : (
                         milestones.map((item, index) => (
@@ -1251,7 +1253,7 @@ export function TorReviewDetailView({
                                   current.filter((_, i) => i !== index)
                                 )
                               }
-                              aria-label="Remove milestone"
+                              aria-label={t("admin.torReviewDetail.removeMilestone")}
                             >
                               <Trash2 />
                             </Button>
@@ -1262,8 +1264,7 @@ export function TorReviewDetailView({
                   </div>
                 </ScrollArea>
                 <p className="text-xs text-muted-foreground">
-                  Same payment timeline shown on the user browse Financials tab.
-                  Amount auto-updates from budget × %.
+                  {t("admin.torReviewDetail.milestoneHint")}
                 </p>
               </div>
             </section>
