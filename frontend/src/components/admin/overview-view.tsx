@@ -22,7 +22,12 @@ type OverviewViewProps = {
     // mrr: string
   }
   trend: readonly { label: string; tors: number; matches: number }[]
-  queue: readonly { label: string; value: number; href: string }[]
+  /**
+   * `value` may be a string so a count that could not be read shows as "—".
+   * Rendering 0 there would be a claim: a reviewer who believes an empty queue
+   * stops opening it.
+   */
+  queue: readonly { label: string; value: number | string; href: string }[]
   activity: OverviewActivity[]
 }
 
