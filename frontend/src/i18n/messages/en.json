@@ -210,6 +210,8 @@
     "announcementDate": "Announced",
     "searchPlaceholder": "Search your keyword...",
     "openOnly": "Open for bids only",
+    "eligibleOnly": "Eligible only",
+    "chipDepartment": "Agency: {value}",
     "sortBy": "Sort by",
     "sort": {
       "opened-desc": "Newest projects",

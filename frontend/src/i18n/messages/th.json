@@ -210,6 +210,8 @@
     "announcementDate": "วันที่ประกาศ",
     "searchPlaceholder": "ค้นหาด้วยคีย์เวิร์ด...",
     "openOnly": "เฉพาะที่ยังเปิดอยู่",
+    "eligibleOnly": "ดูเฉพาะที่ผ่าน",
+    "chipDepartment": "หน่วยงาน: {value}",
     "sortBy": "เรียงตาม",
     "sort": {
       "opened-desc": "โครงการจัดซื้อจัดจ้างล่าสุด",

@@ -222,6 +222,8 @@ export type TorListQuery = {
   keyword?: string
   /** Only TORs still taking bids: open status and a deadline that has not passed. */
   openOnly?: boolean
+  /** Only TORs where the bidder meets all automated eligibility criteria. */
+  eligibleOnly?: boolean
   sort?: TorSort
   budgetRange?: string
   status?: TorProcurementStatus | "all"
