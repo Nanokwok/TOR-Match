@@ -66,6 +66,8 @@ export const env = {
   mailFrom: process.env.MAIL_FROM ?? process.env.SMTP_USER ?? "TOR Match <no-reply@localhost>",
   /** Base URL of the web app, used for the links inside emails. */
   appUrl: (process.env.APP_URL ?? (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(",")[0]).trim(),
+  /** Daily / weekly digest emails, checked every 15 minutes inside the API server. Set DIGESTS_ENABLED=false to turn off. */
+  digestsEnabled: process.env.DIGESTS_ENABLED !== "false",
   /** Hourly deadline reminders inside the API server. Set DEADLINE_REMINDERS_ENABLED=false to turn off. */
   deadlineRemindersEnabled: process.env.DEADLINE_REMINDERS_ENABLED !== "false",
   /**
