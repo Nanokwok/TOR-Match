@@ -28,7 +28,7 @@
     "email:test": "tsx src/utils/send-test-email.ts",
     "seed:admin": "tsx src/seed/ensure-admin.ts",
     "lint": "eslint .",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --import ./tests/setup-env.mjs --test tests/*.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",
