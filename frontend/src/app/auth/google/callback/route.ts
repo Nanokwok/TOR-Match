@@ -4,6 +4,13 @@ import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth-cookie"
 import { GOOGLE_STATE_COOKIE } from "@/lib/google-auth"
 
+import {
+  USER_SESSION_COOKIE,
+  decodeUserToken,
+  encodeUserSession,
+  userSessionCookieOptions,
+} from "@/lib/user-session"
+
 type GoogleSignInResponse = { token: string; created: boolean }
 
 function backToLogin(request: NextRequest, reason: string) {
@@ -36,6 +43,14 @@ export async function GET(request: NextRequest) {
     })
     const response = NextResponse.redirect(new URL("/browse", request.url))
     response.cookies.set(AUTH_COOKIE_NAME, data.token, authCookieOptions())
+    const session = decodeUserToken(data.token)
+    if (session) {
+      response.cookies.set(
+        USER_SESSION_COOKIE,
+        await encodeUserSession(session),
+        userSessionCookieOptions()
+      )
+    }
     response.cookies.delete(GOOGLE_STATE_COOKIE)
     return response
   } catch (error) {
