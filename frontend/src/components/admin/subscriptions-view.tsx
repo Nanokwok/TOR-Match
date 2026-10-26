@@ -17,11 +17,13 @@ import { Input } from "@/components/ui/input"
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { pageWindow } from "@/lib/pagination-window"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Select,
@@ -293,18 +295,24 @@ export function SubscriptionsView({
                 }
               />
             </PaginationItem>
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (pageNumber) => (
-                <PaginationItem key={pageNumber}>
+            {pageWindow(currentPage, totalPages).map((slot, index) =>
+              slot === "ellipsis" ? (
+                // Keyed by position: there can be two gaps, and neither
+                // has a page number of its own to key on.
+                <PaginationItem key={`gap-${index}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={slot}>
                   <PaginationLink
                     href="#"
-                    isActive={pageNumber === currentPage}
+                    isActive={slot === currentPage}
                     onClick={(event) => {
                       event.preventDefault()
-                      setPage(pageNumber)
+                      setPage(slot)
                     }}
                   >
-                    {pageNumber}
+                    {slot}
                   </PaginationLink>
                 </PaginationItem>
               )
