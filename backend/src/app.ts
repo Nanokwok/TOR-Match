@@ -1,4 +1,5 @@
 import express from "express"
+import helmet from "helmet"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import morgan from "morgan"
@@ -8,6 +9,41 @@ import { errorMiddleware, notFoundMiddleware } from "@/middleware/error.middlewa
 
 export function createApp() {
   const app = express()
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          baseUri: ["'self'"],
+          fontSrc: ["'self'", "https:", "data:"],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          objectSrc: ["'none'"],
+          scriptSrc: ["'self'"],
+          scriptSrcAttr: ["'none'"],
+          styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+          upgradeInsecureRequests: [],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      xContentTypeOptions: true,
+      frameguard: {
+        action: "deny",
+      },
+      referrerPolicy: {
+        policy: "strict-origin-when-cross-origin",
+      },
+      crossOriginResourcePolicy: {
+        policy: "cross-origin",
+      },
+    })
+  )
 
   app.use(
     cors({
