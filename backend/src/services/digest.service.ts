@@ -52,12 +52,15 @@ const fitsProfile = (company: CompanyDoc, tor: TorDoc) => matchCompanyToTor(comp
 
 export type DigestRunOptions = {
   now?: Date
+  /** Replaces the real mailer; tests use it to see what would be sent. */
+  send?: typeof sendEmail
   /** Send to this one account right now, ignoring the schedule and the once-a-day record. For trying it out. */
   force?: { email: string }
 }
 
 export async function sendDueDigests(options: DigestRunOptions = {}): Promise<{ daily: number; weekly: number }> {
   const now = options.now ?? new Date()
+  const send = options.send ?? sendEmail
   const companies = await Company.find()
   if (!companies.length) return { daily: 0, weekly: 0 }
 
@@ -98,8 +101,9 @@ export async function sendDueDigests(options: DigestRunOptions = {}): Promise<{ 
         try {
           const mail = await build()
           if (!mail) return
-          await sendEmail({ to, ...mail }, sender)
-          sent[kind] += 1
+          // False means email is not configured here: nothing went out, so the period is not used up.
+          if (await send({ to, ...mail }, sender)) sent[kind] += 1
+          else await DigestRun.deleteOne({ userId: company.ownerId, kind, periodKey })
         } catch (error) {
           await DigestRun.deleteOne({ userId: company.ownerId, kind, periodKey })
           console.error(`[digest] ${kind} digest for ${to} failed`, error)
@@ -108,8 +112,7 @@ export async function sendDueDigests(options: DigestRunOptions = {}): Promise<{ 
       }
       const mail = await build()
       if (!mail) return
-      await sendEmail({ to, ...mail }, sender)
-      sent[kind] += 1
+      if (await send({ to, ...mail }, sender)) sent[kind] += 1
     }
 
     await attempt(
