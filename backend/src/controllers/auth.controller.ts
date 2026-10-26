@@ -6,6 +6,7 @@ import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 import { signAuthToken } from "@/utils/jwt"
 import { env, isProduction } from "@/config/env"
+import { isPasswordPwned, PWNED_PASSWORD_ERROR_MESSAGE } from "@/services/pwned-password.service"
 
 const SALT_ROUNDS = 10
 
@@ -40,6 +41,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.badRequest("Invalid input", parsed.error.flatten())
   }
   const { name, email, password } = parsed.data
+
+  const isPwned = await isPasswordPwned(password)
+  if (isPwned) {
+    throw ApiError.badRequest(PWNED_PASSWORD_ERROR_MESSAGE)
+  }
 
   const existing = await User.findOne({ email: email.toLowerCase() })
   if (existing) throw ApiError.conflict("An account with this email already exists")
