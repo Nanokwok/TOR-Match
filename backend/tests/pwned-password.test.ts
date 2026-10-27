@@ -12,7 +12,7 @@ import { createApp } from "../src/app"
 import { User } from "../src/models/User.model"
 
 test("hashPasswordSha1 calculates a 40-char uppercase SHA-1 and splits into 5-char prefix and 35-char suffix", () => {
-  // Known SHA-1 of "password": 5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8
+  // Test vector SHA-1 hash for the string 'password'
   const result = hashPasswordSha1("password")
   assert.equal(result.hash, "5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8")
   assert.equal(result.prefix, "5BAA6")
