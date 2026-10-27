@@ -51,6 +51,7 @@ import type { Tor } from "@/types/tor"
 const initialFilters: BrowseFiltersState = {
   keyword: "",
   openOnly: true,
+  eligibleOnly: false,
   sort: DEFAULT_BROWSE_SORT,
   budgetRange: "all",
   status: "all",
@@ -221,10 +222,16 @@ export function BrowseView({
   function handleFiltersChange(next: BrowseFiltersState) {
     const detailChanged =
       JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
+    const departmentChanged = next.department !== filters.department
     // A switch or a sort reads as instant; waiting for Enter in the search box
     // made turning it off look like it did nothing.
     const openOnlyChanged = next.openOnly !== filters.openOnly
-    const instantChanged = openOnlyChanged || next.sort !== filters.sort
+    const eligibleOnlyChanged = next.eligibleOnly !== filters.eligibleOnly
+    const instantChanged =
+      openOnlyChanged ||
+      eligibleOnlyChanged ||
+      departmentChanged ||
+      next.sort !== filters.sort
     // Remembered for the next visit. Only the switch itself writes the cookie:
     // the "turn off Open only" shortcut on a linked TOR is a one-off, not a choice.
     if (openOnlyChanged) {

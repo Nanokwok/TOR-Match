@@ -101,8 +101,18 @@ export function NotificationSettingsView({
   }
 
   function handleReset() {
-    updateSettings(() => cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS))
-    setStatusMessage(t("notificationSettings.restoredDefaults"))
+    const defaultSettings: NotificationSettings = {
+      ...cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS),
+      emailRecipient: settings.emailRecipient || initialSettings.emailRecipient,
+    }
+    updateSettings(() => defaultSettings)
+    const isMatchesSaved =
+      JSON.stringify(defaultSettings) === JSON.stringify(savedSnapshot)
+    setStatusMessage(
+      isMatchesSaved
+        ? t("notificationSettings.allSaved")
+        : t("notificationSettings.restoredDefaults")
+    )
   }
 
   function handleSave() {

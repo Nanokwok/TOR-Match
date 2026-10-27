@@ -110,32 +110,72 @@ export function defaultCriteriaForType(type: QualificationCriteria["type"]): Qua
 }
 
 
-export function criteriaLabel(criteria: QualificationCriteria | undefined): string {
-  if (!criteria) return "Not configured"
+export function criteriaLabel(
+  criteria: QualificationCriteria | undefined,
+  t?: (key: string, params?: Record<string, string | number>) => string
+): string {
+  if (!criteria) {
+    return t ? t("admin.qualificationCriteria.preview.notConfigured") : "Not configured"
+  }
 
   switch (criteria.type) {
     case "manual":
-      return "Manual check — no automated rule"
+      return t
+        ? t("admin.qualificationCriteria.preview.manual")
+        : "Manual check — no automated rule"
 
     case "registered-capital":
     case "past-contract": {
+      const formatted = criteria.amountThb.toLocaleString("en-US")
+      if (t) {
+        return criteria.type === "registered-capital"
+          ? t("admin.qualificationCriteria.preview.registeredCapital", {
+              op: criteria.op,
+              amount: formatted,
+            })
+          : t("admin.qualificationCriteria.preview.pastContract", {
+              op: criteria.op,
+              amount: formatted,
+            })
+      }
       const fieldLabel =
         criteria.type === "registered-capital" ? "Registered Capital" : "Past Contract"
-      const formatted = criteria.amountThb.toLocaleString("en-US")
       return `${fieldLabel} ${criteria.op} ${formatted} THB`
     }
 
     case "certification": {
-      const modeWord = criteria.mode === "any" ? "any of" : "all of"
+      const modeWord = t
+        ? criteria.mode === "any"
+          ? t("admin.qualificationCriteria.preview.anyOf")
+          : t("admin.qualificationCriteria.preview.allOf")
+        : criteria.mode === "any"
+          ? "any of"
+          : "all of"
       const knownLabels = criteria.ids.map(
         (id) => CERTIFICATION_OPTIONS.find((o) => o.id === id)?.label ?? id
       )
       const allLabels = [...knownLabels, ...(criteria.customIds ?? [])]
-      if (allLabels.length === 0) return "Certification — none selected"
+      if (allLabels.length === 0) {
+        return t
+          ? t("admin.qualificationCriteria.preview.certificationNone")
+          : "Certification — none selected"
+      }
+      if (t) {
+        return t("admin.qualificationCriteria.preview.certification", {
+          mode: modeWord,
+          labels: allLabels.join(", "),
+        })
+      }
       return `Certification — ${modeWord}: ${allLabels.join(", ")}`
     }
 
     case "egp-registered": {
+      if (t) {
+        const egpLabel = t(`admin.qualificationCriteria.egpStatuses.${criteria.requiredStatus}`)
+        return t("admin.qualificationCriteria.preview.egpStatus", {
+          status: egpLabel,
+        })
+      }
       const statusMap: Record<string, string> = {
         registered: "Registered on e-GP",
         "in-progress": "Registration in progress",
@@ -145,25 +185,55 @@ export function criteriaLabel(criteria: QualificationCriteria | undefined): stri
     }
 
     case "not-blacklisted":
-      return "Not blacklisted"
+      return t
+        ? t("admin.qualificationCriteria.preview.notBlacklisted")
+        : "Not blacklisted"
 
     case "company-size": {
-      const sizeLabel =
-        COMPANY_SIZE_OPTIONS.find((o) => o.value === criteria.size)?.label ?? criteria.size
+      const sizeLabel = t
+        ? t(`admin.companiesPage.size.${criteria.size}`)
+        : COMPANY_SIZE_OPTIONS.find((o) => o.value === criteria.size)?.label ?? criteria.size
+      if (t) {
+        return t("admin.qualificationCriteria.preview.companySize", {
+          op: criteria.op,
+          size: sizeLabel,
+        })
+      }
       return `Company size ${criteria.op} ${sizeLabel}`
     }
 
     case "specialization": {
-      const modeWord = criteria.mode === "any" ? "any of" : "all of"
-      const labels = criteria.ids.map(
-        (id) => SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id
-      )
-      if (labels.length === 0) return "Specialization — none selected"
+      const modeWord = t
+        ? criteria.mode === "any"
+          ? t("admin.qualificationCriteria.preview.anyOf")
+          : t("admin.qualificationCriteria.preview.allOf")
+        : criteria.mode === "any"
+          ? "any of"
+          : "all of"
+      const labels = criteria.ids.map((id) => {
+        if (t) {
+          return t(`companySetup.specialization.${id}`) || (SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id)
+        }
+        return SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id
+      })
+      if (labels.length === 0) {
+        return t
+          ? t("admin.qualificationCriteria.preview.specializationNone")
+          : "Specialization — none selected"
+      }
+      if (t) {
+        return t("admin.qualificationCriteria.preview.specialization", {
+          mode: modeWord,
+          labels: labels.join(", "),
+        })
+      }
       return `Specialization — ${modeWord}: ${labels.join(", ")}`
     }
 
     default:
-      return "Unknown criteria"
+      return t
+        ? t("admin.qualificationCriteria.preview.unknown")
+        : "Unknown criteria"
   }
 }
 

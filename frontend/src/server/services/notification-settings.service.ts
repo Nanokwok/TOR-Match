@@ -28,20 +28,44 @@ type SettingsResponse = {
 
 /** The recipient is not a setting: alerts go to the address the user signs in with. */
 function fromBackend({ settings, accountEmail }: SettingsResponse): NotificationSettings {
+  const defaults = cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
   if (!settings) {
-    return { ...cloneNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS), emailRecipient: accountEmail }
+    return { ...defaults, emailRecipient: accountEmail || "" }
   }
+
+  const events = { ...defaults.events }
+  if (settings.events) {
+    for (const [key, pref] of Object.entries(settings.events)) {
+      if (pref && typeof pref === "object") {
+        const id = key as keyof typeof events
+        events[id] = {
+          inApp: typeof pref.inApp === "boolean" ? pref.inApp : (defaults.events[id]?.inApp ?? true),
+          email: typeof pref.email === "boolean" ? pref.email : (defaults.events[id]?.email ?? true),
+        }
+      }
+    }
+  }
+
   return {
-    inAppEnabled: settings.inAppEnabled,
-    emailEnabled: settings.emailEnabled,
-    emailRecipient: accountEmail,
-    events: settings.events,
-    instantEmailAlerts: settings.instantEmailAlerts,
-    dailyDigestEnabled: settings.dailyDigestEnabled,
-    dailyDigestTime: settings.dailyDigestTime,
-    weeklyDigestEnabled: settings.weeklyDigestEnabled,
-    weeklyDigestDay: settings.weeklyDigestDay,
-    weeklyDigestTime: settings.weeklyDigestTime,
+    inAppEnabled: typeof settings.inAppEnabled === "boolean" ? settings.inAppEnabled : defaults.inAppEnabled,
+    emailEnabled: typeof settings.emailEnabled === "boolean" ? settings.emailEnabled : defaults.emailEnabled,
+    emailRecipient: accountEmail || "",
+    events,
+    instantEmailAlerts:
+      typeof settings.instantEmailAlerts === "boolean"
+        ? settings.instantEmailAlerts
+        : defaults.instantEmailAlerts,
+    dailyDigestEnabled:
+      typeof settings.dailyDigestEnabled === "boolean"
+        ? settings.dailyDigestEnabled
+        : defaults.dailyDigestEnabled,
+    dailyDigestTime: settings.dailyDigestTime ?? defaults.dailyDigestTime,
+    weeklyDigestEnabled:
+      typeof settings.weeklyDigestEnabled === "boolean"
+        ? settings.weeklyDigestEnabled
+        : defaults.weeklyDigestEnabled,
+    weeklyDigestDay: settings.weeklyDigestDay ?? defaults.weeklyDigestDay,
+    weeklyDigestTime: settings.weeklyDigestTime ?? defaults.weeklyDigestTime,
   }
 }
 

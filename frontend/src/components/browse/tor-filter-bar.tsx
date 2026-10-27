@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Filter, Search, X } from "lucide-react"
 
 import { BrowseMoreFiltersDialog } from "@/components/browse/browse-more-filters-dialog"
@@ -33,6 +33,7 @@ import type {
 export type BrowseFiltersState = {
   keyword: string
   openOnly: boolean
+  eligibleOnly: boolean
   sort: TorSort
   budgetRange: string
   status: TorProcurementStatus | "all"
@@ -52,6 +53,7 @@ export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
   return {
     keyword: filters.keyword,
     openOnly: filters.openOnly,
+    eligibleOnly: filters.eligibleOnly,
     sort: filters.sort,
     budgetRange: filters.budgetRange,
     status: filters.status,
@@ -71,35 +73,55 @@ export function TorFilterBar({
   const [moreOpen, setMoreOpen] = useState(false)
 
   /** Department filter values are the canonical English names; labels follow the locale. */
-  const departmentLabel = (value: string) => {
-    const match = departments.find((item) => localizedKey(item) === value)
-    return match ? pickLocalized(match, locale) : value
-  }
-
-  const activeDetailCount = countActiveDetailFilters(filters.detail)
-  const chips = useMemo(
-    () => getActiveDetailFilterChips(filters.detail, t),
-    [filters.detail, t]
+  const departmentLabel = useCallback(
+    (value: string) => {
+      const match = departments.find((item) => localizedKey(item) === value)
+      return match ? pickLocalized(match, locale) : value
+    },
+    [departments, locale]
   )
+
+  const activeDetailCount =
+    countActiveDetailFilters(filters.detail) +
+    (filters.department !== "all" ? 1 : 0)
+
+  const chips = useMemo(() => {
+    const list = getActiveDetailFilterChips(filters.detail, t)
+    if (filters.department && filters.department !== "all") {
+      list.unshift({
+        id: "department",
+        label: t
+          ? t("browse.chipDepartment", {
+              value: departmentLabel(filters.department),
+            })
+          : `Agency: ${departmentLabel(filters.department)}`,
+      })
+    }
+    return list
+  }, [filters.detail, filters.department, departmentLabel, t])
 
   const baseQuery = useMemo(
     () => ({
       keyword: filters.keyword,
       openOnly: filters.openOnly,
+      eligibleOnly: filters.eligibleOnly,
       budgetRange: filters.budgetRange,
       status: filters.status,
-      department: filters.department,
     }),
     [
       filters.keyword,
       filters.openOnly,
+      filters.eligibleOnly,
       filters.budgetRange,
       filters.status,
-      filters.department,
     ]
   )
 
   function clearChip(id: string) {
+    if (id === "department") {
+      onChange({ ...filters, department: "all" })
+      return
+    }
     const next = { ...filters.detail }
     switch (id) {
       case "scale":
@@ -165,6 +187,19 @@ export function TorFilterBar({
               </span>
             </label>
 
+            <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
+              <Switch
+                checked={filters.eligibleOnly}
+                onCheckedChange={(checked) =>
+                  onChange({ ...filters, eligibleOnly: checked })
+                }
+                className="data-checked:bg-primary"
+              />
+              <span className="whitespace-nowrap text-foreground">
+                {t("browse.eligibleOnly")}
+              </span>
+            </label>
+
             <LabeledFilterSelect
               label={t("browse.sortBy")}
               value={filters.sort}
@@ -218,28 +253,6 @@ export function TorFilterBar({
               <SelectItem value="winner-revised">{t("browse.statusWinnerRevised")}</SelectItem>
             </LabeledFilterSelect>
 
-            <LabeledFilterSelect
-              label={t("browse.department")}
-              value={filters.department}
-              formatValue={(value) =>
-                value === "all" ? t("common.all") : departmentLabel(value)
-              }
-              onValueChange={(value) =>
-                onChange({ ...filters, department: value })
-              }
-              triggerClassName="min-w-[7rem]"
-            >
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              {departments.map((department) => (
-                <SelectItem
-                  key={localizedKey(department)}
-                  value={localizedKey(department)}
-                >
-                  {pickLocalized(department, locale)}
-                </SelectItem>
-              ))}
-            </LabeledFilterSelect>
-
             <Button
               variant="outline"
               className="relative h-9 gap-2 px-3"
@@ -286,6 +299,7 @@ export function TorFilterBar({
               onClick={() =>
                 onChange({
                   ...filters,
+                  department: "all",
                   detail: { ...EMPTY_DETAIL_FILTERS },
                 })
               }
@@ -301,8 +315,12 @@ export function TorFilterBar({
         onOpenChange={setMoreOpen}
         baseQuery={baseQuery}
         value={filters.detail}
+        department={filters.department}
+        departments={departments}
         localOffices={localOffices}
-        onApply={(detail) => onChange({ ...filters, detail })}
+        onApply={({ detail, department }) =>
+          onChange({ ...filters, detail, department })
+        }
       />
     </div>
   )

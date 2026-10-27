@@ -13,6 +13,7 @@ export type StoredBrowseFilters = {
   budgetRange: string
   status: TorProcurementStatus | "all"
   department: string
+  eligibleOnly?: boolean
   detail: TorDetailFilters
 }
 
@@ -44,6 +45,7 @@ export function parseStoredBrowseFilters(raw: string | null): StoredBrowseFilter
         ? (saved.status as StoredBrowseFilters["status"])
         : "all",
       department: typeof saved.department === "string" ? saved.department : "all",
+      eligibleOnly: saved.eligibleOnly === true,
       detail: sanitizeDetail(saved.detail),
     }
   } catch {
@@ -61,10 +63,10 @@ export function readStoredBrowseFilters(): StoredBrowseFilters | null {
 
 export function writeStoredBrowseFilters(filters: StoredBrowseFilters): void {
   try {
-    const { sort, budgetRange, status, department, detail } = filters
+    const { sort, budgetRange, status, department, eligibleOnly, detail } = filters
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ sort, budgetRange, status, department, detail })
+      JSON.stringify({ sort, budgetRange, status, department, eligibleOnly, detail })
     )
   } catch {
     // Private mode or a full quota: the filters simply are not remembered.
