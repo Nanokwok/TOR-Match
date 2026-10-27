@@ -1,11 +1,12 @@
-import type { CookieOptions, Request, Response } from "express"
+import type { Request, Response } from "express"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { User } from "@/models/User.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
-import { signAuthToken } from "@/utils/jwt"
-import { env, isProduction } from "@/config/env"
+import { authCookieOptions, signAuthToken } from "@/utils/jwt"
+import { env } from "@/config/env"
+import { isPasswordPwned, PWNED_PASSWORD_ERROR_MESSAGE } from "@/services/pwned-password.service"
 
 const SALT_ROUNDS = 10
 
@@ -20,16 +21,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 })
 
-function authCookieOptions(): CookieOptions {
-  return {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  }
-}
-
 function toPublicUser(user: { _id: unknown; email: string; name: string; role: string }) {
   return { id: String(user._id), email: user.email, name: user.name, role: user.role }
 }
@@ -40,6 +31,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.badRequest("Invalid input", parsed.error.flatten())
   }
   const { name, email, password } = parsed.data
+
+  const isPwned = await isPasswordPwned(password)
+  if (isPwned) {
+    throw ApiError.badRequest(PWNED_PASSWORD_ERROR_MESSAGE)
+  }
 
   const existing = await User.findOne({ email: email.toLowerCase() })
   if (existing) throw ApiError.conflict("An account with this email already exists")
@@ -75,7 +71,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
 export const logout = asyncHandler(async (_req: Request, res: Response) => {
   res.clearCookie(env.authCookieName, { ...authCookieOptions(), maxAge: 0 })
+  res.clearCookie("tm_user_session", { ...authCookieOptions(), maxAge: 0 })
   res.status(204).send()
+})
+
+export const refresh = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) throw ApiError.unauthorized()
+  const refreshedToken = signAuthToken({
+    ...req.user,
+    lastActiveAt: Date.now(),
+  })
+  res.cookie(env.authCookieName, refreshedToken, authCookieOptions())
+  res.setHeader("X-Refreshed-Token", refreshedToken)
+  res.status(200).json({ token: refreshedToken, user: req.user })
 })
 
 export const me = asyncHandler(async (req: Request, res: Response) => {

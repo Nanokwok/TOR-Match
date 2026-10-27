@@ -4,6 +4,7 @@ import { getCompanySetupProfileAction } from "@/actions/company-setup"
 import { getNotificationsAction } from "@/actions/notifications"
 import { Footer } from "@/components/layout/footer"
 import { Header } from "@/components/layout/header"
+import { SessionTimeoutListener } from "@/components/auth/session-timeout-listener"
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const [profile, initialNotifications] = await Promise.all([
@@ -22,6 +23,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
 
   return (
     <>
+      <SessionTimeoutListener />
       <Header account={account} initialNotifications={initialNotifications} />
       <main className="flex min-h-0 flex-1 flex-col">{children}</main>
       <Footer />

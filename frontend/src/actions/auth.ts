@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth-cookie"
 import { GOOGLE_STATE_COOKIE, googleStateCookieOptions } from "@/lib/google-auth"
+import { decodeUserToken, setUserSessionCookie, clearUserSessionCookie } from "@/lib/user-session"
 
 export type AuthResult = { ok: true } | { ok: false; error: string }
 
@@ -28,6 +29,10 @@ type EmailRegisterInput = {
 async function setAuthCookie(token: string, rememberMe = true) {
   const cookieStore = await cookies()
   cookieStore.set(AUTH_COOKIE_NAME, token, authCookieOptions(rememberMe))
+  const session = decodeUserToken(token)
+  if (session) {
+    await setUserSessionCookie(session)
+  }
 }
 
 function messageFromError(error: unknown, fallback: string): string {
@@ -127,6 +132,8 @@ export async function logoutAction(): Promise<void> {
 
   const cookieStore = await cookies()
   cookieStore.delete(AUTH_COOKIE_NAME)
+  cookieStore.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 })
+  await clearUserSessionCookie()
 }
 
 export type RequestPasswordResetInput = {
