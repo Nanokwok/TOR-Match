@@ -67,11 +67,6 @@ const statusStyles: Record<TorReviewStatus, string> = {
     "border-transparent bg-emerald-600 text-white dark:bg-emerald-500",
 }
 
-const statusLabels: Record<TorReviewStatus, string> = {
-  "need-review": "Need Review",
-  "auto-approved": "Auto approved",
-  approved: "Approved",
-}
 
 const PROJECT_SCALES: TorProjectScale[] = [
   "SMALL",
@@ -397,7 +392,7 @@ export function TorReviewDetailView({
               {announcementId}: {projectTitleEn}
             </h1>
             <Badge className={cn("shrink-0", statusStyles[reviewStatus])}>
-              {t(`admin.torReviewList.status.${reviewStatus}` as any)}
+              {t(`admin.torReviewList.status.${reviewStatus}`)}
             </Badge>
           </div>
         </div>
@@ -568,7 +563,7 @@ export function TorReviewDetailView({
                     <SelectContent>
                       {PROJECT_SCALES.map((scale) => (
                         <SelectItem key={scale} value={scale}>
-                          {t(`admin.torReviewDetail.scales.${scale}` as any)}
+                          {t(`admin.torReviewDetail.scales.${scale}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -588,7 +583,7 @@ export function TorReviewDetailView({
                     <SelectContent>
                       {METHODS.map((item) => (
                         <SelectItem key={item} value={item}>
-                          {t(`admin.torReviewDetail.methods.${item}` as any)}
+                          {t(`admin.torReviewDetail.methods.${item}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -608,7 +603,7 @@ export function TorReviewDetailView({
                     <SelectContent>
                       {STATUSES.map((item) => (
                         <SelectItem key={item} value={item}>
-                          {t(`admin.torReviewDetail.statuses.${item}` as any)}
+                          {t(`admin.torReviewDetail.statuses.${item}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>

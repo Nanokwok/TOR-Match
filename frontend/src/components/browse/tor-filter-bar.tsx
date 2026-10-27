@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Filter, Search, X } from "lucide-react"
 
 import { BrowseMoreFiltersDialog } from "@/components/browse/browse-more-filters-dialog"
@@ -73,10 +73,13 @@ export function TorFilterBar({
   const [moreOpen, setMoreOpen] = useState(false)
 
   /** Department filter values are the canonical English names; labels follow the locale. */
-  const departmentLabel = (value: string) => {
-    const match = departments.find((item) => localizedKey(item) === value)
-    return match ? pickLocalized(match, locale) : value
-  }
+  const departmentLabel = useCallback(
+    (value: string) => {
+      const match = departments.find((item) => localizedKey(item) === value)
+      return match ? pickLocalized(match, locale) : value
+    },
+    [departments, locale]
+  )
 
   const activeDetailCount =
     countActiveDetailFilters(filters.detail) +
@@ -95,7 +98,7 @@ export function TorFilterBar({
       })
     }
     return list
-  }, [filters.detail, filters.department, departments, locale, t])
+  }, [filters.detail, filters.department, departmentLabel, t])
 
   const baseQuery = useMemo(
     () => ({

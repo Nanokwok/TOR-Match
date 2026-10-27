@@ -112,7 +112,7 @@ export function defaultCriteriaForType(type: QualificationCriteria["type"]): Qua
 
 export function criteriaLabel(
   criteria: QualificationCriteria | undefined,
-  t?: (key: any, params?: any) => string
+  t?: (key: string, params?: Record<string, string | number>) => string
 ): string {
   if (!criteria) {
     return t ? t("admin.qualificationCriteria.preview.notConfigured") : "Not configured"
@@ -171,7 +171,7 @@ export function criteriaLabel(
 
     case "egp-registered": {
       if (t) {
-        const egpLabel = t(`admin.qualificationCriteria.egpStatuses.${criteria.requiredStatus}` as any)
+        const egpLabel = t(`admin.qualificationCriteria.egpStatuses.${criteria.requiredStatus}`)
         return t("admin.qualificationCriteria.preview.egpStatus", {
           status: egpLabel,
         })
@@ -191,7 +191,7 @@ export function criteriaLabel(
 
     case "company-size": {
       const sizeLabel = t
-        ? t(`admin.companiesPage.size.${criteria.size}` as any)
+        ? t(`admin.companiesPage.size.${criteria.size}`)
         : COMPANY_SIZE_OPTIONS.find((o) => o.value === criteria.size)?.label ?? criteria.size
       if (t) {
         return t("admin.qualificationCriteria.preview.companySize", {
@@ -212,8 +212,7 @@ export function criteriaLabel(
           : "all of"
       const labels = criteria.ids.map((id) => {
         if (t) {
-          const specKey = `companySetup.specialization.${id}` as const
-          return t(specKey as any) || (SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id)
+          return t(`companySetup.specialization.${id}`) || (SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id)
         }
         return SPECIALIZATION_OPTIONS.find((o) => o.id === id)?.label ?? id
       })

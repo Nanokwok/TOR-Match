@@ -144,7 +144,7 @@ function NumberCriteriaEditor({
           <SelectContent>
             {NUMERIC_OPERATORS.map((o) => (
               <SelectItem key={o.value} value={o.value} className="text-xs">
-                {t(`admin.qualificationCriteria.numericOperators.${OP_KEY_MAP[o.value] ?? "eq"}` as any)}
+                {t(`admin.qualificationCriteria.numericOperators.${OP_KEY_MAP[o.value] ?? "eq"}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -441,10 +441,10 @@ export function QualificationCriteriaEditor({
                     <div className="flex items-center gap-2">
                       <FieldIcon name={opt.iconName} className="size-3.5 text-muted-foreground" />
                       <span className="font-medium">
-                        {t(`admin.qualificationCriteria.fieldOptions.${opt.id}` as any)}
+                        {t(`admin.qualificationCriteria.fieldOptions.${opt.id}`)}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        ({t(`admin.qualificationCriteria.sections.${SECTION_KEY_MAP[opt.companySection] ?? "generalInfo"}` as any)})
+                        ({t(`admin.qualificationCriteria.sections.${SECTION_KEY_MAP[opt.companySection] ?? "generalInfo"}`)})
                       </span>
                     </div>
                   </SelectItem>
@@ -501,7 +501,7 @@ export function QualificationCriteriaEditor({
             selectedIds={criteria.ids}
             options={CERTIFICATION_OPTIONS.map((c) => ({
               id: c.id,
-              label: t(`companySetup.certification.${c.id}` as any) || c.label,
+              label: t(`companySetup.certification.${c.id}`) || c.label,
             }))}
             customIds={criteria.customIds}
             showCustom
@@ -542,7 +542,7 @@ export function QualificationCriteriaEditor({
             <SelectContent>
               {EGP_STATUS_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {t(`admin.qualificationCriteria.egpStatuses.${opt.value}` as any)}
+                  {t(`admin.qualificationCriteria.egpStatuses.${opt.value}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -566,7 +566,7 @@ export function QualificationCriteriaEditor({
               <SelectContent>
                 {SIZE_OPERATORS.map((o) => (
                   <SelectItem key={o.value} value={o.value} className="text-xs">
-                    {t(`admin.qualificationCriteria.sizeOperators.${OP_KEY_MAP[o.value] ?? "eq"}` as any)}
+                    {t(`admin.qualificationCriteria.sizeOperators.${OP_KEY_MAP[o.value] ?? "eq"}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -590,7 +590,7 @@ export function QualificationCriteriaEditor({
                     value={opt.value}
                     className="text-xs"
                   >
-                    {t(`admin.companiesPage.size.${opt.value}` as any)}
+                    {t(`admin.companiesPage.size.${opt.value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -607,7 +607,7 @@ export function QualificationCriteriaEditor({
             selectedIds={criteria.ids}
             options={SPECIALIZATION_OPTIONS.map((s) => ({
               id: s.id,
-              label: t(`companySetup.specialization.${s.id}` as any) || s.label,
+              label: t(`companySetup.specialization.${s.id}`) || s.label,
             }))}
             showCustom={false}
             onModeChange={(m) => onChange({ ...criteria, mode: m })}
