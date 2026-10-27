@@ -44,6 +44,9 @@ jobs:
       - name: Lint
         run: npm run lint --workspace frontend
 
+      - name: Test
+        run: npm run test --workspace frontend
+
       - name: Build
         run: npm run build --workspace frontend
         env:
@@ -70,6 +73,9 @@ jobs:
 
       - name: Lint
         run: npm run lint --workspace backend
+
+      - name: Test
+        run: npm run test --workspace backend
 
       - name: Build
         run: npm run build --workspace backend
