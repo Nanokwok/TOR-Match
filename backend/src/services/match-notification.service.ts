@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto"
 
 import { env } from "@/config/env"
+import { torRowHtml, torRowText, type DigestTor } from "@/domain/digest-email"
+import { emailLayout } from "@/domain/email-layout"
+import { summarizeTor } from "@/domain/tor-summary"
+import { escapeHtml } from "@/utils/html"
 import type { CompanyDoc } from "@/models/Company.model"
 import { Company } from "@/models/Company.model"
 import { Notification } from "@/models/Notification.model"
@@ -25,6 +29,7 @@ export type NotificationEvent =
   | "deadline-7-day"
   | "deadline-3-day"
   | "deadline-24-hour"
+  | "system-profile"
 
 /**
  * What an event does for someone with no saved preference for it. Mirrors the
@@ -39,6 +44,7 @@ const DEFAULT_EVENT_PREFERENCE: Record<NotificationEvent, { inApp: boolean; emai
   "deadline-7-day": { inApp: true, email: false },
   "deadline-3-day": { inApp: true, email: true },
   "deadline-24-hour": { inApp: true, email: true },
+  "system-profile": { inApp: true, email: true },
 }
 
 type PreferenceSource = {
@@ -86,23 +92,39 @@ export function emailRecipient(settings: PreferenceSource, accountEmail?: string
   return (saved && saved !== PLACEHOLDER_RECIPIENT ? saved : "") || accountEmail?.trim() || ""
 }
 
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+export { escapeHtml }
 
 /** Pure: the bilingual email for one notification. Titles come from scraped text, so the HTML is escaped. */
 export function renderEmail(
-  notification: { title: { en: string; th: string }; description: { en: string; th: string }; link?: string },
+  notification: {
+    title: { en: string; th: string }
+    description: { en: string; th: string }
+    link?: string
+    /** The TOR this alert is about, shown as a details card under the message. */
+    emailTor?: DigestTor
+  },
   appUrl: string
 ) {
   const url = notification.link ? `${appUrl.replace(/\/$/, "")}${notification.link}` : appUrl
-  const { title, description } = notification
+  const { title, description, emailTor } = notification
   return {
     subject: `${title.th} / ${title.en}`,
-    text: `${title.th}\n${description.th}\n\n${title.en}\n${description.en}\n\n${url}\n`,
-    html:
-      `<p><strong>${escapeHtml(title.th)}</strong><br>${escapeHtml(description.th)}</p>` +
-      `<p><strong>${escapeHtml(title.en)}</strong><br>${escapeHtml(description.en)}</p>` +
-      `<p><a href="${escapeHtml(url)}">${escapeHtml(url)}</a></p>`,
+    text:
+      `${title.th}\n${description.th}\n\n${title.en}\n${description.en}\n\n` +
+      (emailTor ? `${torRowText(emailTor, appUrl)}\n\n` : "") +
+      `${url}\n\n` +
+      `จัดการการแจ้งเตือน / Manage notifications: ${appUrl.replace(/\/$/, "")}/settings/notifications\n`,
+    html: emailLayout({
+      headingTh: title.th,
+      headingEn: title.en,
+      bodyHtml:
+        `<p style="margin:0 0 10px">${escapeHtml(description.th)}</p><p style="margin:0;color:#737373">${escapeHtml(description.en)}</p>` +
+        (emailTor
+          ? `<div style="margin-top:18px;padding:2px 16px;border:1px solid #d4d4d4;border-radius:10px">${torRowHtml(emailTor, appUrl, true)}</div>`
+          : ""),
+      cta: { label: "ดูรายละเอียด / View details", url },
+      appUrl,
+    }),
   }
 }
 
@@ -138,6 +160,8 @@ export type NewNotification = {
   title: { en: string; th: string }
   description: { en: string; th: string }
   link?: string
+  /** Only for the email: the TOR to describe. Not stored with the notification. */
+  emailTor?: DigestTor
   [field: string]: unknown
 }
 
@@ -171,7 +195,7 @@ export async function deliver(event: NotificationEvent, notifications: NewNotifi
   if (!plans.length) return
 
   const inserted = await Notification.insertMany(
-    plans.map((plan) => ({ ...plan.notification, inApp: plan.inApp }))
+    plans.map(({ notification, inApp }) => ({ ...notification, emailTor: undefined, inApp }))
   )
 
   const sender = plans.some((plan) => plan.to) ? await currentSender() : undefined
@@ -196,6 +220,7 @@ function buildMatchNotification(userId: unknown, tor: TorDoc) {
     userId,
     category: "match" as const,
     torId: tor._id,
+    emailTor: summarizeTor(tor),
     dedupeKey: `match:${userId}:${tor._id}`,
     autoVerifiedMatch: true,
     link: `/browse?tor=${tor._id}`,
@@ -217,6 +242,7 @@ function buildHighBudgetNotification(userId: unknown, tor: TorDoc) {
     userId,
     category: "high-budget" as const,
     torId: tor._id,
+    emailTor: summarizeTor(tor),
     dedupeKey: `high-budget:${userId}:${tor._id}`,
     link: `/browse?tor=${tor._id}`,
     action: "view-tor" as const,
@@ -236,6 +262,7 @@ function buildDealBreakerNotification(userId: unknown, tor: TorDoc, version: str
     userId,
     category: "deal-breaker" as const,
     torId: tor._id,
+    emailTor: summarizeTor(tor),
     dedupeKey: `deal-breaker:${userId}:${tor._id}:${version}`,
     link: `/browse?tor=${tor._id}`,
     action: "view-tor" as const,
