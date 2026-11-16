@@ -28,10 +28,17 @@ function isErrorPayload(
   )
 }
 
-/** JWT from the Next auth cookie set by login/register server actions. */
+import { decodeUserToken, isUserSessionExpired } from "@/lib/user-session"
+
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies()
-  return cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null
+  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value ?? null
+  if (!token) return null
+  const session = decodeUserToken(token)
+  if (isUserSessionExpired(session)) {
+    return null
+  }
+  return token
 }
 
 export type ApiFetchInit = Omit<RequestInit, "headers"> & {
