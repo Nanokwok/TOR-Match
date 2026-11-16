@@ -1,6 +1,7 @@
 import { unzipSync } from "fflate"
 
 import { env } from "@/config/env"
+import { MAGIC_BYTES_LENGTH, detectFileType, validateMagicBytes, type FileType } from "@/utils/file-validator"
 
 /**
  * Fetches the documents behind a feed link.
@@ -21,17 +22,45 @@ import { env } from "@/config/env"
 const MAX_TOTAL_BYTES = 15 * 1024 * 1024
 
 /**
- * How large a file may be before we refuse to fetch it at all.
+ * How large a bare PDF may be before we stop downloading it (ASVS V5.2.1).
  *
- * This is a memory guard, not a judgement about the document: what the model
- * is sent is capped by MAX_TOTAL_BYTES regardless. It used to be 40MB, which
- * rejected eight of twenty-one announcements in a live run — tender archives
- * of 42MB to 182MB, every one of them holding a `doc_…` of a few megabytes
- * next to a enormous scan. The archive is now opened and only the files worth
- * reading are decompressed, so the ceiling only has to be high enough to hold
- * the compressed bytes.
+ * The same figure as the model's inline budget: a PDF past it could not be sent
+ * anyway, and the notices and tender documents e-GP serves this way are a few
+ * megabytes at most.
  */
-const MAX_DOWNLOAD_BYTES = 256 * 1024 * 1024
+const MAX_PDF_DOWNLOAD_BYTES = MAX_TOTAL_BYTES
+
+/**
+ * How large a tender archive may be before we stop downloading it.
+ *
+ * Deliberately not 15MB. This is a memory guard on the compressed bytes, not a
+ * judgement about the document: what the model is sent is capped by
+ * MAX_TOTAL_BYTES regardless, because the archive is opened and only the files
+ * worth reading are decompressed. A 15MB ceiling here, or the 40MB this used to
+ * be, rejected eight of twenty-one announcements in a live run — tender
+ * archives of 42MB to 182MB, every one holding a `doc_…` of a few megabytes
+ * next to an enormous scan.
+ */
+const MAX_ARCHIVE_DOWNLOAD_BYTES = 256 * 1024 * 1024
+
+/** A tender archive holds a handful of files; thousands is not a tender. */
+const MAX_ARCHIVE_ENTRIES = 1000
+
+const MB = 1024 * 1024
+
+function describeBytes(bytes: number): string {
+  return bytes >= MB ? `${(bytes / MB).toFixed(1)}MB` : `${bytes} bytes`
+}
+
+/**
+ * A refused document is logged as well as thrown: the caller may skip the link
+ * and carry on, and without the log nobody would learn that a source is serving
+ * oversized or mislabelled files.
+ */
+function refuse(message: string): never {
+  console.warn(`[documents] refused: ${message}`)
+  throw new Error(message)
+}
 
 export type TorDocument = {
   /** File name inside the archive, or a synthetic one for a bare PDF. */
@@ -56,45 +85,69 @@ function documentRank(name: string): number {
 }
 
 function isPdf(bytes: Uint8Array): boolean {
-  return Buffer.from(bytes.subarray(0, 5)).toString("latin1") === "%PDF-"
+  return validateMagicBytes(bytes, "pdf")
 }
 
 /**
  * Unpacks a tender archive into its PDFs, best first.
  *
- * Entries are chosen from the archive's index before anything is decompressed,
- * so a 120MB scan of the site drawings costs nothing to skip. Only PDFs small
- * enough to be worth sending are expanded — which is what makes a 182MB
- * archive readable at all.
+ * Nothing is decompressed until it has been chosen. The archive's index is read
+ * first, the candidates are ranked, and files are then expanded one at a time
+ * until the inline-data budget is spent — so what is held in memory is bounded
+ * by that budget, however many files the archive claims to hold or however well
+ * they compress. (Capping each file alone is not enough: forty 14MB entries
+ * pass a 15MB-per-file check and expand to 560MB from a 0.5MB download.)
+ *
+ * Sizes come from the archive's own index. An archive that under-states one is
+ * cut off at the stated size rather than expanded past it, so it cannot be used
+ * to get around the budget.
  */
 export function unpackArchive(archive: Buffer): TorDocument[] {
-  const oversized: string[] = []
+  // A view, not a copy: archives run to hundreds of megabytes.
+  const bytes = new Uint8Array(archive.buffer, archive.byteOffset, archive.byteLength)
 
-  const entries = unzipSync(new Uint8Array(archive), {
+  const candidates = new Map<string, number>()
+  const oversized: string[] = []
+  let entries = 0
+
+  unzipSync(bytes, {
     filter: (file) => {
+      entries += 1
+      if (entries > MAX_ARCHIVE_ENTRIES) {
+        refuse(`Archive holds more than ${MAX_ARCHIVE_ENTRIES} files`)
+      }
       if (!file.name.toLowerCase().endsWith(".pdf")) return false
-      // fflate's `size` is the compressed size; `originalSize` is what we
-      // would have to hold in memory and send, which is the number that
-      // matters — a scan compresses well and would otherwise slip through.
+      // `originalSize` is what we would have to hold in memory and send;
+      // fflate's `size` is the compressed size, and a scan compresses well.
       if (file.originalSize > MAX_TOTAL_BYTES) {
-        oversized.push(`${file.name} (${(file.originalSize / 1024 / 1024).toFixed(1)}MB)`)
+        oversized.push(`${file.name} (${describeBytes(file.originalSize)})`)
         return false
       }
-      return true
+      candidates.set(file.name, file.originalSize)
+      return false
     },
   })
 
-  const documents = Object.entries(entries)
-    .filter(([, bytes]) => isPdf(bytes))
-    .map(([name, bytes]) => ({ name, pdf: Buffer.from(bytes) }))
-    .sort((a, b) => documentRank(a.name) - documentRank(b.name))
+  const ranked = [...candidates].sort(([a], [b]) => documentRank(a) - documentRank(b))
+
+  const documents: TorDocument[] = []
+  let total = 0
+  for (const [name, size] of ranked) {
+    if (total + size > MAX_TOTAL_BYTES) continue
+
+    const entry = unzipSync(bytes, { filter: (file) => file.name === name })[name]
+    // Judged by content, not by the extension: a file named .pdf that is not
+    // one is dropped here, before it has used any of the budget.
+    if (!entry || !isPdf(entry)) continue
+
+    documents.push({ name, pdf: Buffer.from(entry) })
+    total += entry.byteLength
+  }
 
   // Saying "no readable PDF" about an archive that held three of them, each
   // too big to send, would send someone looking in the wrong place.
   if (!documents.length && oversized.length) {
-    throw new Error(
-      `Every PDF in the archive is above the ${MAX_TOTAL_BYTES / 1024 / 1024}MB per-request budget: ${oversized.join(", ")}`
-    )
+    refuse(`Every PDF in the archive is above the ${MAX_TOTAL_BYTES / MB}MB per-request budget: ${oversized.join(", ")}`)
   }
 
   return documents
@@ -186,7 +239,93 @@ export async function downloadAllTorDocuments(
   return withinBudget(collected)
 }
 
-export async function downloadTorDocuments(url: string): Promise<TorDocument[]> {
+export type DownloadOptions = {
+  /** Overrides the bare-PDF ceiling; exists so a test does not have to serve 15MB. */
+  maxPdfBytes?: number
+  /** Overrides the archive ceiling; exists so a test does not have to serve 256MB. */
+  maxArchiveBytes?: number
+}
+
+type DownloadLimits = Required<DownloadOptions>
+
+/**
+ * Reads a response body, refusing it the moment it passes its ceiling or its
+ * first bytes show it is neither a PDF nor a ZIP.
+ *
+ * Counted as it arrives rather than after `arrayBuffer()`: Content-Length is
+ * optional (a chunked response has none) and a server can understate it, so
+ * the header alone cannot bound what is pulled into memory.
+ *
+ * Which ceiling applies is not known until the first bytes arrive and say what
+ * the file is, so the larger one governs until then.
+ */
+async function readBody(response: Response, limits: DownloadLimits, declaredBytes: number): Promise<{ buffer: Buffer; type: FileType }> {
+  const reader = response.body?.getReader()
+  if (!reader) {
+    const buffer = Buffer.from(await response.arrayBuffer())
+    const type = requireDocumentType(buffer)
+    enforceLimit(type, buffer.byteLength, limits)
+    return { buffer, type }
+  }
+
+  const chunks: Uint8Array[] = []
+  let received = 0
+  let type: FileType | null = null
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      chunks.push(value)
+      received += value.byteLength
+
+      if (!type && received >= MAGIC_BYTES_LENGTH) {
+        type = requireDocumentType(Buffer.concat(chunks, received))
+        // The header said how big the file is; now that its kind is known the
+        // right ceiling can be applied to it without reading any further.
+        if (declaredBytes > limitFor(type, limits)) {
+          refuse(`Download declares ${describeBytes(declaredBytes)}, above the ${describeBytes(limitFor(type, limits))} limit for a ${type}`)
+        }
+      }
+      enforceLimit(type, received, limits)
+    }
+
+    const buffer = Buffer.concat(chunks, received)
+    // A body shorter than the signature never reached the check above.
+    return { buffer, type: type ?? requireDocumentType(buffer) }
+  } catch (error) {
+    // Hang up rather than leave the rest of a refused file coming down the
+    // line: an open stream keeps the connection, and the transfer, alive.
+    await reader.cancel().catch(() => undefined)
+    throw error
+  }
+}
+
+const limitFor = (type: FileType, limits: DownloadLimits) => (type === "pdf" ? limits.maxPdfBytes : limits.maxArchiveBytes)
+
+function enforceLimit(type: FileType | null, bytes: number, limits: DownloadLimits) {
+  const limit = type ? limitFor(type, limits) : Math.max(limits.maxPdfBytes, limits.maxArchiveBytes)
+  if (bytes > limit) refuse(`Download is above the ${describeBytes(limit)} limit${type ? ` for a ${type}` : ""}`)
+}
+
+function requireDocumentType(bytes: Uint8Array): FileType {
+  const type = detectFileType(bytes)
+  if (!type) {
+    // A missing document often answers 200 with an HTML error page; extraction
+    // would then bill a full request to read an error message.
+    const head = Buffer.from(bytes.subarray(0, MAGIC_BYTES_LENGTH)).toString("latin1")
+    refuse(`Downloaded file is neither a PDF nor a ZIP (starts with ${JSON.stringify(head)})`)
+  }
+  return type
+}
+
+export async function downloadTorDocuments(url: string, options: DownloadOptions = {}): Promise<TorDocument[]> {
+  const limits: DownloadLimits = {
+    maxPdfBytes: options.maxPdfBytes ?? MAX_PDF_DOWNLOAD_BYTES,
+    maxArchiveBytes: options.maxArchiveBytes ?? MAX_ARCHIVE_DOWNLOAD_BYTES,
+  }
+
   const response = await fetch(url, {
     headers: { "User-Agent": env.scraperUserAgent },
     // Tender archives run to hundreds of megabytes over a government link.
@@ -197,37 +336,24 @@ export async function downloadTorDocuments(url: string): Promise<TorDocument[]> 
   }
 
   // Refused from the header where the server states one, so an absurd file is
-  // declined before it is pulled across the wire and into memory.
+  // declined before it is pulled across the wire and into memory. Its kind is
+  // not known yet, so only the larger ceiling can be applied here.
   const declaredBytes = Number(response.headers.get("content-length") ?? 0)
-  if (declaredBytes > MAX_DOWNLOAD_BYTES) {
-    throw new Error(
-      `Download declares ${(declaredBytes / 1024 / 1024).toFixed(1)}MB, above the ${MAX_DOWNLOAD_BYTES / 1024 / 1024}MB limit`
-    )
+  const largest = Math.max(limits.maxPdfBytes, limits.maxArchiveBytes)
+  if (declaredBytes > largest) {
+    await response.body?.cancel().catch(() => undefined)
+    refuse(`Download declares ${describeBytes(declaredBytes)}, above the ${describeBytes(largest)} limit`)
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer())
-  if (buffer.byteLength > MAX_DOWNLOAD_BYTES) {
-    throw new Error(
-      `Download is ${(buffer.byteLength / 1024 / 1024).toFixed(1)}MB, above the ${MAX_DOWNLOAD_BYTES / 1024 / 1024}MB limit`
-    )
-  }
+  const { buffer, type } = await readBody(response, limits, declaredBytes)
 
-  const magic = buffer.subarray(0, 5).toString("latin1")
-
-  if (magic === "%PDF-") {
+  if (type === "pdf") {
     return [{ name: "announcement.pdf", pdf: buffer }]
   }
 
-  // "PK" is the ZIP local-file-header signature.
-  if (magic.startsWith("PK")) {
-    const documents = withinBudget(unpackArchive(buffer))
-    if (documents.length === 0) {
-      throw new Error("Tender archive contained no readable PDF")
-    }
-    return documents
+  const documents = withinBudget(unpackArchive(buffer))
+  if (documents.length === 0) {
+    refuse("Tender archive contained no readable PDF")
   }
-
-  // A missing document often answers 200 with an HTML error page; extraction
-  // would then bill a full request to read an error message.
-  throw new Error(`Downloaded file is neither a PDF nor a ZIP (starts with ${JSON.stringify(magic)})`)
+  return documents
 }
