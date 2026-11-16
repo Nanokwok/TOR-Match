@@ -6,6 +6,7 @@ import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
 const COLUMNS = ["bookmark", "todo", "in-progress", "done"] as const
+const PRIORITIES = ["HIGH", "MEDIUM", "LOW"] as const
 
 export const getBoard = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
@@ -101,6 +102,15 @@ export const updateCard = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const { priority, column, assigneeIds, checklist } = req.body ?? {}
+  if (priority !== undefined && !PRIORITIES.includes(priority)) {
+    throw ApiError.badRequest("Invalid priority")
+  }
+  if (assigneeIds !== undefined && !Array.isArray(assigneeIds)) {
+    throw ApiError.badRequest("assigneeIds must be a list")
+  }
+  if (checklist !== undefined && !Array.isArray(checklist)) {
+    throw ApiError.badRequest("checklist must be a list")
+  }
   const update: Record<string, unknown> = {}
   if (priority !== undefined) update.priority = priority
   if (column !== undefined && COLUMNS.includes(column)) update.column = column
