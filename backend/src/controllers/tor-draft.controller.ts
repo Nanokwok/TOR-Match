@@ -1,4 +1,5 @@
 import type { Request, Response } from "express"
+import { isValidObjectId } from "mongoose"
 import { z } from "zod"
 
 import { TorDraft, type TorDraftDoc } from "@/models/TorDraft.model"
@@ -166,10 +167,15 @@ export const listTorDrafts = asyncHandler(async (req: Request, res: Response) =>
   res.status(200).json({ items, total: items.length })
 })
 
-export const getTorDraftById = asyncHandler(async (req: Request, res: Response) => {
-  const draft = await TorDraft.findById(req.params.id)
+/** A malformed id is a draft that does not exist, not a server error. */
+async function findDraftOrThrow(id: string) {
+  const draft = isValidObjectId(id) ? await TorDraft.findById(id) : null
   if (!draft) throw ApiError.notFound("TOR draft not found")
-  res.status(200).json(draft)
+  return draft
+}
+
+export const getTorDraftById = asyncHandler(async (req: Request, res: Response) => {
+  res.status(200).json(await findDraftOrThrow(req.params.id))
 })
 
 export const updateTorDraft = asyncHandler(async (req: Request, res: Response) => {
@@ -178,8 +184,7 @@ export const updateTorDraft = asyncHandler(async (req: Request, res: Response) =
     throw ApiError.badRequest("Invalid input", parsed.error.flatten())
   }
 
-  const draft = await TorDraft.findById(req.params.id)
-  if (!draft) throw ApiError.notFound("TOR draft not found")
+  const draft = await findDraftOrThrow(req.params.id)
 
   draft.set(draftUpdateFrom(draft, parsed.data))
   await draft.save()
@@ -188,13 +193,18 @@ export const updateTorDraft = asyncHandler(async (req: Request, res: Response) =
 })
 
 export const publishTorDraft = asyncHandler(async (req: Request, res: Response) => {
-  const draft = await TorDraft.findById(req.params.id)
-  if (!draft) throw ApiError.notFound("TOR draft not found")
+  const draft = await findDraftOrThrow(req.params.id)
 
   const blocker = publishBlocker(draft)
   if (blocker) throw ApiError.badRequest(`Cannot publish: ${blocker}`)
 
   const published = await publishDraft(draft)
+
+  // The reviewer's verdict. Recording it is what makes the ingest treat the
+  // published content as theirs: a later announcement may add a deadline to an
+  // approved draft, but it cannot overwrite what the reviewer corrected.
+  draft.set({ reviewStatus: "approved", publishedTorId: published._id, publishedAt: new Date() })
+  await draft.save()
 
   res.status(200).json({ draft, tor: published })
 })
