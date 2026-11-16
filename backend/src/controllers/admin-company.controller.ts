@@ -18,6 +18,7 @@ import {
 import { User } from "@/models/User.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
+import { notifyCompanyStatusChanged } from "@/services/profile-notification.service"
 
 const ALLOWED_STATUS_TRANSITIONS: Record<CompanyStatus, CompanyStatus[]> = {
   pending: ["active"],
@@ -186,6 +187,11 @@ export const patchAdminCompanyStatus = asyncHandler(async (req: Request, res: Re
 
   company.status = next
   await company.save()
+
+  // The owner hears about it; a failure to notify must not undo or fail the change.
+  await notifyCompanyStatusChanged(company, next).catch((error) => {
+    console.error("notifyCompanyStatusChanged failed", error)
+  })
 
   const counts = await memberCountsByCompanyId([company._id])
   res.status(200).json(toAdminCompanyDetail(company, memberCountFor(company, counts)))
