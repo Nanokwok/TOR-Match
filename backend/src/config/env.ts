@@ -39,6 +39,7 @@ export const env = {
   jwtSecret: requiredSecret("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
+  userIdleTimeoutSeconds: Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60),
 
   /**
    * Deliberately not `required()`: only TOR extraction needs these, and making
