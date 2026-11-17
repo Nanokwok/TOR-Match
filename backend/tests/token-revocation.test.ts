@@ -164,3 +164,21 @@ test("optionalAuth ignores token with outdated tokenVersion", async () => {
   const { req: activeReq } = await runAsync(optionalAuth, { bearer: activeToken })
   assert.equal(activeReq.user?.sub, "u1")
 })
+
+test("logout increments user tokenVersion in DB, immediately revoking the JWT session", async () => {
+  const user: FakeUser = { _id: "u-logout", tokenVersion: 0 }
+  simulatedDbUsers.set("u-logout", user)
+
+  const token = signAuthToken({ sub: "u-logout", email: "logout@example.com", role: "user", tokenVersion: 0 })
+
+  const beforeLogout = await runAsync(requireAuth, { bearer: token })
+  assert.equal(beforeLogout.nextArg, undefined)
+
+  // Simulate logout incrementing tokenVersion
+  user.tokenVersion += 1
+
+  const afterLogout = await runAsync(requireAuth, { bearer: token })
+  assert.ok(afterLogout.nextArg instanceof ApiError)
+  assert.equal((afterLogout.nextArg as InstanceType<typeof ApiError>).status, 401)
+  assert.equal((afterLogout.nextArg as InstanceType<typeof ApiError>).message, "Session has been revoked")
+})

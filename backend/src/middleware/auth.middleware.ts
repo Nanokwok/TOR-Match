@@ -5,6 +5,7 @@ import { isSessionRevoked } from "@/domain/session-revocation"
 import { User } from "@/models/User.model"
 import { ApiError } from "@/utils/ApiError"
 import { authCookieOptions, signAuthToken, verifyAuthToken, type AuthTokenPayload } from "@/utils/jwt"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -85,12 +86,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const user = verifyAuthToken(token)
     if (isSessionExpired(user.lastActiveAt)) {
+      logSecurityEvent({ event: "ACCESS_DENIED", req, userId: user.sub, email: user.email, reason: "Session expired due to inactivity" })
       return next(ApiError.unauthorized("Session expired due to inactivity"))
     }
 
     const completeAuth = (dbUser?: { tokenVersion?: number } | null) => {
       if (dbUser !== undefined) {
         if (!dbUser || (dbUser.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+          logSecurityEvent({ event: "AUTH_SESSION_REVOKED", req, userId: user.sub, email: user.email, reason: "Token version outdated or user removed" })
           return next(ApiError.unauthorized("Session has been revoked"))
         }
       }
@@ -155,8 +158,20 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
 
 export function requireRole(...roles: AuthTokenPayload["role"][]) {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.user) return next(ApiError.unauthorized("Authentication required"))
-    if (!roles.includes(req.user.role)) return next(ApiError.forbidden())
+    if (!req.user) {
+      logSecurityEvent({ event: "ACCESS_DENIED", req, reason: "Authentication required" })
+      return next(ApiError.unauthorized("Authentication required"))
+    }
+    if (!roles.includes(req.user.role)) {
+      logSecurityEvent({
+        event: "ROLE_ACCESS_DENIED",
+        req,
+        userId: req.user.sub,
+        email: req.user.email,
+        reason: `Forbidden: required roles [${roles.join(", ")}], user has role '${req.user.role}'`,
+      })
+      return next(ApiError.forbidden())
+    }
     next()
   }
 }

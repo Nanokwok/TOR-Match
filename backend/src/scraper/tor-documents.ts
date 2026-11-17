@@ -328,6 +328,7 @@ export async function downloadTorDocuments(url: string, options: DownloadOptions
 
   const response = await fetch(url, {
     headers: { "User-Agent": env.scraperUserAgent },
+    redirect: "error",
     // Tender archives run to hundreds of megabytes over a government link.
     signal: AbortSignal.timeout(600_000),
   })
