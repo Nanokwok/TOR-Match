@@ -42,6 +42,7 @@ test("signAuthToken preserves specific tokenVersion", () => {
 })
 
 test("a token signed with another secret is rejected", () => {
+  // nosemgrep: javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret -- deliberately wrong secret: the test proves a forged token is rejected
   const forged = jwt.sign(admin, "some-other-secret")
   assert.throws(() => verifyAuthToken(forged))
 })
@@ -75,6 +76,7 @@ test("requireAuth accepts the token from the session cookie and from a bearer he
 })
 
 test("requireAuth refuses a token that does not verify", () => {
+  // nosemgrep: javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret -- deliberately wrong secret: the test proves a forged token is rejected
   const { nextArg, req } = run(requireAuth, { cookie: jwt.sign(user, "wrong-secret") })
   assert.equal((nextArg as InstanceType<typeof ApiError>).status, 401)
   assert.equal(req.user, undefined)
