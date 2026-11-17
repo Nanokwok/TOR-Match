@@ -79,6 +79,8 @@ export async function requestPasswordReset(email: string, deps: PasswordResetDep
 /**
  * Sets a new password from a link's token. The token works once: it is removed
  * before the password changes, and so is every other link for the account.
+ * Every session that was signed in before this moment stops working: the point
+ * of a reset is often to lock out someone who should not have access.
  */
 export async function resetPassword(token: string, newPassword: string, deps: PasswordResetDeps = {}): Promise<void> {
   const isPwned = deps.isPwned ?? isPasswordPwned
@@ -97,7 +99,7 @@ export async function resetPassword(token: string, newPassword: string, deps: Pa
   const spent = await PasswordResetToken.findOneAndDelete({ _id: record._id })
   if (!spent) throw ApiError.badRequest(INVALID_RESET_LINK_MESSAGE)
 
-  const updated = await User.updateOne({ _id: record.userId }, { $set: { passwordHash } })
+  const updated = await User.updateOne({ _id: record.userId }, { $set: { passwordHash, passwordChangedAt: now } })
   if (updated.matchedCount === 0) throw ApiError.badRequest(INVALID_RESET_LINK_MESSAGE)
   await PasswordResetToken.deleteMany({ userId: record.userId })
 }
