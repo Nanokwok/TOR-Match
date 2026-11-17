@@ -1,0 +1,41 @@
+name: Semgrep
+
+# Static analysis (SAST) for the whole repository: both workspaces, tests and workflows.
+# Rulesets: https://semgrep.dev/explore. Run the same scan locally with `npm run sast`.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      # Pinned so a new Semgrep release cannot start failing unrelated pull requests.
+      - run: pip install semgrep==1.185.0
+
+      # --error exits non-zero on any finding, so a new one blocks the merge.
+      # --metrics=off: no usage data leaves the runner (the code itself never does).
+      - name: Scan
+        run: >
+          semgrep scan --error --metrics=off
+          --config p/typescript --config p/javascript --config p/nodejs
+          --config p/react --config p/expressjs --config p/jwt
+          --config p/security-audit --config p/owasp-top-ten
+          --config p/command-injection --config p/insecure-transport
+          --config p/secrets
+          .
