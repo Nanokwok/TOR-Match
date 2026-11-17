@@ -28,6 +28,7 @@ test("a long list is cut and says how many were left out", () => {
 
 test("scraped text is escaped in the HTML", () => {
   const mail = renderDailyDigest([tor(1, { titleEn: "<script>x</script>" })], "http://x")
+  // nosemgrep: javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag -- attack payload: the test proves it is escaped
   assert.ok(!mail.html.includes("<script>"))
   assert.ok(mail.html.includes("&lt;script&gt;"))
 })
@@ -112,6 +113,7 @@ test("the layout escapes whatever it is given", () => {
     appUrl: "http://x",
   })
   assert.ok(!html.includes("<b>x</b>"))
+  // nosemgrep: javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag -- attack payload: the test proves it is escaped
   assert.ok(!html.includes("<script>"))
 })
 
