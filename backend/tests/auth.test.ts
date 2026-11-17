@@ -33,6 +33,12 @@ test("a signed token verifies and carries who the user is", () => {
   assert.equal(payload.sub, "u1")
   assert.equal(payload.email, "a@x.co")
   assert.equal(payload.role, "user")
+  assert.equal(payload.tokenVersion, 0)
+})
+
+test("signAuthToken preserves specific tokenVersion", () => {
+  const payload = verifyAuthToken(signAuthToken({ ...user, tokenVersion: 3 }))
+  assert.equal(payload.tokenVersion, 3)
 })
 
 test("a token signed with another secret is rejected", () => {

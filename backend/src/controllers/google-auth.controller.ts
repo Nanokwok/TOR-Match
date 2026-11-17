@@ -111,7 +111,12 @@ export const googleSignIn = asyncHandler(async (req: Request, res: Response) => 
         : await User.findById(plan.userId)
   if (!user) throw ApiError.unauthorized("Account not found")
 
-  const token = signAuthToken({ sub: String(user._id), email: user.email, role: user.role as "user" | "admin" })
+  const token = signAuthToken({
+    sub: String(user._id),
+    email: user.email,
+    role: user.role as "user" | "admin",
+    tokenVersion: user.tokenVersion ?? 0,
+  })
   res.cookie(env.authCookieName, token, authCookieOptions())
   res.status(plan.action === "create" ? 201 : 200).json({
     user: { id: String(user._id), email: user.email, name: user.name, role: user.role },
