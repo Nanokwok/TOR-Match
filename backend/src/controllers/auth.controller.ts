@@ -7,6 +7,7 @@ import { asyncHandler } from "@/utils/asyncHandler"
 import { authCookieOptions, signAuthToken } from "@/utils/jwt"
 import { env } from "@/config/env"
 import { isPasswordPwned, PWNED_PASSWORD_ERROR_MESSAGE } from "@/services/pwned-password.service"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 const SALT_ROUNDS = 10
 
@@ -48,6 +49,8 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
   const user = await User.create({ name, email: email.toLowerCase(), passwordHash })
 
+  logSecurityEvent({ event: "AUTH_REGISTRATION", req, userId: String(user._id), email: user.email })
+
   const token = signAuthToken({
     sub: String(user._id),
     email: user.email,
@@ -66,13 +69,22 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = parsed.data
 
   const user = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash")
-  if (!user) throw ApiError.unauthorized("Invalid email or password")
+  if (!user) {
+    logSecurityEvent({ event: "AUTH_LOGIN_FAILURE", req, email: email.toLowerCase(), reason: "Account not found" })
+    throw ApiError.unauthorized("Invalid email or password")
+  }
 
   if (!user.passwordHash) {
+    logSecurityEvent({ event: "AUTH_LOGIN_FAILURE", req, email: email.toLowerCase(), reason: "Google-only account" })
     throw ApiError.unauthorized("This account signs in with Google. Use the Google button.")
   }
   const matches = await bcrypt.compare(password, user.passwordHash)
-  if (!matches) throw ApiError.unauthorized("Invalid email or password")
+  if (!matches) {
+    logSecurityEvent({ event: "AUTH_LOGIN_FAILURE", req, email: email.toLowerCase(), reason: "Incorrect password" })
+    throw ApiError.unauthorized("Invalid email or password")
+  }
+
+  logSecurityEvent({ event: "AUTH_LOGIN_SUCCESS", req, userId: String(user._id), email: user.email })
 
   const token = signAuthToken({
     sub: String(user._id),
@@ -84,7 +96,11 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ user: toPublicUser(user), token })
 })
 
-export const logout = asyncHandler(async (_req: Request, res: Response) => {
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  if (req.user?.sub) {
+    await User.findByIdAndUpdate(req.user.sub, { $inc: { tokenVersion: 1 } })
+    logSecurityEvent({ event: "AUTH_LOGOUT", req, userId: req.user.sub, email: req.user.email })
+  }
   res.clearCookie(env.authCookieName, { ...authCookieOptions(), maxAge: 0 })
   res.clearCookie("tm_user_session", { ...authCookieOptions(), maxAge: 0 })
   res.status(204).send()
@@ -137,6 +153,8 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   user.passwordHash = newHash
   user.tokenVersion = (user.tokenVersion ?? 0) + 1
   await user.save()
+
+  logSecurityEvent({ event: "PASSWORD_CHANGED", req, userId: req.user.sub, email: req.user.email })
 
   const newToken = signAuthToken({
     sub: String(user._id),

@@ -1,13 +1,21 @@
 import type { NextFunction, Request, Response } from "express"
 import { ApiError } from "@/utils/ApiError"
 import { isProduction } from "@/config/env"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 export function notFoundMiddleware(req: Request, res: Response) {
   res.status(404).json({ error: `Route not found: ${req.method} ${req.originalUrl}` })
 }
 
-export function errorMiddleware(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+export function errorMiddleware(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof ApiError) {
+    if (err.status === 401 || err.status === 403) {
+      logSecurityEvent({
+        event: "ACCESS_DENIED",
+        req,
+        reason: `${err.status} - ${err.message}`,
+      })
+    }
     res.status(err.status).json({ error: err.message, details: err.details })
     return
   }
