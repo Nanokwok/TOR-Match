@@ -30,16 +30,12 @@ export function ForgotPasswordForm() {
   const searchParams = useSearchParams()
   const { t } = useLocale()
 
-  const urlToken = searchParams.get("token") || ""
-  const urlStep = searchParams.get("step")
+  // The emailed link opens this page with the token in the address.
+  const token = searchParams.get("token") || ""
 
-  const [step, setStep] = useState<FlowStep>(() => {
-    if (urlToken || urlStep === "reset") return "reset"
-    return "request"
-  })
+  const [step, setStep] = useState<FlowStep>(() => (token ? "reset" : "request"))
 
   const [email, setEmail] = useState("")
-  const token = urlToken || "mock_reset_token_dev"
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -54,10 +50,6 @@ export function ForgotPasswordForm() {
     setError(null)
     setInfoNotice(null)
 
-    console.log("[Forgot Password] Request reset link initiated:", {
-      email,
-      timestamp: new Date().toISOString(),
-    })
 
     startTransition(async () => {
       const result = await requestPasswordResetAction({ email })
@@ -66,17 +58,12 @@ export function ForgotPasswordForm() {
         return
       }
 
-      console.log("[Forgot Password] Reset link request succeeded for:", email)
       setStep("sent")
     })
   }
 
   function handleResendEmail() {
     setError(null)
-    console.log("[Forgot Password] Resend reset link clicked for email:", {
-      email,
-      timestamp: new Date().toISOString(),
-    })
 
     startTransition(async () => {
       const result = await requestPasswordResetAction({ email })
@@ -85,7 +72,6 @@ export function ForgotPasswordForm() {
         return
       }
 
-      console.log("[Forgot Password] Resend email dispatched to:", email)
       setInfoNotice(t("auth.emailResentNotice"))
     })
   }
@@ -105,28 +91,19 @@ export function ForgotPasswordForm() {
       return
     }
 
-    console.log("[Forgot Password] Reset password form submitted:", {
-      email,
-      token,
-      newPasswordLength: newPassword.length,
-      timestamp: new Date().toISOString(),
-    })
 
     startTransition(async () => {
-      // Future API call / Server action placeholder
       const result = await resetPasswordAction({ token, password: newPassword })
       if (!result.ok) {
         setError(result.error)
         return
       }
 
-      console.log("[Forgot Password] Password reset completed successfully for:", email)
       setStep("success")
     })
   }
 
   function handleBackToLogin() {
-    console.log("[Forgot Password] User initiated navigation back to /login")
     router.push("/login")
   }
 
@@ -176,7 +153,6 @@ export function ForgotPasswordForm() {
               <div className="pt-2 text-center">
                 <Link
                   href="/login"
-                  onClick={() => console.log("[Forgot Password] Clicked 'Back to Log In' link")}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -223,7 +199,6 @@ export function ForgotPasswordForm() {
               <div className="text-center pt-2">
                 <Link
                   href="/login"
-                  onClick={() => console.log("[Forgot Password] Clicked 'Back to Log In' from sent view")}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -267,7 +242,6 @@ export function ForgotPasswordForm() {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log("[Forgot Password] Toggle new password visibility:", !showPassword)
                       setShowPassword((prev) => !prev)
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
@@ -299,10 +273,6 @@ export function ForgotPasswordForm() {
                   <button
                     type="button"
                     onClick={() => {
-                      console.log(
-                        "[Forgot Password] Toggle confirm password visibility:",
-                        !showConfirmPassword
-                      )
                       setShowConfirmPassword((prev) => !prev)
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
@@ -331,7 +301,6 @@ export function ForgotPasswordForm() {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log("[Forgot Password] Cancel reset, switch back to request step")
                     setStep("request")
                   }}
                   className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"

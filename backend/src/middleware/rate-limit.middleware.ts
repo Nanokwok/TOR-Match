@@ -57,3 +57,22 @@ export function createApiRateLimiter(options?: Partial<Options>) {
     ...options,
   })
 }
+
+/**
+ * The two password-reset endpoints. Every request counts (not just failures):
+ * "forgot password" has no failure to count, and each call can cost an email.
+ */
+function createResetLimiter(limit: number) {
+  return rateLimit({
+    windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+    limit,
+    standardHeaders: "draft-6",
+    legacyHeaders: false,
+    handler: (_req, _res, next) => {
+      next(ApiError.tooManyRequests("Too many password reset attempts. Please try again in 15 minutes."))
+    },
+  })
+}
+
+export const forgotPasswordRateLimiter = createResetLimiter(5)
+export const resetPasswordRateLimiter = createResetLimiter(10)
