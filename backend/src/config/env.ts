@@ -28,6 +28,12 @@ function requiredSecret(name: string, developmentFallback: string): string {
   return developmentFallback
 }
 
+/** A whole number above zero from the environment; anything else (unset, blank, 0, "abc") falls back. */
+function positiveInt(name: string, fallback: number): number {
+  const value = Number(process.env[name])
+  return Number.isInteger(value) && value > 0 ? value : fallback
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
@@ -40,6 +46,9 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
   userIdleTimeoutSeconds: Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60),
+  /** Global limit for /api/*: at most `rateLimitMaxRequests` per client IP in each `rateLimitWindowMs`. */
+  rateLimitWindowMs: positiveInt("RATE_LIMIT_WINDOW_MS", 60 * 1000),
+  rateLimitMaxRequests: positiveInt("RATE_LIMIT_MAX_REQUESTS", 100),
 
   /**
    * Deliberately not `required()`: only TOR extraction needs these, and making
