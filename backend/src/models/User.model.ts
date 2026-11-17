@@ -16,6 +16,7 @@ const userSchema = new Schema(
     name: { type: String, required: true, trim: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     companyId: { type: Schema.Types.ObjectId, ref: "Company", default: null },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 )

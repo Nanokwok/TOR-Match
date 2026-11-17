@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { login, logout, me, refresh, register } from "@/controllers/auth.controller"
+import { changePassword, login, logout, me, refresh, register } from "@/controllers/auth.controller"
 import { googleAuthUrl, googleSignIn } from "@/controllers/google-auth.controller"
 import { changeMyPassword } from "@/controllers/password-change.controller"
 import { forgotPassword, resetPasswordWithToken } from "@/controllers/password-reset.controller"
@@ -21,6 +21,7 @@ router.post("/reset-password", resetPasswordRateLimiter, resetPasswordWithToken)
 // requireAuth first, so a visitor with no session cannot use up anyone's allowance.
 router.post("/change-password", requireAuth, changePasswordRateLimiter, changeMyPassword)
 router.post("/refresh", requireAuth, refresh)
+router.post("/change-password", requireAuth, changePassword)
 router.get("/google/url", googleAuthUrl)
 router.post("/google", googleSignIn)
 router.get("/me", requireAuth, me)

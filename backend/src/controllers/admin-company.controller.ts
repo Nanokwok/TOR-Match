@@ -188,6 +188,13 @@ export const patchAdminCompanyStatus = asyncHandler(async (req: Request, res: Re
   company.status = next
   await company.save()
 
+  if (next === "suspended") {
+    await User.updateMany(
+      { $or: [{ companyId: company._id }, { _id: company.ownerId }] },
+      { $inc: { tokenVersion: 1 } }
+    )
+  }
+
   // The owner hears about it; a failure to notify must not undo or fail the change.
   await notifyCompanyStatusChanged(company, next).catch((error) => {
     console.error("notifyCompanyStatusChanged failed", error)
