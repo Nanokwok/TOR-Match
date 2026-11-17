@@ -1,0 +1,9 @@
+# Build artifacts and dependencies: generated, not ours to fix.
+dist/
+.next/
+node_modules/
+coverage/
+package-lock.json
+
+# The report itself quotes rule ids and code snippets; scanning it only re-finds them.
+docs/security/
