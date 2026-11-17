@@ -1,5 +1,6 @@
-import { cookies } from "next/headers"
+import { cookies, headers as requestHeaders } from "next/headers"
 
+import { pickClientIp } from "@/lib/client-ip"
 import { required } from "@/lib/env"
 
 const API_URL = required("NEXT_PUBLIC_API_URL")
@@ -41,6 +42,16 @@ export async function getAuthToken(): Promise<string | null> {
   return token
 }
 
+/** The visitor behind the page being rendered, or null outside a request. */
+async function currentClientIp(): Promise<string | null> {
+  try {
+    const incoming = await requestHeaders()
+    return pickClientIp(incoming.get("x-forwarded-for"), incoming.get("x-real-ip"))
+  } catch {
+    return null
+  }
+}
+
 export type ApiFetchInit = Omit<RequestInit, "headers"> & {
   headers?: HeadersInit
   /**
@@ -65,6 +76,13 @@ export async function apiFetch<T>(
 
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json")
+  }
+
+  // The backend rate-limits per client address; this server is the one making the
+  // call, so tell it who the visitor is or everyone shares one allowance.
+  if (!headers.has("X-Forwarded-For")) {
+    const ip = await currentClientIp()
+    if (ip) headers.set("X-Forwarded-For", ip)
   }
 
   if (auth && !headers.has("Authorization")) {

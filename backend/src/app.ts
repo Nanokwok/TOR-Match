@@ -6,6 +6,7 @@ import morgan from "morgan"
 import { env } from "@/config/env"
 import routes from "@/routes"
 import { errorMiddleware, notFoundMiddleware } from "@/middleware/error.middleware"
+import { createApiRateLimiter } from "@/middleware/rate-limit.middleware"
 
 export function createApp() {
   const app = express()
@@ -59,6 +60,8 @@ export function createApp() {
     app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"))
   }
 
+  // Before the routes, so a throttled client costs a counter lookup and nothing more.
+  app.use("/api", createApiRateLimiter())
   app.use("/api", routes)
 
   app.use(notFoundMiddleware)
