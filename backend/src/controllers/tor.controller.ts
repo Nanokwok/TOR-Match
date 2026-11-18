@@ -1,5 +1,6 @@
 import type { Request, Response } from "express"
 import { isValidObjectId, type Types } from "mongoose"
+import { z } from "zod"
 import { Company } from "@/models/Company.model"
 import { QualificationSelfCheck } from "@/models/QualificationSelfCheck.model"
 import { localizedKey } from "@/models/localized.schema"
@@ -32,8 +33,22 @@ async function selfChecksByTor(companyId: Types.ObjectId | undefined, torIds: Ty
   return new Map(stored.map((row) => [String(row.torId), row.entries as SelfCheckEntry[]]))
 }
 
+/**
+ * The listing's simple filters. Each must be one string: a repeated parameter
+ * arrives as an array and `status[$ne]=x` as an object, and either would
+ * otherwise be placed straight into the MongoDB filter below.
+ */
+const listQuerySchema = z.object({
+  keyword: z.string().max(200).optional(),
+  status: z.string().max(100).optional(),
+  department: z.string().max(300).optional(),
+  budgetRange: z.string().max(50).optional(),
+})
+
 export const listTors = asyncHandler(async (req: Request, res: Response) => {
-  const { keyword, status, department, budgetRange } = req.query as Record<string, string | undefined>
+  const parsedQuery = listQuerySchema.safeParse(req.query)
+  if (!parsedQuery.success) throw ApiError.badRequest("Invalid query")
+  const { keyword, status, department, budgetRange } = parsedQuery.data
   const sort = isTorSort(req.query.sort) ? req.query.sort : DEFAULT_TOR_SORT
 
   let detail: ReturnType<typeof detailFiltersSchema.parse> | undefined

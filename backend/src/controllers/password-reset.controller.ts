@@ -4,12 +4,13 @@ import { z } from "zod"
 import { requestPasswordReset, resetPassword } from "@/services/password-reset.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
+import { newPasswordSchema } from "@/validation/password"
 
 const forgotSchema = z.object({ email: z.string().trim().email("Valid email is required") })
 
 const resetSchema = z.object({
   token: z.string().min(20, "Reset token is required").max(200),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordSchema,
 })
 
 export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {

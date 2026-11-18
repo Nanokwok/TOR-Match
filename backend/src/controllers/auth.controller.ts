@@ -7,13 +7,14 @@ import { asyncHandler } from "@/utils/asyncHandler"
 import { authCookieOptions, signAuthToken } from "@/utils/jwt"
 import { env } from "@/config/env"
 import { isPasswordPwned, PWNED_PASSWORD_ERROR_MESSAGE } from "@/services/pwned-password.service"
+import { newPasswordSchema } from "@/validation/password"
 
 const SALT_ROUNDS = 10
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Valid email is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: newPasswordSchema,
 })
 
 const loginSchema = z.object({
