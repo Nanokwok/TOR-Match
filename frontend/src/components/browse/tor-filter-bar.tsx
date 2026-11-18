@@ -135,7 +135,13 @@ export function TorFilterBar({
   return (
     <div className="border-b border-border bg-card px-4 py-3 md:px-6">
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        {/*
+          Two rows, not one that wraps: with the filters beside the search box,
+          a narrow window squeezed the box to a sliver and pushed the Search
+          button underneath it. The box and its button stay together on the
+          first row; the filters wrap freely on the second.
+        */}
+        <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -151,7 +157,15 @@ export function TorFilterBar({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <Button
+            className="h-9 shrink-0 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
+            onClick={onSearch}
+          >
+            {t("common.search")}
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
             <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
               <Switch
                 checked={filters.openOnly}
@@ -254,14 +268,6 @@ export function TorFilterBar({
                 </Badge>
               ) : null}
             </Button>
-
-            <Button
-              className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
-              onClick={onSearch}
-            >
-              {t("common.search")}
-            </Button>
-          </div>
         </div>
 
         {chips.length > 0 ? (
