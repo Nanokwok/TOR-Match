@@ -43,6 +43,7 @@ test("the email carries the link in both the text and the HTML, in Thai and Engl
 
 test("a name is escaped in the HTML so it cannot add markup", () => {
   const mail = renderPasswordResetEmail({ name: "<script>x</script>", resetUrl: "https://a/b", appUrl: "https://a" })
+  // nosemgrep: javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag -- attack payload: the test proves it is escaped
   assert.ok(!mail.html.includes("<script>"))
   assert.ok(mail.html.includes("&lt;script&gt;"))
 })
