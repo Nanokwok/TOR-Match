@@ -162,6 +162,37 @@ export async function requestPasswordResetAction({
   }
 }
 
+export type ChangePasswordInput = {
+  currentPassword: string
+  newPassword: string
+}
+
+/**
+ * Changes the signed-in user's password. The backend ends every earlier session,
+ * this one included, and answers with a fresh token that replaces the cookies.
+ */
+export async function changePasswordAction({
+  currentPassword,
+  newPassword,
+}: ChangePasswordInput): Promise<AuthResult> {
+  if (!currentPassword) {
+    return { ok: false, error: "Current password is required." }
+  }
+  if (newPassword.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." }
+  }
+  try {
+    const data = await apiFetch<{ ok: true; token: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+    await setAuthCookie(data.token)
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: messageFromError(error, "changePasswordAction failed") }
+  }
+}
+
 export type ResetPasswordInput = {
   token?: string
   password: string
