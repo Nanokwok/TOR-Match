@@ -39,6 +39,8 @@
     "companyProfile": "Company Profile",
     "settings": "Setting",
     "logout": "Logout",
+    "login": "Log in",
+    "signUp": "Sign up",
     "companyName": "Company Name",
     "notifications": "Notifications",
     "notificationsUnread": "Notifications, {count} unread",
@@ -296,6 +298,10 @@
       "to": "To",
       "category": "Category",
       "softwareOnly": "Software and IT work only"
+    },
+    "guestQualification": {
+      "title": "Log in to check your eligibility",
+      "description": "Eligibility is checked against your company profile. Log in or sign up, save your profile, and we will compare it with every requirement in this TOR."
     },
     "qualificationUnavailable": "Qualification results are unavailable.",
     "qualificationStatus": {

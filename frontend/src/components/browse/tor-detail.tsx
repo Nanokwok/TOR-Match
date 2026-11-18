@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
@@ -58,12 +59,14 @@ import { cn } from "@/lib/utils";
 import type { Tor } from "@/types/tor";
 
 type TorDetailProps = {
+  /** A guest sees the TOR itself; eligibility needs a company profile, so it asks them to log in. */
+  isSignedIn: boolean;
   tor: Tor | null;
   onToggleBookmark: (torId: string) => void;
   onDirtyChange?: (isDirty: boolean) => void;
 };
 
-export function TorDetail({ tor, onToggleBookmark, onDirtyChange }: TorDetailProps) {
+export function TorDetail({ isSignedIn, tor, onToggleBookmark, onDirtyChange }: TorDetailProps) {
   const { t } = useLocale();
 
   if (!tor) {
@@ -76,6 +79,7 @@ export function TorDetail({ tor, onToggleBookmark, onDirtyChange }: TorDetailPro
 
   return (
     <TorDetailContent
+      isSignedIn={isSignedIn}
       tor={tor}
       onToggleBookmark={onToggleBookmark}
       onDirtyChange={onDirtyChange}
@@ -96,10 +100,12 @@ function formatCompactBaht(amountBaht: number, locale: Locale = "th") {
 }
 
 function TorDetailContent({
+  isSignedIn,
   tor,
   onToggleBookmark,
   onDirtyChange,
 }: {
+  isSignedIn: boolean;
   tor: Tor;
   onToggleBookmark: (torId: string) => void;
   onDirtyChange?: (isDirty: boolean) => void;
@@ -197,6 +203,8 @@ function TorDetailContent({
     qualificationCheck?.rows.filter((r) => r.status === "failed").length ?? 0;
 
   function renderEligibilityBadge() {
+    // Without a company profile every requirement would read as failed or unknown: say nothing.
+    if (!isSignedIn) return null;
     if (failedCount > 0) {
       return (
         <Badge
@@ -670,7 +678,30 @@ function TorDetailContent({
           </TabsContent>
 
           <TabsContent value="qualification" className="mt-0">
-            {qualificationCheck ? (
+            {!isSignedIn ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-8 text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {t("browse.guestQualification.title")}
+                </p>
+                <p className="max-w-md text-sm text-muted-foreground">
+                  {t("browse.guestQualification.description")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/login?redirectTo=${encodeURIComponent(`/browse?tor=${tor.id}`)}`}
+                    className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    {t("header.login")}
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="inline-flex h-9 items-center rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    {t("header.signUp")}
+                  </Link>
+                </div>
+              </div>
+            ) : qualificationCheck ? (
               <TorQualificationPanel
                 torId={tor.id}
                 check={qualificationCheck}

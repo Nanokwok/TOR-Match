@@ -4,6 +4,7 @@ import { BrowseView } from "@/components/browse/browse-view"
 import { BROWSE_PAGE_SIZE, DEFAULT_BROWSE_SORT } from "@/lib/browse-filters"
 import { resolveBrowseDeepLink } from "@/lib/browse-deep-link.server"
 import { BROWSE_OPEN_ONLY_COOKIE, parseBrowseOpenOnly } from "@/lib/preferences"
+import { getUserSession } from "@/lib/user-session"
 import {
   listTorDepartments,
   listTorLocalOffices,
@@ -16,6 +17,8 @@ type BrowsePageProps = {
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const params = await searchParams
+  // Anyone may browse; what depends on a signed-in user (eligibility, bookmarks) is hidden from a guest.
+  const isSignedIn = (await getUserSession()) !== null
   const openOnly = parseBrowseOpenOnly(
     (await cookies()).get(BROWSE_OPEN_ONLY_COOKIE)?.value
   )
@@ -38,6 +41,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <BrowseView
+        isSignedIn={isSignedIn}
         initialItems={items}
         initialSelectedId={selectedId}
         initialDeepLink={deepLink}
