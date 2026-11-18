@@ -5,7 +5,8 @@ import { Company } from "@/models/Company.model"
 import { QualificationSelfCheck } from "@/models/QualificationSelfCheck.model"
 import { localizedKey } from "@/models/localized.schema"
 import { matchCompanyToTor, type SelfCheckEntry } from "@/services/qualification.service"
-import { detailFiltersSchema, matchesDetailFilters } from "@/services/tor-filters"
+import { detailFiltersSchema, matchesDetailFilters, matchesSimpleFilters, type SimpleTorFilters } from "@/services/tor-filters"
+import { torListCache } from "@/services/tor-cache.service"
 import { Tor } from "@/models/Tor.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
@@ -36,7 +37,7 @@ async function selfChecksByTor(companyId: Types.ObjectId | undefined, torIds: Ty
 /**
  * The listing's simple filters. Each must be one string: a repeated parameter
  * arrives as an array and `status[$ne]=x` as an object, and either would
- * otherwise be placed straight into the MongoDB filter below.
+ * otherwise reach the filter code below as something other than text.
  */
 const listQuerySchema = z.object({
   keyword: z.string().max(200).optional(),
@@ -59,38 +60,21 @@ export const listTors = asyncHandler(async (req: Request, res: Response) => {
       throw ApiError.badRequest("Invalid detail filters")
     }
   }
-  const filter: Record<string, unknown> = {}
-  if (status && status !== "all") filter.status = status
-  // The filter value is localizedKey(): English, or Thai for a Thai-only TOR.
-  const and: Record<string, unknown>[] = []
-  if (department && department !== "all") {
-    and.push({ $or: [{ "department.en": department }, { "department.en": "", "department.th": department }] })
+  // The department value is localizedKey(): English, or Thai for a Thai-only TOR.
+  const filters: SimpleTorFilters = {
+    status: status && status !== "all" ? status : undefined,
+    department: department && department !== "all" ? department : undefined,
+    budget: budgetRange && budgetRange !== "all" ? BUDGET_RANGES[budgetRange] : undefined,
+    keyword,
   }
-  if (budgetRange && budgetRange !== "all" && BUDGET_RANGES[budgetRange]) {
-    const { min, max } = BUDGET_RANGES[budgetRange]
-    filter.budgetBaht = { $gte: min, $lt: max }
-  }
-  if (keyword?.trim()) {
-    const q = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    // Search every locale so a Thai term still finds a TOR read in English.
-    const localizedFields = ["title", "department", "localOffice", "summary"]
-    and.push({
-      $or: [
-        ...localizedFields.flatMap((field) => [
-          { [`${field}.en`]: { $regex: q, $options: "i" } },
-          { [`${field}.th`]: { $regex: q, $options: "i" } },
-        ]),
-        { announcementNo: { $regex: q, $options: "i" } },
-        { techTags: { $regex: q, $options: "i" } },
-      ],
-    })
-  }
-  if (and.length) filter.$and = and
 
-  const [tors, company] = await Promise.all([
-    Tor.find(filter).sort({ createdAt: -1 }),
+  // Every published TOR comes from memory (see tor-cache.service); the database
+  // is read again only when that list is older than a minute or a TOR is published.
+  const [published, company] = await Promise.all([
+    torListCache.get(),
     req.user ? Company.findOne({ ownerId: req.user.sub }) : Promise.resolve(null),
   ])
+  const tors = published.filter((tor) => matchesSimpleFilters(tor, filters))
   // One query for the whole page rather than one per TOR: the matching loop
   // below already runs in JS over every result.
   const selfChecks = await selfChecksByTor(company?._id, tors.map((tor) => tor._id))
