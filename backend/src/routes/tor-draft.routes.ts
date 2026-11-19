@@ -1,6 +1,8 @@
 import { Router } from "express"
 import {
   getTorDraftById,
+  getTorDraftFiles,
+  getTorDraftPdf,
   listTorDrafts,
   publishTorDraft,
   updateTorDraft,
@@ -14,6 +16,8 @@ router.use(requireAuth, requireRole("admin"))
 
 router.get("/", listTorDrafts)
 router.get("/:id", getTorDraftById)
+router.get("/:id/files", getTorDraftFiles)
+router.get("/:id/pdf", getTorDraftPdf)
 router.put("/:id", updateTorDraft)
 router.post("/:id/publish", publishTorDraft)
 

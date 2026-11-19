@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
-import type { AdminSystemSettings } from "@/server/db/mock/admin-settings"
+import type { AdminSystemSettings } from "@/types/admin-settings"
 
 type SystemSettingsViewProps = {
   initialSettings: AdminSystemSettings

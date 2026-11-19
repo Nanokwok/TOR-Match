@@ -3,7 +3,7 @@ import path from "node:path"
 
 import { NextResponse } from "next/server"
 
-import { MOCK_TOR_PDF_PATH } from "@/server/db/mock/admin-tor-review"
+const MOCK_TOR_PDF_PATH = "C_TOR_YYY_Digital_Multimedia_1.pdf"
 
 export async function GET() {
   const filePath = path.join(

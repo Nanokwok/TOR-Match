@@ -1,15 +1,10 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 
-import { getAdminCompanyStatsAction } from "@/actions/admin-companies"
+import { getAdminOverviewAction } from "@/actions/admin-overview"
 import { OverviewView } from "@/components/admin/overview-view"
 import { AdminApiAuthError } from "@/lib/admin-api"
-import {
-  overviewActivity,
-  overviewQueue,
-  overviewStats,
-  overviewTrend,
-} from "@/server/db/mock/admin-overview"
+import type { AdminOverviewData } from "@/types/admin-overview"
 
 export const metadata: Metadata = {
   title: "Overview | TOR Match Admin",
@@ -17,33 +12,44 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminOverviewPage() {
-  let activeCompanies: string = "—"
-  let pendingCompanies = 0
-
-  try {
-    const companyStats = await getAdminCompanyStatsAction()
-    activeCompanies = String(companyStats.active)
-    pendingCompanies = companyStats.pending
-  } catch (error) {
-    if (error instanceof AdminApiAuthError) redirect("/admin/login")
-    console.error("AdminOverviewPage company stats failed", error)
+  let data: AdminOverviewData = {
+    stats: {
+      activeCompanies: 0,
+      pendingCompanies: 0,
+      torsNeedReview: 0,
+    },
+    activity: [],
   }
 
-  const queue = overviewQueue.map((item) =>
-    item.label === "Pending companies"
-      ? { ...item, value: pendingCompanies }
-      : item
-  )
+  try {
+    data = await getAdminOverviewAction()
+  } catch (error) {
+    if (error instanceof AdminApiAuthError) redirect("/admin/login")
+    console.error("AdminOverviewPage failed to load overview data", error)
+  }
+
+  const queue = [
+    {
+      label: "Need TOR review",
+      value: data.stats.torsNeedReview,
+      href: "/admin/tor-review",
+    },
+    {
+      label: "Pending companies",
+      value: data.stats.pendingCompanies,
+      href: "/admin/companies?status=pending",
+    },
+  ]
 
   return (
     <OverviewView
       stats={{
-        activeCompanies,
-        torsNeedReview: overviewStats.torsNeedReview,
+        activeCompanies: String(data.stats.activeCompanies),
+        torsNeedReview: String(data.stats.torsNeedReview),
+        pendingCompanies: String(data.stats.pendingCompanies),
       }}
-      trend={overviewTrend}
       queue={queue}
-      activity={overviewActivity}
+      activity={data.activity}
     />
   )
 }

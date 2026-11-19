@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useSyncExternalStore } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
   ArrowRightLeft,
   ClipboardList,
+  ExternalLink,
   FileText,
   Plus,
   Trash2,
@@ -14,8 +15,10 @@ import {
 } from "lucide-react"
 
 import {
+  getTorDraftFilesAction,
   publishTorReviewAction,
   saveTorReviewAction,
+  type TorDraftFile,
 } from "@/actions/admin-tor-review"
 import {
   createEmptyMilestone,
@@ -172,6 +175,36 @@ export function TorReviewDetailView({
   const [isPublishing, setIsPublishing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
+
+  const [files, setFiles] = useState<TorDraftFile[]>([])
+  const [activeFileIndex, setActiveFileIndex] = useState(0)
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    if (!tor.id) {
+      setIsLoadingFiles(false)
+      return
+    }
+
+    setIsLoadingFiles(true)
+    getTorDraftFilesAction(tor.id)
+      .then((fetched) => {
+        if (!active) return
+        setFiles(fetched)
+        setActiveFileIndex(0)
+      })
+      .catch((err) => {
+        console.error("Failed to load draft document files", err)
+      })
+      .finally(() => {
+        if (active) setIsLoadingFiles(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [tor.id])
 
   const budgetNumber = Number(budget) || 0
 
@@ -444,14 +477,107 @@ export function TorReviewDetailView({
           className="flex min-h-0 flex-col overflow-hidden bg-muted/30"
         >
           <div className="flex h-9 shrink-0 items-center justify-between border-b bg-muted/40 px-3 text-xs text-muted-foreground">
-            <span className="font-medium">Original TOR Document (PDF)</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Original TOR Documents</span>
+              {files.length > 0 ? (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-mono">
+                  {files.length} {files.length === 1 ? "file" : "files"}
+                </Badge>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-3">
+              {tor.id && (files.length > 0 || isLoadingFiles) ? (
+                <a
+                  href={`/admin/api/tor-pdf?id=${encodeURIComponent(tor.id)}&file=${activeFileIndex}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs hover:text-foreground transition-colors"
+                  title="Open this PDF directly in a new browser tab"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Open in tab</span>
+                </a>
+              ) : null}
+              {tor.pdfUrl || tor.sourceUrl ? (
+                <a
+                  href={tor.pdfUrl || tor.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs hover:text-foreground transition-colors"
+                  title="Download original document or ZIP archive in new window"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Download original</span>
+                </a>
+              ) : null}
+            </div>
           </div>
-          <div className="relative min-h-0 flex-1 w-full">
-            <iframe
-              title={`TOR PDF ${announcementId}`}
-              src={tor.pdfUrl}
-              className="h-full w-full border-none"
-            />
+
+          {isLoadingFiles ? (
+            <div className="flex h-9 shrink-0 items-center gap-2 border-b bg-muted/20 px-3 text-xs text-muted-foreground animate-pulse">
+              <div className="size-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span>Extracting documents from archive...</span>
+            </div>
+          ) : files.length > 1 ? (
+            <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b bg-muted/20 px-2 py-1.5">
+              {files.map((file) => {
+                const isActive = file.index === activeFileIndex
+                return (
+                  <button
+                    key={file.index}
+                    type="button"
+                    onClick={() => setActiveFileIndex(file.index)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all whitespace-nowrap cursor-pointer",
+                      isActive
+                        ? "bg-background text-foreground shadow-xs border border-border"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    )}
+                    title={file.name}
+                  >
+                    <FileText className={cn("size-3.5", isActive ? "text-primary" : "text-muted-foreground")} />
+                    <span className="max-w-[180px] truncate">{file.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : files.length === 1 ? (
+            <div className="flex h-8 shrink-0 items-center gap-1.5 border-b bg-muted/20 px-3 text-xs text-muted-foreground">
+              <FileText className="size-3.5 text-primary" />
+              <span className="font-mono text-[11px] font-medium text-foreground">{files[0].name}</span>
+            </div>
+          ) : null}
+
+          <div className="relative min-h-0 flex-1 w-full bg-muted/10">
+            {tor.id && (files.length > 0 || isLoadingFiles) ? (
+              <iframe
+                key={`${tor.id}-${activeFileIndex}`}
+                title={`TOR PDF ${announcementId} - ${files[activeFileIndex]?.name || activeFileIndex}`}
+                src={`/admin/api/tor-pdf?id=${encodeURIComponent(tor.id)}&file=${activeFileIndex}`}
+                className="h-full w-full border-none"
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                <FileText className="mb-2 h-8 w-8 text-muted-foreground/50" />
+                <p className="font-medium text-foreground">No readable PDF preview available</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                  {tor.pdfUrl
+                    ? "The procurement document could not be extracted as an inline PDF."
+                    : "No document attachment found for this draft."}
+                </p>
+                {tor.pdfUrl || tor.sourceUrl ? (
+                  <a
+                    href={tor.pdfUrl || tor.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    <ExternalLink className="size-3.5" />
+                    Download Original File
+                  </a>
+                ) : null}
+              </div>
+            )}
             {isResizing ? (
               <div className="absolute inset-0 z-50 bg-transparent" />
             ) : null}

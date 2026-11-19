@@ -23,8 +23,8 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://api.qrserver.com",
   `connect-src ${connectSources.join(" ")}`,
   "frame-src 'self' https://*.cgd.go.th https://*.gprocurement.go.th https: blob: data:",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "object-src 'self' blob: data:",
   "base-uri 'self'",
   "form-action 'self'",
 ];
@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "X-Frame-Options",
-            value: "DENY",
+            value: "SAMEORIGIN",
           },
           {
             key: "X-Content-Type-Options",
@@ -60,6 +60,19 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+      {
+        source: "/admin/api/tor-pdf",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; frame-ancestors 'self'; object-src 'self' blob: data:",
           },
         ],
       },
