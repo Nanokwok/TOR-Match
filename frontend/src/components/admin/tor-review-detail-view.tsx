@@ -178,16 +178,16 @@ export function TorReviewDetailView({
 
   const [files, setFiles] = useState<TorDraftFile[]>([])
   const [activeFileIndex, setActiveFileIndex] = useState(0)
-  const [isLoadingFiles, setIsLoadingFiles] = useState(true)
+  const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null)
+
+  const isLoadingFiles = Boolean(tor.id) && loadedDraftId !== tor.id
 
   useEffect(() => {
     let active = true
     if (!tor.id) {
-      setIsLoadingFiles(false)
       return
     }
 
-    setIsLoadingFiles(true)
     getTorDraftFilesAction(tor.id)
       .then((fetched) => {
         if (!active) return
@@ -198,7 +198,9 @@ export function TorReviewDetailView({
         console.error("Failed to load draft document files", err)
       })
       .finally(() => {
-        if (active) setIsLoadingFiles(false)
+        if (active) {
+          setLoadedDraftId(tor.id)
+        }
       })
 
     return () => {
