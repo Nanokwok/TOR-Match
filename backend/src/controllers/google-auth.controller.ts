@@ -87,7 +87,12 @@ export const googleSignIn = asyncHandler(async (req: Request, res: Response) => 
   const profile = await profileFromCode(parsed.data.code)
   const { user, action } = await signInWithGoogleProfile(profile)
 
-  const token = signAuthToken({ sub: String(user._id), email: user.email, role: user.role as "user" | "admin" })
+  const token = signAuthToken({
+    sub: String(user._id),
+    email: user.email,
+    role: user.role as "user" | "admin",
+    tokenVersion: user.tokenVersion ?? 0,
+  })
   res.cookie(env.authCookieName, token, authCookieOptions())
   res.status(action === "create" ? 201 : 200).json({
     user: { id: String(user._id), email: user.email, name: user.name, role: user.role },

@@ -20,18 +20,13 @@ export type PasswordChangeDeps = {
 /**
  * Changes the password of a signed-in user, who must prove they know the
  * current one. (A stolen session alone must not be enough to take the account.)
- *
- * Returns the moment of the change. It is stored as `passwordChangedAt`, so
- * every session that began before it stops working (see dropRevokedSessions):
- * the caller has to issue the user a fresh login token afterwards, or the
- * session that made the change would be signed out as well.
  */
 export async function changePassword(
   userId: string,
   currentPassword: string,
   newPassword: string,
   deps: PasswordChangeDeps = {}
-): Promise<Date> {
+): Promise<{ tokenVersion: number }> {
   const isPwned = deps.isPwned ?? isPasswordPwned
 
   const user = await User.findById(userId).select("+passwordHash")
@@ -46,12 +41,15 @@ export async function changePassword(
 
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS)
 
-  // Taken after the slow work above, so a token issued right after this call is never older than it.
-  const changedAt = (deps.now ?? (() => new Date()))()
-  await User.updateOne({ _id: user._id }, { $set: { passwordHash, passwordChangedAt: changedAt } })
+  const updated = await User.findByIdAndUpdate(
+    user._id,
+    { $set: { passwordHash }, $inc: { tokenVersion: 1 } },
+    { new: true }
+  )
+  if (!updated) throw ApiError.unauthorized()
 
   // A reset link sent before the change must not let its holder set a password again.
   await PasswordResetToken.deleteMany({ userId: user._id })
 
-  return changedAt
+  return { tokenVersion: updated.tokenVersion ?? 1 }
 }

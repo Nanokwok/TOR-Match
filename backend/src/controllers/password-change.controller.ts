@@ -19,10 +19,14 @@ export const changeMyPassword = asyncHandler(async (req: Request, res: Response)
   const parsed = changeSchema.safeParse(req.body)
   if (!parsed.success) throw ApiError.badRequest("Invalid input", parsed.error.flatten())
 
-  await changePassword(req.user.sub, parsed.data.currentPassword, parsed.data.newPassword)
+  const result = await changePassword(req.user.sub, parsed.data.currentPassword, parsed.data.newPassword)
 
-  // Every earlier session is now revoked, this one included: sign this one in again.
-  const token = signAuthToken({ sub: req.user.sub, email: req.user.email, role: req.user.role })
+  const token = signAuthToken({
+    sub: req.user.sub,
+    email: req.user.email,
+    role: req.user.role,
+    tokenVersion: result.tokenVersion,
+  })
   res.cookie(env.authCookieName, token, authCookieOptions())
   // requireAuth already put a token for the old session in this header.
   res.setHeader("X-Refreshed-Token", token)

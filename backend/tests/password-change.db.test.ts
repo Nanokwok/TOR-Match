@@ -71,8 +71,8 @@ test("the right current password sets the new one, which works while the old one
   const hash = await storedHash(ana._id)
   assert.equal(await bcrypt.compare(NEW_PASSWORD, hash), true)
   assert.equal(await bcrypt.compare(OLD_PASSWORD, hash), false)
-  assert.equal(result.getTime(), changedAt.getTime())
-  assert.equal((await User.findById(ana._id))!.passwordChangedAt?.getTime(), changedAt.getTime(), "recorded, so older sessions end")
+  assert.equal(result.tokenVersion, 1)
+  assert.equal((await User.findById(ana._id))!.tokenVersion, 1)
 })
 
 test("a wrong current password is refused and nothing changes", async () => {
@@ -83,7 +83,7 @@ test("a wrong current password is refused and nothing changes", async () => {
   assert.equal(error.status, 400)
   assert.equal(error.message, WRONG_CURRENT_PASSWORD_MESSAGE)
   assert.equal(await bcrypt.compare(OLD_PASSWORD, await storedHash(ana._id)), true)
-  assert.equal((await User.findById(ana._id))!.passwordChangedAt, undefined)
+  assert.equal((await User.findById(ana._id))!.tokenVersion, 0)
 })
 
 test("the new password must differ from the current one", async () => {
