@@ -48,3 +48,6 @@ next-env.d.ts
 
 # mongod binary cached by CI for the database tests
 .mongodb-binaries/
+
+# AI agents
+.agents/

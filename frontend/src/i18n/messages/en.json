@@ -47,7 +47,8 @@
     "openMenu": "Open menu"
   },
   "footer": {
-    "copyright": "© {year} TOR Match. All rights reserved."
+    "copyright": "© {year} TOR Match. All rights reserved.",
+    "privacyPolicy": "Privacy Policy"
   },
   "landing": {
     "headlinePrefix": "Built for tech agencies to",
@@ -131,9 +132,9 @@
     "sortBy": "Sort by",
     "sort": {
       "opened-desc": "Newest projects",
-        "opened-asc": "Oldest projects",
-        "budget-desc": "Highest budget",
-        "budget-asc": "Lowest budget"
+      "opened-asc": "Oldest projects",
+      "budget-desc": "Highest budget",
+      "budget-asc": "Lowest budget"
     },
     "budgetRange": "Budget Range",
     "procurementStatus": "Procurement Status",
@@ -425,7 +426,9 @@
     "resetSuccessTitle": "Password Reset Complete",
     "resetSuccessDesc": "Your password has been successfully updated. You can now log in with your new credentials.",
     "backToLogin": "Back to Log In",
-    "returnToLogin": "Return to Log In"
+    "returnToLogin": "Return to Log In",
+    "privacyConsentText": "By registering, you agree to our processing of personal data under the PDPA as described in our",
+    "privacyPolicyLink": "Privacy Policy"
   },
   "settings": {
     "title": "Settings",
@@ -436,7 +439,9 @@
     "appearanceDesc": "Adjust theme, density, and how content is shown across TOR Match.",
     "logoutTitle": "Log Out",
     "logoutDesc": "Securely end your current session on this device.",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "privacyTitle": "Privacy & Data Protection",
+    "privacyDesc": "View our PDPA privacy policy and standard operating procedures (SOP) for data access or erasure requests."
   },
   "appearanceSettings": {
     "backToSettings": "Back to Settings",
@@ -659,6 +664,9 @@
       "blacklistRequired": "Please confirm the blacklist declaration.",
       "certificationIncomplete": "Fill certificate number and expiration for selected certifications.",
       "specializationRequired": "Select at least one specialization."
-    }
+    },
+    "pdpaNotice": "Your company profile and contact details are collected strictly for BMA government tender matching and eligibility assessment under Thailand PDPA.",
+    "pdpaNoticeLink": "Read our Privacy Policy & SOP",
+    "taxIdHint": "For sole proprietorships or partnerships, this 13-digit number is your National Citizen ID. It is processed strictly to check eligibility against e-GP requirements and protected under PDPA."
   }
 }
