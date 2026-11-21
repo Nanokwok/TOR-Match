@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { getAdminSystemSettingsAction } from "@/actions/admin-settings"
 import { SystemSettingsView } from "@/components/admin/system-settings-view"
 import { AdminApiAuthError } from "@/lib/admin-api"
-import { defaultAdminSystemSettings } from "@/server/db/mock/admin-settings"
+import { defaultAdminSystemSettings } from "@/types/admin-settings"
 
 export const metadata: Metadata = {
   title: "System Settings | TOR Match Admin",

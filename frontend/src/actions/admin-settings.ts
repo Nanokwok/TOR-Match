@@ -7,7 +7,7 @@ import { ApiRequestError } from "@/lib/api-client"
 import {
   defaultAdminSystemSettings,
   type AdminSystemSettings,
-} from "@/server/db/mock/admin-settings"
+} from "@/types/admin-settings"
 
 export type AdminSystemSettingsActionResult =
   | { ok: true; settings: AdminSystemSettings }

@@ -7,6 +7,7 @@ import workspaceRoutes from "@/routes/workspace.routes"
 import notificationRoutes from "@/routes/notification.routes"
 import notificationSettingsRoutes from "@/routes/notification-settings.routes"
 import adminSettingsRoutes from "@/routes/admin-settings.routes"
+import adminOverviewRoutes from "@/routes/admin-overview.routes"
 
 const router = Router()
 
@@ -20,5 +21,6 @@ router.use("/workspace", workspaceRoutes)
 router.use("/notifications", notificationRoutes)
 router.use("/notification-settings", notificationSettingsRoutes)
 router.use("/admin/settings", adminSettingsRoutes)
+router.use("/admin/overview", adminOverviewRoutes)
 
 export default router

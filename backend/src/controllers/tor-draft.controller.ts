@@ -11,6 +11,7 @@ import {
 import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
+import { downloadAllTorDocuments, type TorDocument } from "@/scraper/tor-documents"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -215,4 +216,116 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   await draft.save()
 
   res.status(200).json({ draft, tor: published })
+})
+
+type CachedDraftDocs = {
+  expiresAt: number
+  documents: TorDocument[]
+}
+
+const docsCache = new Map<string, CachedDraftDocs>()
+const inFlightRequests = new Map<string, Promise<TorDocument[]>>()
+
+async function getOrFetchDraftDocuments(draft: TorDraftDoc): Promise<TorDocument[]> {
+  const cacheKey = draft._id.toString()
+  const now = Date.now()
+  const cached = docsCache.get(cacheKey)
+  if (cached && cached.expiresAt > now) {
+    return cached.documents
+  }
+
+  const existingInFlight = inFlightRequests.get(cacheKey)
+  if (existingInFlight) {
+    return existingInFlight
+  }
+
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    return []
+  }
+
+  if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+    const fetchPromise = downloadAllTorDocuments([targetUrl])
+      .then((docs) => {
+        if (docs.length > 0) {
+          docsCache.set(cacheKey, {
+            expiresAt: Date.now() + 30 * 60 * 1000,
+            documents: docs,
+          })
+          if (docsCache.size > 50) {
+            const oldestKey = docsCache.keys().next().value
+            if (oldestKey) docsCache.delete(oldestKey)
+          }
+        }
+        return docs
+      })
+      .finally(() => {
+        inFlightRequests.delete(cacheKey)
+      })
+
+    inFlightRequests.set(cacheKey, fetchPromise)
+    return fetchPromise
+  }
+
+  return []
+}
+
+export const getTorDraftFiles = asyncHandler(async (req: Request, res: Response) => {
+  const draft = await findDraftOrThrow(req.params.id)
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    res.status(200).json({ files: [] })
+    return
+  }
+
+  try {
+    const docs = await getOrFetchDraftDocuments(draft)
+    const files = docs.map((doc, index) => ({
+      index,
+      name: doc.name,
+      sizeBytes: doc.pdf.byteLength,
+    }))
+    res.status(200).json({ files })
+  } catch (err) {
+    console.error(`getTorDraftFiles failed for draft ${draft._id}:`, err)
+    throw ApiError.badRequest(`Could not retrieve document list: ${err instanceof Error ? err.message : String(err)}`)
+  }
+})
+
+export const getTorDraftPdf = asyncHandler(async (req: Request, res: Response) => {
+  const draft = await findDraftOrThrow(req.params.id)
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    throw ApiError.notFound("No document attached to this draft")
+  }
+
+  if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+    try {
+      const docs = await getOrFetchDraftDocuments(draft)
+      if (!docs.length) {
+        throw ApiError.notFound("No readable PDF document could be extracted")
+      }
+
+      const fileParam = Number(req.query.file ?? 0)
+      const fileIndex = Number.isFinite(fileParam) && fileParam >= 0 && fileParam < docs.length ? fileParam : 0
+      const selected = docs[fileIndex]
+
+      res.setHeader("Content-Type", "application/pdf")
+      res.setHeader("Content-Disposition", `inline; filename="${selected.name || `${draft.announcementNo}.pdf`}"`)
+      res.setHeader("Cache-Control", "private, max-age=3600")
+      res.setHeader("X-Frame-Options", "SAMEORIGIN")
+      res.status(200).send(selected.pdf)
+      return
+    } catch (err) {
+      console.error(`getTorDraftPdf failed for draft ${draft._id}:`, err)
+      throw ApiError.badRequest(`Could not retrieve document: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  if (targetUrl.startsWith("/")) {
+    res.redirect(targetUrl)
+    return
+  }
+
+  throw ApiError.badRequest("Invalid document URL format")
 })

@@ -90,6 +90,9 @@ function toListItem(draft: BackendDraft): TorReviewListItem {
     budgetBaht: draft.budgetBaht,
     aiConfidence: draft.aiConfidence,
     reviewStatus: draft.reviewStatus,
+    deadline: draft.deadline,
+    announcementDate: draft.announcementDate,
+    method: draft.method,
   }
 }
 
@@ -224,5 +227,21 @@ export async function publishTorReviewAction(
     return { ok: true, data: toDetail(draft) }
   } catch (error) {
     return { ok: false, error: messageFrom(error, "publishTorReviewAction failed") }
+  }
+}
+
+export type TorDraftFile = {
+  index: number
+  name: string
+  sizeBytes: number
+}
+
+export async function getTorDraftFilesAction(id: string): Promise<TorDraftFile[]> {
+  try {
+    const data = await adminApiFetch<{ files: TorDraftFile[] }>(`/tor-drafts/${id}/files`)
+    return data.files || []
+  } catch (error) {
+    console.error("getTorDraftFilesAction failed", error)
+    return []
   }
 }
