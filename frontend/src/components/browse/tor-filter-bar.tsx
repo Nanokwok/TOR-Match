@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Filter, Search, X } from "lucide-react"
 
 import { BrowseMoreFiltersDialog } from "@/components/browse/browse-more-filters-dialog"
@@ -33,6 +33,7 @@ import type {
 export type BrowseFiltersState = {
   keyword: string
   openOnly: boolean
+  eligibleOnly: boolean
   sort: TorSort
   budgetRange: string
   status: TorProcurementStatus | "all"
@@ -52,6 +53,7 @@ export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
   return {
     keyword: filters.keyword,
     openOnly: filters.openOnly,
+    eligibleOnly: filters.eligibleOnly,
     sort: filters.sort,
     budgetRange: filters.budgetRange,
     status: filters.status,
@@ -71,35 +73,55 @@ export function TorFilterBar({
   const [moreOpen, setMoreOpen] = useState(false)
 
   /** Department filter values are the canonical English names; labels follow the locale. */
-  const departmentLabel = (value: string) => {
-    const match = departments.find((item) => localizedKey(item) === value)
-    return match ? pickLocalized(match, locale) : value
-  }
-
-  const activeDetailCount = countActiveDetailFilters(filters.detail)
-  const chips = useMemo(
-    () => getActiveDetailFilterChips(filters.detail, t),
-    [filters.detail, t]
+  const departmentLabel = useCallback(
+    (value: string) => {
+      const match = departments.find((item) => localizedKey(item) === value)
+      return match ? pickLocalized(match, locale) : value
+    },
+    [departments, locale]
   )
+
+  const activeDetailCount =
+    countActiveDetailFilters(filters.detail) +
+    (filters.department !== "all" ? 1 : 0)
+
+  const chips = useMemo(() => {
+    const list = getActiveDetailFilterChips(filters.detail, t)
+    if (filters.department && filters.department !== "all") {
+      list.unshift({
+        id: "department",
+        label: t
+          ? t("browse.chipDepartment", {
+              value: departmentLabel(filters.department),
+            })
+          : `Agency: ${departmentLabel(filters.department)}`,
+      })
+    }
+    return list
+  }, [filters.detail, filters.department, departmentLabel, t])
 
   const baseQuery = useMemo(
     () => ({
       keyword: filters.keyword,
       openOnly: filters.openOnly,
+      eligibleOnly: filters.eligibleOnly,
       budgetRange: filters.budgetRange,
       status: filters.status,
-      department: filters.department,
     }),
     [
       filters.keyword,
       filters.openOnly,
+      filters.eligibleOnly,
       filters.budgetRange,
       filters.status,
-      filters.department,
     ]
   )
 
   function clearChip(id: string) {
+    if (id === "department") {
+      onChange({ ...filters, department: "all" })
+      return
+    }
     const next = { ...filters.detail }
     switch (id) {
       case "scale":
@@ -135,7 +157,13 @@ export function TorFilterBar({
   return (
     <div className="border-b border-border bg-card px-4 py-3 md:px-6">
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        {/*
+          Two rows, not one that wraps: with the filters beside the search box,
+          a narrow window squeezed the box to a sliver and pushed the Search
+          button underneath it. The box and its button stay together on the
+          first row; the filters wrap freely on the second.
+        */}
+        <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -151,7 +179,15 @@ export function TorFilterBar({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <Button
+            className="h-9 shrink-0 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
+            onClick={onSearch}
+          >
+            {t("common.search")}
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
             <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
               <Switch
                 checked={filters.openOnly}
@@ -162,6 +198,19 @@ export function TorFilterBar({
               />
               <span className="whitespace-nowrap text-foreground">
                 {t("browse.openOnly")}
+              </span>
+            </label>
+
+            <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
+              <Switch
+                checked={filters.eligibleOnly}
+                onCheckedChange={(checked) =>
+                  onChange({ ...filters, eligibleOnly: checked })
+                }
+                className="data-checked:bg-primary"
+              />
+              <span className="whitespace-nowrap text-foreground">
+                {t("browse.eligibleOnly")}
               </span>
             </label>
 
@@ -218,28 +267,6 @@ export function TorFilterBar({
               <SelectItem value="winner-revised">{t("browse.statusWinnerRevised")}</SelectItem>
             </LabeledFilterSelect>
 
-            <LabeledFilterSelect
-              label={t("browse.department")}
-              value={filters.department}
-              formatValue={(value) =>
-                value === "all" ? t("common.all") : departmentLabel(value)
-              }
-              onValueChange={(value) =>
-                onChange({ ...filters, department: value })
-              }
-              triggerClassName="min-w-[7rem]"
-            >
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              {departments.map((department) => (
-                <SelectItem
-                  key={localizedKey(department)}
-                  value={localizedKey(department)}
-                >
-                  {pickLocalized(department, locale)}
-                </SelectItem>
-              ))}
-            </LabeledFilterSelect>
-
             <Button
               variant="outline"
               className="relative h-9 gap-2 px-3"
@@ -254,14 +281,6 @@ export function TorFilterBar({
                 </Badge>
               ) : null}
             </Button>
-
-            <Button
-              className="h-9 bg-primary px-5 text-primary-foreground hover:bg-primary/90"
-              onClick={onSearch}
-            >
-              {t("common.search")}
-            </Button>
-          </div>
         </div>
 
         {chips.length > 0 ? (
@@ -286,6 +305,7 @@ export function TorFilterBar({
               onClick={() =>
                 onChange({
                   ...filters,
+                  department: "all",
                   detail: { ...EMPTY_DETAIL_FILTERS },
                 })
               }
@@ -301,8 +321,12 @@ export function TorFilterBar({
         onOpenChange={setMoreOpen}
         baseQuery={baseQuery}
         value={filters.detail}
+        department={filters.department}
+        departments={departments}
         localOffices={localOffices}
-        onApply={(detail) => onChange({ ...filters, detail })}
+        onApply={({ detail, department }) =>
+          onChange({ ...filters, detail, department })
+        }
       />
     </div>
   )

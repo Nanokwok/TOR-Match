@@ -6,6 +6,7 @@ export type AuthTokenPayload = {
   sub: string
   email: string
   role: "user" | "admin"
+  tokenVersion?: number
   lastActiveAt?: number
   issuedAt?: number
 }
@@ -28,6 +29,7 @@ export function signAuthToken(payload: AuthTokenPayload): string {
   const completePayload: AuthTokenPayload = {
     issuedAt: payload.issuedAt ?? now,
     lastActiveAt: payload.lastActiveAt ?? now,
+    tokenVersion: payload.tokenVersion ?? 0,
     ...payload,
   }
   delete (completePayload as Record<string, unknown>).exp

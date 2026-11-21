@@ -10,6 +10,7 @@ import {
   type TorReviewListItem,
   type TorReviewStatus,
 } from "@/types/tor-review"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,6 +46,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { formatThb } from "@/lib/format"
+import type { Locale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 type TorReviewListViewProps = {
@@ -60,18 +62,14 @@ const statusStyles: Record<TorReviewStatus, string> = {
     "border-transparent bg-emerald-600 text-white dark:bg-emerald-500",
 }
 
-const statusLabels: Record<TorReviewStatus, string> = {
-  "need-review": "Need Review",
-  "auto-approved": "Auto approved",
-  approved: "Approved",
-}
+const STATUS_KEYS: TorReviewStatus[] = ["need-review", "auto-approved", "approved"]
 
-function formatDate(iso?: string) {
+function formatDate(iso?: string, locale?: Locale) {
   if (!iso) return ""
   try {
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return ""
-    return new Intl.DateTimeFormat("en-GB", {
+    return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -110,6 +108,7 @@ function getPageNumbers(currentPage: number, totalPages: number): (number | "ell
 }
 
 export function TorReviewListView({ items }: TorReviewListViewProps) {
+  const { locale, t } = useLocale()
   const [search, setSearch] = useState("")
   const [reviewStatus, setReviewStatus] = useState("all")
   const [department, setDepartment] = useState("all")
@@ -137,28 +136,31 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
 
   const statCards = [
     {
-      label: "Total Tracked TORs",
+      label: locale === "th" ? "TOR ทั้งหมดที่ติดตาม" : "Total Tracked TORs",
       value: String(stats.total),
-      subtext: "All drafts in review queue",
+      subtext: locale === "th" ? "แบบร่างทั้งหมดในคิวตรวจสอบ" : "All drafts in review queue",
       icon: FileSearch,
     },
     {
-      label: "Need Review",
+      label: t("admin.torReviewList.status.need-review"),
       value: String(stats.needReview),
-      subtext: "Requires human review & approval",
+      subtext: locale === "th" ? "ต้องการคนตรวจสอบและอนุมัติ" : "Requires human review & approval",
       icon: AlertCircle,
       alert: stats.needReview > 0,
     },
     {
-      label: "Auto Approved",
+      label: t("admin.torReviewList.status.auto-approved"),
       value: String(stats.autoApproved),
-      subtext: `Cleared AI threshold (≥${AUTO_APPROVE_CONFIDENCE_THRESHOLD}%)`,
+      subtext:
+        locale === "th"
+          ? `ผ่านเกณฑ์ความมั่นใจ AI (≥${AUTO_APPROVE_CONFIDENCE_THRESHOLD}%)`
+          : `Cleared AI threshold (≥${AUTO_APPROVE_CONFIDENCE_THRESHOLD}%)`,
       icon: Sparkles,
     },
     {
-      label: "Approved & Live",
+      label: t("admin.torReviewList.status.approved"),
       value: String(stats.approved),
-      subtext: "Published to live catalog",
+      subtext: locale === "th" ? "เผยแพร่ไปยังรายการประกาศหลักแล้ว" : "Published to live catalog",
       icon: CheckCircle2,
     },
   ]
@@ -215,9 +217,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
       <div className="flex flex-col gap-5 sm:gap-6 p-4 sm:p-6 pb-12 min-w-0">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">TOR Review</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
+              {t("admin.torReviewList.title")}
+            </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Manage ingested government procurement drafts and AI validation confidence
+              {locale === "th"
+                ? "จัดการแบบร่างจัดซื้อจัดจ้างภาครัฐและความมั่นใจจากการตรวจสอบของ AI"
+                : "Manage ingested government procurement drafts and AI validation confidence"}
             </p>
           </div>
         </div>
@@ -229,10 +235,20 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                 <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
                   {card.label}
                 </CardTitle>
-                <card.icon className={cn("size-3.5 sm:size-4 shrink-0", card.alert ? "text-rose-500" : "text-muted-foreground")} />
+                <card.icon
+                  className={cn(
+                    "size-3.5 sm:size-4 shrink-0",
+                    card.alert ? "text-rose-500" : "text-muted-foreground"
+                  )}
+                />
               </CardHeader>
               <CardContent>
-                <p className={cn("text-xl sm:text-2xl font-semibold tracking-tight", card.alert && "text-rose-600 dark:text-rose-400")}>
+                <p
+                  className={cn(
+                    "text-xl sm:text-2xl font-semibold tracking-tight",
+                    card.alert && "text-rose-600 dark:text-rose-400"
+                  )}
+                >
                   {card.value}
                 </p>
                 <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-1">
@@ -252,7 +268,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                 setSearch(event.target.value)
                 setPage(1)
               }}
-              placeholder="Search announcement ID, title, or department..."
+              placeholder={t("admin.torReviewList.searchPlaceholder")}
               className="pl-8 h-9 text-xs sm:text-sm"
             />
           </div>
@@ -265,13 +281,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
             }}
           >
             <SelectTrigger className="w-full sm:w-38 lg:w-44 h-9 text-xs sm:text-sm">
-              <SelectValue placeholder="Review Status" />
+              <SelectValue placeholder={t("admin.torReviewList.statusPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              {(Object.keys(statusLabels) as TorReviewStatus[]).map((key) => (
+              <SelectItem value="all">{t("admin.torReviewList.allStatuses")}</SelectItem>
+              {STATUS_KEYS.map((key) => (
                 <SelectItem key={key} value={key}>
-                  {statusLabels[key]}
+                  {t(`admin.torReviewList.status.${key}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -285,10 +301,10 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
             }}
           >
             <SelectTrigger className="w-full sm:w-48 lg:w-56 h-9 text-xs sm:text-sm">
-              <SelectValue placeholder="Department" />
+              <SelectValue placeholder={t("admin.torReviewList.departmentPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All departments</SelectItem>
+              <SelectItem value="all">{t("admin.torReviewList.allDepartments")}</SelectItem>
               {departments.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}
@@ -305,13 +321,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
             }}
           >
             <SelectTrigger className="w-full sm:w-40 lg:w-48 h-9 text-xs sm:text-sm">
-              <SelectValue placeholder="AI Confidence Level" />
+              <SelectValue placeholder={t("admin.torReviewList.confidencePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All confidence</SelectItem>
-              <SelectItem value="high">High (≥90%)</SelectItem>
-              <SelectItem value="medium">Medium (70–89%)</SelectItem>
-              <SelectItem value="low">Low (&lt;70%)</SelectItem>
+              <SelectItem value="all">{t("admin.torReviewList.allConfidence")}</SelectItem>
+              <SelectItem value="high">{t("admin.torReviewList.confidenceHigh")}</SelectItem>
+              <SelectItem value="medium">{t("admin.torReviewList.confidenceMedium")}</SelectItem>
+              <SelectItem value="low">{t("admin.torReviewList.confidenceLow")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -323,7 +339,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
               className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground shrink-0"
             >
               <RotateCcw className="mr-1.5 size-3.5" />
-              Reset filters
+              {locale === "th" ? "ล้างตัวกรอง" : "Reset filters"}
             </Button>
           ) : null}
         </div>
@@ -333,30 +349,43 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
             <Table className="min-w-[960px] w-full">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[170px] px-4 font-semibold">Announcement ID</TableHead>
-                  <TableHead className="min-w-[340px] font-semibold">Project Title & Context</TableHead>
-                  <TableHead className="w-[200px] font-semibold">Department</TableHead>
-                  <TableHead className="w-[140px] font-semibold">Budget</TableHead>
-                  <TableHead className="w-[130px] font-semibold">AI Confidence</TableHead>
+                  <TableHead className="w-[170px] px-4 font-semibold">
+                    {t("admin.torReviewList.table.announcementId")}
+                  </TableHead>
+                  <TableHead className="min-w-[340px] font-semibold">
+                    {t("admin.torReviewList.table.projectTitle")}
+                  </TableHead>
+                  <TableHead className="w-[200px] font-semibold">
+                    {t("admin.torReviewList.table.department")}
+                  </TableHead>
+                  <TableHead className="w-[140px] font-semibold">
+                    {t("admin.torReviewList.table.budget")}
+                  </TableHead>
+                  <TableHead className="w-[130px] font-semibold">
+                    {t("admin.torReviewList.table.aiConfidence")}
+                  </TableHead>
                   <TableHead className="w-[140px] font-semibold">
                     <span className="inline-flex items-center gap-1.5">
-                      Review Status
+                      {t("admin.torReviewList.table.reviewStatus")}
                       <Tooltip>
                         <TooltipTrigger
                           type="button"
                           className="inline-flex text-muted-foreground hover:text-foreground"
-                          aria-label="About auto approval"
+                          aria-label={t("admin.torReviewList.table.autoApproveAria")}
                         >
                           <Info className="size-3.5" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          Auto approve when AI Confidence ≥{" "}
-                          {AUTO_APPROVE_CONFIDENCE_THRESHOLD}%
+                          {t("admin.torReviewList.table.autoApproveTooltip", {
+                            threshold: AUTO_APPROVE_CONFIDENCE_THRESHOLD,
+                          })}
                         </TooltipContent>
                       </Tooltip>
                     </span>
                   </TableHead>
-                  <TableHead className="w-[120px] px-4 text-right font-semibold">Action</TableHead>
+                  <TableHead className="w-[120px] px-4 text-right font-semibold">
+                    {t("admin.torReviewList.table.action")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -368,8 +397,14 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                     >
                       <div className="flex flex-col items-center justify-center gap-1">
                         <FileSearch className="size-8 text-muted-foreground/50 mb-1" />
-                        <p className="font-medium text-foreground">No matching TOR drafts found</p>
-                        <p className="text-xs text-muted-foreground">Try adjusting your search terms or filters</p>
+                        <p className="font-medium text-foreground">
+                          {t("admin.torReviewList.table.noMatch")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {locale === "th"
+                            ? "ลองปรับคำค้นหาหรือตัวกรองของคุณ"
+                            : "Try adjusting your search terms or filters"}
+                        </p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -390,7 +425,8 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                             href={`/admin/tor-review/${item.id}`}
                             className="font-medium text-foreground hover:underline line-clamp-2 leading-snug"
                           >
-                            {item.projectTitle || "Untitled Procurement"}
+                            {item.projectTitle ||
+                              (locale === "th" ? "ไม่มีชื่อโครงการ" : "Untitled Procurement")}
                           </Link>
                           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             {item.method ? (
@@ -399,10 +435,16 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                               </span>
                             ) : null}
                             {item.deadline ? (
-                              <span>Deadline: {formatDate(item.deadline)}</span>
+                              <span>
+                                {locale === "th" ? "กำหนดยื่น:" : "Deadline:"}{" "}
+                                {formatDate(item.deadline, locale)}
+                              </span>
                             ) : null}
                             {item.announcementDate ? (
-                              <span>• Announced: {formatDate(item.announcementDate)}</span>
+                              <span>
+                                • {locale === "th" ? "ประกาศเมื่อ:" : "Announced:"}{" "}
+                                {formatDate(item.announcementDate, locale)}
+                              </span>
                             ) : null}
                           </div>
                         </div>
@@ -411,7 +453,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                         <span className="line-clamp-2">{item.department || "—"}</span>
                       </TableCell>
                       <TableCell className="font-medium text-foreground whitespace-nowrap">
-                        {formatThb(item.budgetBaht)}
+                        {formatThb(item.budgetBaht, locale)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -432,7 +474,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge className={cn(statusStyles[item.reviewStatus])}>
-                          {statusLabels[item.reviewStatus]}
+                          {t(`admin.torReviewList.status.${item.reviewStatus}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-4 text-right whitespace-nowrap">
@@ -445,7 +487,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                             <Link href={`/admin/tor-review/${item.id}`} />
                           }
                         >
-                          Review & Edit
+                          {t("admin.torReviewList.table.reviewAndEdit")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -459,11 +501,12 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-1">
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span>
-              Showing {filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–
-              {Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} TOR drafts
+              {locale === "th"
+                ? `แสดง ${filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)} จากทั้งหมด ${filtered.length} รายการ`
+                : `Showing ${filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)} of ${filtered.length} TOR drafts`}
             </span>
             <div className="flex items-center gap-1.5">
-              <span>Per page:</span>
+              <span>{locale === "th" ? "ต่อหน้า:" : "Per page:"}</span>
               <Select
                 value={String(pageSize)}
                 onValueChange={(val) => {

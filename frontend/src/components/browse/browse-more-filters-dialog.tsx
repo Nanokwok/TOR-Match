@@ -40,7 +40,9 @@ import {
   PROCUREMENT_METHOD_OPTIONS,
   PROJECT_SCALE_OPTIONS,
 } from "@/lib/browse-filters"
+import { localizedKey, pickLocalized } from "@/lib/localized-content"
 import { cn } from "@/lib/utils"
+import type { LocalizedText } from "@/types/localized"
 import type {
   TorDetailFilters,
   TorDurationPreset,
@@ -52,10 +54,12 @@ import type {
 type BrowseMoreFiltersDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  baseQuery: Omit<TorListQuery, "detail">
+  baseQuery: Omit<TorListQuery, "detail" | "department">
   value: TorDetailFilters
+  department: string
+  departments: LocalizedText[]
   localOffices: string[]
-  onApply: (next: TorDetailFilters) => void
+  onApply: (next: { detail: TorDetailFilters; department: string }) => void
 }
 
 export function BrowseMoreFiltersDialog({
@@ -63,23 +67,36 @@ export function BrowseMoreFiltersDialog({
   onOpenChange,
   baseQuery,
   value,
+  department,
+  departments,
   localOffices,
   onApply,
 }: BrowseMoreFiltersDialogProps) {
-  const { t } = useLocale()
+  const { locale, t } = useLocale()
   const [draft, setDraft] = useState(() => cloneDetailFilters(value))
+  const [draftDepartment, setDraftDepartment] = useState(department)
   const [officeQuery, setOfficeQuery] = useState("")
   const [previewTotal, setPreviewTotal] = useState<number | null>(null)
   const [isCounting, startCount] = useTransition()
 
+  const departmentLabel = (val: string) => {
+    const match = departments.find((item) => localizedKey(item) === val)
+    return match ? pickLocalized(match, locale) : val
+  }
+
   // Reset the draft whenever the dialog opens or the applied filters change.
   // Adjusting state during render (rather than in an effect) avoids the extra
   // render pass React would otherwise have to discard.
-  const [lastSync, setLastSync] = useState({ open, value })
-  if (lastSync.open !== open || lastSync.value !== value) {
-    setLastSync({ open, value })
+  const [lastSync, setLastSync] = useState({ open, value, department })
+  if (
+    lastSync.open !== open ||
+    lastSync.value !== value ||
+    lastSync.department !== department
+  ) {
+    setLastSync({ open, value, department })
     if (open) {
       setDraft(cloneDetailFilters(value))
+      setDraftDepartment(department)
       setOfficeQuery("")
     }
   }
@@ -90,11 +107,12 @@ export function BrowseMoreFiltersDialog({
     startCount(async () => {
       const result = await searchTorsAction({
         ...baseQuery,
+        department: draftDepartment,
         detail: draft,
       })
       setPreviewTotal(result.total)
     })
-  }, [open, draft, baseQuery])
+  }, [open, draft, draftDepartment, baseQuery])
 
   const filteredOffices = useMemo(() => {
     const q = officeQuery.trim().toLowerCase()
@@ -140,6 +158,7 @@ export function BrowseMoreFiltersDialog({
 
   function handleReset() {
     setDraft(cloneDetailFilters(EMPTY_DETAIL_FILTERS))
+    setDraftDepartment("all")
   }
 
   function handleCancel() {
@@ -147,7 +166,7 @@ export function BrowseMoreFiltersDialog({
   }
 
   function handleApply() {
-    onApply(cloneDetailFilters(draft))
+    onApply({ detail: cloneDetailFilters(draft), department: draftDepartment })
     onOpenChange(false)
   }
 
@@ -182,6 +201,32 @@ export function BrowseMoreFiltersDialog({
                 setDraft((current) => ({ ...current, softwareOnly: !current.softwareOnly }))
               }
             />
+          </FilterSection>
+
+          <FilterSection title={t("browse.department")}>
+            <Select
+              value={draftDepartment}
+              onValueChange={(next) => {
+                if (!next) return
+                setDraftDepartment(next)
+              }}
+            >
+              <SelectTrigger className="h-10 w-full data-[size=default]:h-10">
+                <SelectValue placeholder={t("common.all")}>
+                  {draftDepartment === "all"
+                    ? t("common.all")
+                    : departmentLabel(draftDepartment)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("common.all")}</SelectItem>
+                {departments.map((dep) => (
+                  <SelectItem key={localizedKey(dep)} value={localizedKey(dep)}>
+                    {pickLocalized(dep, locale)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FilterSection>
 
           <FilterSection title={t("browse.moreFiltersModal.projectScale")}>

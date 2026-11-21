@@ -8,5 +8,8 @@
  */
 import process from "node:process"
 
+process.env.NODE_ENV ??= "test"
 process.env.MONGODB_URI ??= "mongodb://127.0.0.1:27017/unit-tests-unused"
 process.env.JWT_SECRET ??= "unit-test-secret"
+// Tests create TORs and list them straight away; a cache would show them the list from before.
+process.env.TOR_CACHE_TTL_MS ??= "0"

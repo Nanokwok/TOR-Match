@@ -107,6 +107,9 @@ test("requireAuth allows active session tokens and provides sliding window refre
     lastActiveAt: Date.now() - 5 * 60 * 1000,
   })
 
+  // The app also looks the account up to see whether its password was reset; this test has no database.
+  mock.method(User, "findOne", () => ({ select: () => ({ lean: async () => null }) }))
+
   mock.method(User, "findById", async () => ({
     _id: "662662662662662662662660",
     email: "active@example.com",
@@ -156,6 +159,9 @@ test("POST /api/auth/refresh updates session sliding window explicitly", async (
     lastActiveAt: Date.now() - 10 * 60 * 1000,
   })
 
+  // The app also looks the account up to see whether its password was reset; this test has no database.
+  mock.method(User, "findOne", () => ({ select: () => ({ lean: async () => null }) }))
+
   try {
     const res = await fetch(`http://localhost:${address.port}/api/auth/refresh`, {
       method: "POST",
@@ -175,6 +181,7 @@ test("POST /api/auth/refresh updates session sliding window explicitly", async (
       "Refreshed session must have current lastActiveAt"
     )
   } finally {
+    mock.reset()
     server.close()
   }
 })

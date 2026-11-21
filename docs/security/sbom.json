@@ -1,0 +1,137 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:68cf742b-65c3-4f9e-b9e7-49d95f4103fa",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-17T23:50:00Z",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "Node.js SBOM Generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "tor-match",
+      "version": "0.1.0",
+      "description": "TOR-Match Fullstack Procurement & TOR Intelligence Application"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "express",
+      "version": "4.19.2",
+      "description": "Fast, unopinionated, minimalist web framework",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/express@4.19.2"
+    },
+    {
+      "type": "library",
+      "name": "helmet",
+      "version": "8.3.0",
+      "description": "Help secure Express apps with various HTTP headers",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/helmet@8.3.0"
+    },
+    {
+      "type": "library",
+      "name": "jsonwebtoken",
+      "version": "9.0.2",
+      "description": "JSON Web Token implementation",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/jsonwebtoken@9.0.2"
+    },
+    {
+      "type": "library",
+      "name": "bcryptjs",
+      "version": "2.4.3",
+      "description": "Optimized bcrypt in JavaScript with zero dependencies",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/bcryptjs@2.4.3"
+    },
+    {
+      "type": "library",
+      "name": "express-rate-limit",
+      "version": "8.7.1",
+      "description": "Basic rate-limiting middleware for Express",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/express-rate-limit@8.7.1"
+    },
+    {
+      "type": "library",
+      "name": "mongoose",
+      "version": "8.5.0",
+      "description": "Mongoose MongoDB ODM",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/mongoose@8.5.0"
+    },
+    {
+      "type": "library",
+      "name": "zod",
+      "version": "3.23.8",
+      "description": "TypeScript-first schema declaration and validation library",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/zod@3.23.8"
+    },
+    {
+      "type": "library",
+      "name": "google-auth-library",
+      "version": "11.3.1",
+      "description": "Google APIs Authentication Client Library for Node.js",
+      "licenses": [{ "license": { "id": "Apache-2.0" } }],
+      "purl": "pkg:npm/google-auth-library@11.3.1"
+    },
+    {
+      "type": "library",
+      "name": "cookie-parser",
+      "version": "1.4.6",
+      "description": "Parse HTTP request cookies",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/cookie-parser@1.4.6"
+    },
+    {
+      "type": "library",
+      "name": "cors",
+      "version": "2.8.5",
+      "description": "Node.js CORS middleware",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/cors@2.8.5"
+    },
+    {
+      "type": "library",
+      "name": "fast-xml-parser",
+      "version": "5.11.2",
+      "description": "Validate XML, Parse XML to JS Object",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/fast-xml-parser@5.11.2"
+    },
+    {
+      "type": "library",
+      "name": "nodemailer",
+      "version": "10.0.15",
+      "description": "Easy as cake e-mail sending from your Node.js applications",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/nodemailer@10.0.15"
+    },
+    {
+      "type": "framework",
+      "name": "next",
+      "version": "15.5.0",
+      "description": "The React Framework for the Web",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/next@15.5.0"
+    },
+    {
+      "type": "library",
+      "name": "react",
+      "version": "19.0.0",
+      "description": "React is a JavaScript library for building user interfaces",
+      "licenses": [{ "license": { "id": "MIT" } }],
+      "purl": "pkg:npm/react@19.0.0"
+    }
+  ]
+}

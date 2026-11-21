@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import { updateAdminCompanyStatusAction } from "@/actions/admin-companies"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,12 +18,11 @@ import {
 } from "@/lib/company-setup"
 import { formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import type { Locale } from "@/lib/i18n"
 import type { CertificationId, SpecializationId } from "@/types/company-setup"
-import {
-  companyStatusLabels,
-  formatCompanySize,
-  type AdminCompanyDetail,
-  type AdminCompanyStatus,
+import type {
+  AdminCompanyDetail,
+  AdminCompanyStatus,
 } from "@/types/admin-company"
 
 type CompanyDetailViewProps = {
@@ -35,8 +35,8 @@ const statusStyles: Record<AdminCompanyStatus, string> = {
   suspended: "border-transparent bg-rose-100 text-rose-800",
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatDate(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -44,19 +44,24 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-function labelSpecialization(id: string) {
-  return getSpecializationLabel(id as SpecializationId)
-}
-
-function labelCertification(id: string) {
-  return getCertificationLabel(id as CertificationId)
-}
-
 export function CompanyDetailView({ company }: CompanyDetailViewProps) {
   const router = useRouter()
+  const { locale, t } = useLocale()
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const status = company.status
+
+  function labelSpecialization(id: string) {
+    const key = `companySetup.specialization.${id}`
+    const translated = t(key)
+    return translated !== key ? translated : getSpecializationLabel(id as SpecializationId)
+  }
+
+  function labelCertification(id: string) {
+    const key = `companySetup.certification.${id}`
+    const translated = t(key)
+    return translated !== key ? translated : getCertificationLabel(id as CertificationId)
+  }
 
   function applyStatus(next: AdminCompanyStatus, successMessage: string) {
     setMessage(null)
@@ -71,6 +76,15 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
     })
   }
 
+  const primaryName =
+    locale === "th"
+      ? company.nameThai || company.nameEnglish || "Company"
+      : company.nameEnglish || company.nameThai || "Company"
+  const secondaryName =
+    locale === "th"
+      ? company.nameEnglish || "—"
+      : company.nameThai || "—"
+
   return (
     <ScrollArea className="min-h-0 flex-1" viewportClassName="flex flex-col">
       <div className="flex flex-col gap-3 border-b bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -83,44 +97,44 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
             render={<Link href="/admin/companies" />}
           >
             <ArrowLeft data-icon="inline-start" />
-            Back to Companies
+            {t("admin.companyDetail.back")}
           </Button>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">
-              {company.nameEnglish || company.nameThai || "Company"}
+              {primaryName}
             </h1>
             <Badge className={cn(statusStyles[status])}>
-              {companyStatusLabels[status]}
+              {t(`admin.companiesPage.status.${status}`)}
             </Badge>
           </div>
           <p className="truncate text-sm text-muted-foreground">
-            {company.nameThai || "—"}
+            {secondaryName}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {status === "pending" ? (
             <Button
               disabled={isPending}
-              onClick={() => applyStatus("active", "Company approved.")}
+              onClick={() => applyStatus("active", t("admin.companyDetail.approvedNotice"))}
             >
-              Approve
+              {t("admin.companyDetail.approve")}
             </Button>
           ) : null}
           {status === "active" ? (
             <Button
               variant="outline"
               disabled={isPending}
-              onClick={() => applyStatus("suspended", "Company suspended.")}
+              onClick={() => applyStatus("suspended", t("admin.companyDetail.suspendedNotice"))}
             >
-              Suspend
+              {t("admin.companyDetail.suspend")}
             </Button>
           ) : null}
           {status === "suspended" ? (
             <Button
               disabled={isPending}
-              onClick={() => applyStatus("active", "Company reactivated.")}
+              onClick={() => applyStatus("active", t("admin.companyDetail.reactivatedNotice"))}
             >
-              Reactivate
+              {t("admin.companyDetail.reactivate")}
             </Button>
           ) : null}
         </div>
@@ -135,44 +149,68 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
       <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Company Profile</CardTitle>
+            <CardTitle className="text-base">
+              {t("admin.companyDetail.profileCard")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <DetailRow label="Tax ID" value={company.taxId || "—"} mono />
             <DetailRow
-              label="Contact Email"
+              label={t("admin.companyDetail.taxId")}
+              value={company.taxId || "—"}
+              mono
+            />
+            <DetailRow
+              label={t("admin.companyDetail.contactEmail")}
               value={company.contactEmail || "—"}
             />
-            <DetailRow label="Phone" value={company.phone || "—"} />
+            <DetailRow
+              label={t("admin.companyDetail.phone")}
+              value={company.phone || "—"}
+            />
             <Separator />
             <DetailRow
-              label="Company Size"
-              value={formatCompanySize(company.size)}
+              label={t("admin.companyDetail.companySize")}
+              value={
+                company.size
+                  ? t(`admin.companiesPage.size.${company.size}`)
+                  : "—"
+              }
             />
             <DetailRow
-              label="Registered Capital"
-              value={formatThb(company.registeredCapitalBaht)}
+              label={t("admin.companyDetail.registeredCapital")}
+              value={formatThb(company.registeredCapitalBaht, locale)}
             />
             <DetailRow
-              label="e-GP Registered"
-              value={company.egpRegistered ? "Yes" : "No"}
+              label={t("admin.companyDetail.egpRegistered")}
+              value={
+                company.egpRegistered
+                  ? t("admin.companyDetail.yes")
+                  : t("admin.companyDetail.no")
+              }
             />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Account</CardTitle>
+            <CardTitle className="text-base">
+              {t("admin.companyDetail.accountCard")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <DetailRow
-              label="Team Members"
+              label={t("admin.companyDetail.teamMembers")}
               value={String(company.memberCount)}
             />
-            <DetailRow label="Joined" value={formatDate(company.joinedAt)} />
+            <DetailRow
+              label={t("admin.companyDetail.joined")}
+              value={formatDate(company.joinedAt, locale)}
+            />
             <Separator />
             <div className="space-y-2">
-              <p className="text-muted-foreground">Specializations</p>
+              <p className="text-muted-foreground">
+                {t("admin.companyDetail.specializations")}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {company.specializations.length > 0 ? (
                   company.specializations.map((item) => (
@@ -181,12 +219,16 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
                     </Badge>
                   ))
                 ) : (
-                  <span className="text-muted-foreground">None</span>
+                  <span className="text-muted-foreground">
+                    {t("admin.companyDetail.none")}
+                  </span>
                 )}
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-muted-foreground">Certifications</p>
+              <p className="text-muted-foreground">
+                {t("admin.companyDetail.certifications")}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {company.certifications.length > 0 ? (
                   company.certifications.map((item) => (
@@ -195,7 +237,9 @@ export function CompanyDetailView({ company }: CompanyDetailViewProps) {
                     </Badge>
                   ))
                 ) : (
-                  <span className="text-muted-foreground">None</span>
+                  <span className="text-muted-foreground">
+                    {t("admin.companyDetail.none")}
+                  </span>
                 )}
               </div>
             </div>

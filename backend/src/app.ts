@@ -7,6 +7,7 @@ import { env } from "@/config/env"
 import routes from "@/routes"
 import { errorMiddleware, notFoundMiddleware } from "@/middleware/error.middleware"
 import { createApiRateLimiter } from "@/middleware/rate-limit.middleware"
+import { rejectMongoOperators } from "@/middleware/reject-operators.middleware"
 
 export function createApp() {
   const app = express()
@@ -62,6 +63,9 @@ export function createApp() {
 
   // Before the routes, so a throttled client costs a counter lookup and nothing more.
   app.use("/api", createApiRateLimiter())
+  // Body and query are parsed by now. Path parameters belong to the routes, so
+  // each controller checks its own ids (isValidObjectId) before querying.
+  app.use("/api", rejectMongoOperators)
   app.use("/api", routes)
 
   app.use(notFoundMiddleware)

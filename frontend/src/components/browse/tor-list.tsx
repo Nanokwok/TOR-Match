@@ -14,6 +14,8 @@ import {
 import type { Tor } from "@/types/tor"
 
 type TorListProps = {
+  /** A guest has no company profile to be matched against, so no eligibility badge is shown. */
+  isSignedIn: boolean
   items: Tor[]
   selectedId: string | null
   linkedTorId?: string | null
@@ -22,6 +24,7 @@ type TorListProps = {
 }
 
 export function TorList({
+  isSignedIn,
   items,
   selectedId,
   linkedTorId = null,
@@ -84,14 +87,16 @@ export function TorList({
             <div className="flex items-center justify-between gap-2 h-6">
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 {/* Badge ผลการประเมินสิทธิ์ (Match Badge): คำเดียว เช่น [ ผ่าน ] หรือ [ ไม่ผ่าน ] */}
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-tight shrink-0",
-                    matchBadge.classes
-                  )}
-                >
-                  {matchBadge.label}
-                </span>
+                {isSignedIn ? (
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-tight shrink-0",
+                      matchBadge.classes
+                    )}
+                  >
+                    {matchBadge.label}
+                  </span>
+                ) : null}
 
                 {/* ป้ายขั้นตอน (Stage Badge): เช่น [ ร่าง TOR ] สีเทาอ่อน Neutral ไม่ตีกับสีแดง */}
                 <span

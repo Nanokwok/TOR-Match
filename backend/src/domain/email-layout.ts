@@ -43,8 +43,14 @@ export function emailLayout(params: {
   bodyHtml: string
   cta?: { label: string; url: string }
   appUrl: string
+  /**
+   * Replaces the footer that points to notification settings. Account emails
+   * (password reset) are not governed by those settings, so they must not say
+   * they are.
+   */
+  footer?: { th: string; en: string }
 }): string {
-  const { headingTh, headingEn, bodyHtml, cta, appUrl } = params
+  const { headingTh, headingEn, bodyHtml, cta, appUrl, footer } = params
   const { primary, ink, muted, border, page, white } = EMAIL_COLORS
 
   return (
@@ -64,8 +70,10 @@ export function emailLayout(params: {
     `</td></tr>` +
     // footer
     `<tr><td style="padding:16px 8px;font-size:12px;line-height:1.6;color:${muted};text-align:center">` +
-    `คุณได้รับอีเมลนี้ตามการตั้งค่าแจ้งเตือนของคุณ · You are receiving this because of your notification settings.<br>` +
-    `<a href="${escapeHtml(base(appUrl))}/settings/notifications" style="color:${primary};text-decoration:underline">จัดการการแจ้งเตือน / Manage notifications</a>` +
+    (footer
+      ? `${escapeHtml(footer.th)}<br>${escapeHtml(footer.en)}`
+      : `คุณได้รับอีเมลนี้ตามการตั้งค่าแจ้งเตือนของคุณ · You are receiving this because of your notification settings.<br>` +
+        `<a href="${escapeHtml(base(appUrl))}/settings/notifications" style="color:${primary};text-decoration:underline">จัดการการแจ้งเตือน / Manage notifications</a>`) +
     `</td></tr></table></td></tr></table></body></html>`
   )
 }
