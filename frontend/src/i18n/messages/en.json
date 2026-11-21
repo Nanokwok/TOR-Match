@@ -875,6 +875,7 @@
     "systemSettings": {
       "title": "System Settings",
       "subtitle": "Configure API ingest, OCR, review automation, and admin security.",
+      "loadFailed": "The current settings could not be loaded, so nothing is shown to edit. Reload the page; if it keeps failing, check that the API is running.",
       "reset": "Reset",
       "resetting": "Resetting...",
       "saveChanges": "Save Changes",

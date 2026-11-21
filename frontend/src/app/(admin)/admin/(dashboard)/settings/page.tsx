@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { getAdminSystemSettingsAction } from "@/actions/admin-settings"
 import { SystemSettingsView } from "@/components/admin/system-settings-view"
 import { AdminApiAuthError } from "@/lib/admin-api"
-import { defaultAdminSystemSettings } from "@/types/admin-settings"
+import type { AdminSystemSettings } from "@/types/admin-settings"
 
 export const metadata: Metadata = {
   title: "System Settings | TOR Match Admin",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminSettingsPage() {
-  let settings = defaultAdminSystemSettings
+  let settings: AdminSystemSettings | null = null
 
   try {
     settings = await getAdminSystemSettingsAction()
@@ -22,8 +22,6 @@ export default async function AdminSettingsPage() {
     }
   }
 
-  return (
-    <SystemSettingsView initialSettings={settings} />
-  )
+  // null means the stored settings could not be read; the view says so rather than showing defaults.
+  return <SystemSettingsView initialSettings={settings} />
 }
-

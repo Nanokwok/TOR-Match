@@ -33,6 +33,19 @@ export function isSessionExpired(
   return Date.now() - lastActiveAt > maxIdleSeconds * 1000
 }
 
+/**
+ * Whether the sign-in is older than the absolute session limit. Unlike the idle
+ * check this is not reset by activity: `issuedAt` is set at login and copied
+ * into every refreshed token.
+ */
+export function isSessionTooOld(
+  issuedAt: number | undefined,
+  maxAgeSeconds = env.sessionMaxAgeSeconds
+): boolean {
+  if (typeof issuedAt !== "number") return false
+  return Date.now() - issuedAt > maxAgeSeconds * 1000
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = extractToken(req)
   if (!token) return next(ApiError.unauthorized("Authentication required"))
@@ -42,6 +55,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     if (isSessionExpired(user.lastActiveAt)) {
       logSecurityEvent({ event: "ACCESS_DENIED", req, userId: user.sub, email: user.email, reason: "Session expired due to inactivity" })
       return next(ApiError.unauthorized("Session expired due to inactivity"))
+    }
+    if (isSessionTooOld(user.issuedAt)) {
+      logSecurityEvent({ event: "ACCESS_DENIED", req, userId: user.sub, email: user.email, reason: "Session reached its maximum lifetime" })
+      return next(ApiError.unauthorized("Session expired, please sign in again"))
     }
 
     const completeAuth = (dbUser?: { tokenVersion?: number } | null) => {
@@ -88,7 +105,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
   if (token) {
     try {
       const user = verifyAuthToken(token)
-      if (!isSessionExpired(user.lastActiveAt)) {
+      if (!isSessionExpired(user.lastActiveAt) && !isSessionTooOld(user.issuedAt)) {
         if (mongoose.connection.readyState === 1) {
           User.findById(user.sub)
             .select("tokenVersion")

@@ -54,6 +54,12 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
   userIdleTimeoutSeconds: Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60),
+  /**
+   * Longest a session may last, however active the user is. Refreshing a token
+   * extends its idle window and its `exp`, but never this: it counts from the
+   * `issuedAt` of the sign-in, which every refresh carries over.
+   */
+  sessionMaxAgeSeconds: positiveInt("SESSION_MAX_AGE_SECONDS", 7 * 24 * 60 * 60),
   /** Global limit for /api/*: at most `rateLimitMaxRequests` per client IP in each `rateLimitWindowMs`. */
   rateLimitWindowMs: positiveInt("RATE_LIMIT_WINDOW_MS", 60 * 1000),
   rateLimitMaxRequests: positiveInt("RATE_LIMIT_MAX_REQUESTS", 100),
