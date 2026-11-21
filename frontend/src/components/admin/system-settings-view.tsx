@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/components/i18n/locale-provider"
 import type { AdminSystemSettings } from "@/server/db/mock/admin-settings"
 
 type SystemSettingsViewProps = {
@@ -22,6 +23,7 @@ type SystemSettingsViewProps = {
 export function SystemSettingsView({
   initialSettings,
 }: SystemSettingsViewProps) {
+  const { t } = useLocale()
   const [settings, setSettings] = useState(initialSettings)
   const [message, setMessage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
@@ -41,7 +43,7 @@ export function SystemSettingsView({
     const result = await updateAdminSystemSettingsAction(settings)
     if (result.ok) {
       setSettings(result.settings)
-      setMessage("Settings saved successfully.")
+      setMessage(t("admin.systemSettings.settingsSaved"))
       setIsError(false)
     } else {
       setMessage(result.error)
@@ -56,7 +58,7 @@ export function SystemSettingsView({
     const result = await resetAdminSystemSettingsAction()
     if (result.ok) {
       setSettings(result.settings)
-      setMessage("Settings reset to defaults.")
+      setMessage(t("admin.systemSettings.settingsReset"))
       setIsError(false)
     } else {
       setMessage(result.error)
@@ -70,10 +72,10 @@ export function SystemSettingsView({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            System Settings
+            {t("admin.systemSettings.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure API ingest, OCR, review automation, and admin security.
+            {t("admin.systemSettings.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -82,13 +84,13 @@ export function SystemSettingsView({
             onClick={handleReset}
             disabled={isSaving || isResetting}
           >
-            {isResetting ? "Resetting..." : "Reset"}
+            {isResetting ? t("admin.systemSettings.resetting") : t("admin.systemSettings.reset")}
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || isResetting}
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? t("admin.systemSettings.saving") : t("admin.systemSettings.saveChanges")}
           </Button>
         </div>
       </div>
@@ -109,12 +111,12 @@ export function SystemSettingsView({
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">API Ingest & OCR</CardTitle>
+            <CardTitle className="text-base">{t("admin.systemSettings.cards.apiIngest")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <SettingRow
-              title="Enable automated ingest"
-              description="Run scheduled API collection against source portals."
+              title={t("admin.systemSettings.fields.enableAutomatedIngest")}
+              description={t("admin.systemSettings.fields.enableAutomatedIngestDesc")}
             >
               <Switch
                 checked={settings.scraperEnabled}
@@ -125,7 +127,7 @@ export function SystemSettingsView({
             </SettingRow>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="scraper-interval">Ingest interval (min)</Label>
+                <Label htmlFor="scraper-interval">{t("admin.systemSettings.fields.ingestInterval")}</Label>
                 <Input
                   id="scraper-interval"
                   type="number"
@@ -140,7 +142,7 @@ export function SystemSettingsView({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ocr-workers">OCR workers</Label>
+                <Label htmlFor="ocr-workers">{t("admin.systemSettings.fields.ocrWorkers")}</Label>
                 <Input
                   id="ocr-workers"
                   type="number"
@@ -158,12 +160,12 @@ export function SystemSettingsView({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">TOR Review Automation</CardTitle>
+            <CardTitle className="text-base">{t("admin.systemSettings.cards.torAutomation")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <SettingRow
-              title="Auto-approve high confidence"
-              description="Publish TORs automatically when AI confidence is high enough."
+              title={t("admin.systemSettings.fields.autoApproveHighConfidence")}
+              description={t("admin.systemSettings.fields.autoApproveHighConfidenceDesc")}
             >
               <Switch
                 checked={settings.autoApproveEnabled}
@@ -174,7 +176,7 @@ export function SystemSettingsView({
             </SettingRow>
             <div className="space-y-2">
               <Label htmlFor="auto-threshold">
-                Auto-approve threshold (%)
+                {t("admin.systemSettings.fields.autoApproveThreshold")}
               </Label>
               <Input
                 id="auto-threshold"
@@ -196,12 +198,12 @@ export function SystemSettingsView({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Notifications</CardTitle>
+            <CardTitle className="text-base">{t("admin.systemSettings.cards.notifications")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <SettingRow
-              title="OCR failure alerts"
-              description="Email admins when OCR jobs fail."
+              title={t("admin.systemSettings.fields.ocrFailureAlerts")}
+              description={t("admin.systemSettings.fields.ocrFailureAlertsDesc")}
             >
               <Switch
                 checked={settings.notifyOnOcrFailure}
@@ -211,8 +213,8 @@ export function SystemSettingsView({
               />
             </SettingRow>
             <SettingRow
-              title="New company signup alerts"
-              description="Notify when a company account needs approval."
+              title={t("admin.systemSettings.fields.newCompanyAlerts")}
+              description={t("admin.systemSettings.fields.newCompanyAlertsDesc")}
             >
               <Switch
                 checked={settings.notifyOnNewSignup}
@@ -222,7 +224,7 @@ export function SystemSettingsView({
               />
             </SettingRow>
             <div className="space-y-2">
-              <Label htmlFor="support-email">Support email</Label>
+              <Label htmlFor="support-email">{t("admin.systemSettings.fields.supportEmail")}</Label>
               <Input
                 id="support-email"
                 type="email"
@@ -235,12 +237,12 @@ export function SystemSettingsView({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Security & Access</CardTitle>
+            <CardTitle className="text-base">{t("admin.systemSettings.cards.security")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <SettingRow
-              title="Maintenance mode"
-              description="Block non-admin access to the public product UI."
+              title={t("admin.systemSettings.fields.maintenanceMode")}
+              description={t("admin.systemSettings.fields.maintenanceModeDesc")}
             >
               <Switch
                 checked={settings.maintenanceMode}
@@ -251,7 +253,7 @@ export function SystemSettingsView({
             </SettingRow>
             <div className="space-y-2">
               <Label htmlFor="session-minutes">
-                Admin session timeout (min)
+                {t("admin.systemSettings.fields.adminSessionTimeout")}
               </Label>
               <Input
                 id="session-minutes"
@@ -267,7 +269,7 @@ export function SystemSettingsView({
                 }
               />
               <p className="text-xs text-muted-foreground">
-                Live sessions currently use a 30-minute inactivity timeout.
+                {t("admin.systemSettings.fields.sessionTimeoutHint")}
               </p>
             </div>
           </CardContent>

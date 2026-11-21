@@ -10,6 +10,7 @@ import {
   type TorReviewListItem,
   type TorReviewStatus,
 } from "@/types/tor-review"
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,13 +58,10 @@ const statusStyles: Record<TorReviewStatus, string> = {
     "border-transparent bg-emerald-600 text-white dark:bg-emerald-500",
 }
 
-const statusLabels: Record<TorReviewStatus, string> = {
-  "need-review": "Need Review",
-  "auto-approved": "Auto approved",
-  approved: "Approved",
-}
+const STATUS_KEYS: TorReviewStatus[] = ["need-review", "auto-approved", "approved"]
 
 export function TorReviewListView({ items }: TorReviewListViewProps) {
+  const { locale, t } = useLocale()
   const [search, setSearch] = useState("")
   const [reviewStatus, setReviewStatus] = useState("all")
   const [department, setDepartment] = useState("all")
@@ -107,7 +105,9 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">TOR Review</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("admin.torReviewList.title")}
+      </h1>
 
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <div className="relative w-full max-w-sm">
@@ -118,7 +118,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
               setSearch(event.target.value)
               setPage(1)
             }}
-            placeholder="Search tracked TORs..."
+            placeholder={t("admin.torReviewList.searchPlaceholder")}
             className="pl-8"
           />
         </div>
@@ -131,13 +131,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
           }}
         >
           <SelectTrigger className="w-full xl:w-44">
-            <SelectValue placeholder="Review Status" />
+            <SelectValue placeholder={t("admin.torReviewList.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {(Object.keys(statusLabels) as TorReviewStatus[]).map((key) => (
+            <SelectItem value="all">{t("admin.torReviewList.allStatuses")}</SelectItem>
+            {STATUS_KEYS.map((key) => (
               <SelectItem key={key} value={key}>
-                {statusLabels[key]}
+                {t(`admin.torReviewList.status.${key}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -151,10 +151,10 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
           }}
         >
           <SelectTrigger className="w-full xl:w-52">
-            <SelectValue placeholder="Department" />
+            <SelectValue placeholder={t("admin.torReviewList.departmentPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All departments</SelectItem>
+            <SelectItem value="all">{t("admin.torReviewList.allDepartments")}</SelectItem>
             {departments.map((name) => (
               <SelectItem key={name} value={name}>
                 {name}
@@ -171,13 +171,13 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
           }}
         >
           <SelectTrigger className="w-full xl:w-48">
-            <SelectValue placeholder="AI Confidence Level" />
+            <SelectValue placeholder={t("admin.torReviewList.confidencePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All confidence</SelectItem>
-            <SelectItem value="high">High (≥90%)</SelectItem>
-            <SelectItem value="medium">Medium (70–89%)</SelectItem>
-            <SelectItem value="low">Low (&lt;70%)</SelectItem>
+            <SelectItem value="all">{t("admin.torReviewList.allConfidence")}</SelectItem>
+            <SelectItem value="high">{t("admin.torReviewList.confidenceHigh")}</SelectItem>
+            <SelectItem value="medium">{t("admin.torReviewList.confidenceMedium")}</SelectItem>
+            <SelectItem value="low">{t("admin.torReviewList.confidenceLow")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -186,30 +186,31 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
         <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="px-4">Announcement ID</TableHead>
-              <TableHead>Project Title</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>AI Confidence</TableHead>
+              <TableHead className="px-4">{t("admin.torReviewList.table.announcementId")}</TableHead>
+              <TableHead>{t("admin.torReviewList.table.projectTitle")}</TableHead>
+              <TableHead>{t("admin.torReviewList.table.department")}</TableHead>
+              <TableHead>{t("admin.torReviewList.table.budget")}</TableHead>
+              <TableHead>{t("admin.torReviewList.table.aiConfidence")}</TableHead>
               <TableHead>
                 <span className="inline-flex items-center gap-1.5">
-                  Review Status
+                  {t("admin.torReviewList.table.reviewStatus")}
                   <Tooltip>
                     <TooltipTrigger
                       type="button"
                       className="inline-flex text-muted-foreground hover:text-foreground"
-                      aria-label="About auto approval"
+                      aria-label={t("admin.torReviewList.table.autoApproveAria")}
                     >
                       <Info className="size-3.5" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      Auto approve when AI Confidence ≥{" "}
-                      {AUTO_APPROVE_CONFIDENCE_THRESHOLD}%
+                      {t("admin.torReviewList.table.autoApproveTooltip", {
+                        threshold: AUTO_APPROVE_CONFIDENCE_THRESHOLD,
+                      })}
                     </TooltipContent>
                   </Tooltip>
                 </span>
               </TableHead>
-              <TableHead className="px-4 text-right">Action</TableHead>
+              <TableHead className="px-4 text-right">{t("admin.torReviewList.table.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -219,7 +220,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                   colSpan={7}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  No TORs match your filters.
+                  {t("admin.torReviewList.table.noMatch")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -232,11 +233,11 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                     {item.projectTitle}
                   </TableCell>
                   <TableCell>{item.department}</TableCell>
-                  <TableCell>{formatThb(item.budgetBaht)}</TableCell>
+                  <TableCell>{formatThb(item.budgetBaht, locale)}</TableCell>
                   <TableCell>{item.aiConfidence}%</TableCell>
                   <TableCell>
                     <Badge className={cn(statusStyles[item.reviewStatus])}>
-                      {statusLabels[item.reviewStatus]}
+                      {t(`admin.torReviewList.status.${item.reviewStatus}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 text-right">
@@ -249,7 +250,7 @@ export function TorReviewListView({ items }: TorReviewListViewProps) {
                         <Link href={`/admin/tor-review/${item.id}`} />
                       }
                     >
-                      Review & Edit
+                      {t("admin.torReviewList.table.reviewAndEdit")}
                     </Button>
                   </TableCell>
                 </TableRow>

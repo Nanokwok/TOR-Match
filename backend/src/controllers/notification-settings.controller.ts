@@ -25,11 +25,17 @@ export const getMyNotificationSettings = asyncHandler(async (req: Request, res: 
 
 export const upsertMyNotificationSettings = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
+  const cleanBody = { ...(req.body ?? {}) }
+  delete cleanBody._id
+  delete cleanBody.userId
+  delete cleanBody.createdAt
+  delete cleanBody.updatedAt
+
   const [settings, accountEmail] = await Promise.all([
     NotificationSettings.findOneAndUpdate(
       { userId: req.user.sub },
       // The recipient is never stored: it follows the account's email.
-      { $set: { ...req.body, emailRecipient: "", userId: req.user.sub } },
+      { $set: { ...cleanBody, emailRecipient: "", userId: req.user.sub } },
       { new: true, upsert: true, runValidators: true }
     ),
     accountEmailOf(req.user.sub),
