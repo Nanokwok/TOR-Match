@@ -22,11 +22,11 @@ Static application security testing for the whole repository (frontend, backend,
 | Severity | Found | Genuine (fixed) | False positive (suppressed) | Remaining |
 |---|---:|---:|---:|---:|
 | High / Error | 0 | 0 | 0 | 0 |
-| Medium / Warning | 14 | 10 | 4 | **0** |
+| Medium / Warning | 15 | 10 | 5 | **0** |
 | Low / Info | 0 | 0 | 0 | 0 |
-| **Total** | **14** | **10** | **4** | **0** |
+| **Total** | **15** | **10** | **5** | **0** |
 
-No finding was in application code (`frontend/src`, `backend/src`). All fourteen were in CI configuration files and test files.
+No finding was in application code (`frontend/src`, `backend/src`). All fifteen were in CI configuration files and test files.
 
 ## Findings and triage
 
@@ -68,11 +68,11 @@ Rule: `javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret` — `
 
 `jwt.sign(admin, "some-other-secret")` builds a token signed with the *wrong* secret to prove that `verifyAuthToken` and `requireAuth` reject it. The string is not a credential and never ships. Suppressed with an inline `// nosemgrep` comment that states the reason.
 
-### 4. `<script>` with an unknown value in tests — false positive, suppressed (2 findings)
+### 4. `<script>` with an unknown value in tests — false positive, suppressed (3 findings)
 
-Rule: `javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag` — `backend/tests/digest-email.test.ts` (2 places).
+Rule: `javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag` — `backend/tests/digest-email.test.ts` (2 places) and `backend/tests/password-reset.test.ts` (1 place).
 
-The tests feed `<script>x</script>` into the digest email renderer and assert the output is escaped (`&lt;script&gt;`). The tag is the attack payload under test, not markup we emit. Suppressed with an inline `// nosemgrep` comment that states the reason.
+The tests feed `<script>x</script>` into the email renderers (the digest and the password-reset email) and assert the output is escaped (`&lt;script&gt;`). The tag is the attack payload under test, not markup we emit. Suppressed with an inline `// nosemgrep` comment that states the reason.
 
 ## Scan notes
 
