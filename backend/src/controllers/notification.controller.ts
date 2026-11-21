@@ -1,4 +1,5 @@
 import type { Request, Response } from "express"
+import { isValidObjectId } from "mongoose"
 import { Notification } from "@/models/Notification.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
@@ -11,6 +12,8 @@ export const listNotifications = asyncHandler(async (req: Request, res: Response
 
 export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
+  // A malformed id is a notification that does not exist, not a server error.
+  if (!isValidObjectId(req.params.id)) throw ApiError.notFound("Notification not found")
   const notification = await Notification.findOneAndUpdate(
     { _id: req.params.id, userId: req.user.sub },
     { $set: { isRead: true } },
@@ -28,6 +31,7 @@ export const markAllAsRead = asyncHandler(async (req: Request, res: Response) =>
 
 export const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
+  if (!isValidObjectId(req.params.id)) throw ApiError.notFound("Notification not found")
   const notification = await Notification.findOneAndDelete({ _id: req.params.id, userId: req.user.sub })
   if (!notification) throw ApiError.notFound("Notification not found")
   res.status(204).send()

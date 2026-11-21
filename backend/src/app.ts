@@ -6,6 +6,9 @@ import morgan from "morgan"
 import { env } from "@/config/env"
 import routes from "@/routes"
 import { errorMiddleware, notFoundMiddleware } from "@/middleware/error.middleware"
+import { dropRevokedSessions } from "@/middleware/auth.middleware"
+import { createApiRateLimiter } from "@/middleware/rate-limit.middleware"
+import { rejectMongoOperators } from "@/middleware/reject-operators.middleware"
 
 export function createApp() {
   const app = express()
@@ -59,6 +62,14 @@ export function createApp() {
     app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"))
   }
 
+  // Before the routes, so a throttled client costs a counter lookup and nothing more.
+  app.use("/api", createApiRateLimiter())
+  // After the limiter (a flood of stale tokens should not reach the database) and
+  // before the routes, so requireAuth and optionalAuth never see a revoked session.
+  app.use("/api", dropRevokedSessions)
+  // Body and query are parsed by now. Path parameters belong to the routes, so
+  // each controller checks its own ids (isValidObjectId) before querying.
+  app.use("/api", rejectMongoOperators)
   app.use("/api", routes)
 
   app.use(notFoundMiddleware)

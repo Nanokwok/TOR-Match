@@ -29,4 +29,8 @@ export class ApiError extends Error {
   static conflict(message: string) {
     return new ApiError(409, message)
   }
+
+  static tooManyRequests(message = "Too many requests. Please slow down and try again shortly.", details?: unknown) {
+    return new ApiError(429, message, details)
+  }
 }

@@ -2,6 +2,7 @@ import { localizedKey } from "@/models/localized.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import type { TorDraftDoc } from "@/models/TorDraft.model"
 import { notifyTorPublished } from "@/services/match-notification.service"
+import { torListCache } from "@/services/tor-cache.service"
 
 /**
  * Copies a reviewed draft into the published `tors` collection.
@@ -105,6 +106,10 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
       `Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`
     )
   }
+
+  // The browse list is served from memory: without this a reviewer who just
+  // published would not see the TOR until the cache ran out.
+  torListCache.invalidate()
 
   // Awaited so a client refetching notifications right after the publish
   // cannot race ahead of the write. Alerts must never fail the publish.

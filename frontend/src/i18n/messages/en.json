@@ -39,6 +39,8 @@
     "companyProfile": "Company Profile",
     "settings": "Setting",
     "logout": "Logout",
+    "login": "Log in",
+    "signUp": "Sign up",
     "companyName": "Company Name",
     "notifications": "Notifications",
     "notificationsUnread": "Notifications, {count} unread",
@@ -381,6 +383,10 @@
       "category": "Category",
       "softwareOnly": "Software and IT work only"
     },
+    "guestQualification": {
+      "title": "Log in to check your eligibility",
+      "description": "Eligibility is checked against your company profile. Log in or sign up, save your profile, and we will compare it with every requirement in this TOR."
+    },
     "qualificationUnavailable": "Qualification results are unavailable.",
     "qualificationStatus": {
       "passed": "Passed",
@@ -518,9 +524,20 @@
     "notificationsDesc": "Control in-app and email alerts, digests, and event preferences.",
     "appearanceTitle": "Appearance & Display",
     "appearanceDesc": "Adjust theme, density, and how content is shown across TOR Match.",
+    "passwordTitle": "Change Password",
+    "passwordDesc": "Set a new password. You'll be signed out on your other devices.",
     "logoutTitle": "Log Out",
     "logoutDesc": "Securely end your current session on this device.",
     "signOut": "Sign Out"
+  },
+  "passwordSettings": {
+    "title": "Change Password",
+    "subtitle": "Enter your current password, then choose a new one.",
+    "currentPassword": "Current Password",
+    "hint": "At least 8 characters. Any characters are allowed, and you can paste or use a password manager. Passwords that appeared in a known data breach are refused.",
+    "submit": "Change password",
+    "saving": "Saving...",
+    "success": "Your password was changed. Your other devices have been signed out."
   },
   "appearanceSettings": {
     "backToSettings": "Back to Settings",
