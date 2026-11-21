@@ -34,6 +34,14 @@ function positiveInt(name: string, fallback: number): number {
   return Number.isInteger(value) && value > 0 ? value : fallback
 }
 
+/** A whole number, zero included; anything else (unset, blank, negative, "abc") falls back. */
+function nonNegativeInt(name: string, fallback: number): number {
+  const raw = process.env[name]
+  if (raw === undefined || raw.trim() === "") return fallback
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 0 ? value : fallback
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
@@ -49,6 +57,8 @@ export const env = {
   /** Global limit for /api/*: at most `rateLimitMaxRequests` per client IP in each `rateLimitWindowMs`. */
   rateLimitWindowMs: positiveInt("RATE_LIMIT_WINDOW_MS", 60 * 1000),
   rateLimitMaxRequests: positiveInt("RATE_LIMIT_MAX_REQUESTS", 100),
+  /** How long the list of published TORs is kept in memory (see tor-cache.service). 0 turns the cache off. */
+  torCacheTtlMs: nonNegativeInt("TOR_CACHE_TTL_MS", 60 * 1000),
 
   /**
    * Deliberately not `required()`: only TOR extraction needs these, and making

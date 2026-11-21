@@ -33,6 +33,11 @@ export type HeaderNavItem = {
 type HeaderProps = {
   className?: string;
   /**
+   * Whether a user is signed in. A guest sees Log in and Sign up instead of the
+   * notifications bell and the account menu (with its "log out").
+   */
+  isSignedIn?: boolean;
+  /**
    * Signed-in company identity from the saved profile.
    * Omit for guests — the header will not invent a placeholder name.
    */
@@ -52,6 +57,7 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   className,
+  isSignedIn = false,
   account,
   navItems = defaultNavItems,
   initialNotifications = [],
@@ -96,7 +102,9 @@ export function Header({
         </nav>
 
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
-          <NotificationCenter initialNotifications={initialNotifications} />
+          {isSignedIn ? (
+            <NotificationCenter initialNotifications={initialNotifications} />
+          ) : null}
 
           <AnimatedThemeToggler
             theme={resolvedTheme}
@@ -108,12 +116,30 @@ export function Header({
 
           <LanguageSwitcher variant="dark" />
 
-          {displayName ? (
+          {!isSignedIn ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex h-8 items-center rounded-md px-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
+              >
+                {t("header.login")}
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {t("header.signUp")}
+              </Link>
+            </div>
+          ) : null}
+
+          {isSignedIn && displayName ? (
             <span className="hidden max-w-48 truncate text-sm text-white/90 lg:inline">
               {displayName}
             </span>
           ) : null}
 
+          {isSignedIn ? (
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
@@ -149,6 +175,7 @@ export function Header({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          ) : null}
         </div>
       </div>
     </header>

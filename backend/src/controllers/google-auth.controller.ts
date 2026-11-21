@@ -3,8 +3,8 @@ import { OAuth2Client } from "google-auth-library"
 import { z } from "zod"
 
 import { env, isProduction } from "@/config/env"
-import { planGoogleSignIn, type GoogleProfile } from "@/domain/google-account"
-import { User } from "@/models/User.model"
+import type { GoogleProfile } from "@/domain/google-account"
+import { signInWithGoogleProfile } from "@/services/google-sign-in.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 import { signAuthToken } from "@/utils/jwt"
@@ -85,37 +85,13 @@ export const googleSignIn = asyncHandler(async (req: Request, res: Response) => 
   if (!parsed.success) throw ApiError.badRequest("A Google authorization code is required")
 
   const profile = await profileFromCode(parsed.data.code)
-  const [byGoogleId, byEmail] = await Promise.all([
-    User.findOne({ googleId: profile.googleId }),
-    User.findOne({ email: profile.email }),
-  ])
-  const plan = planGoogleSignIn(
-    profile,
-    byGoogleId && { id: String(byGoogleId._id), googleId: byGoogleId.googleId },
-    byEmail && { id: String(byEmail._id), googleId: byEmail.googleId }
-  )
-
-  if (plan.action === "reject") {
-    throw ApiError.unauthorized(
-      plan.reason === "email-not-verified"
-        ? "Your Google email address is not verified"
-        : "This email is already linked to a different Google account"
-    )
-  }
-
-  const user =
-    plan.action === "create"
-      ? await User.create({ name: profile.name, email: profile.email, googleId: profile.googleId })
-      : plan.action === "link"
-        ? await User.findByIdAndUpdate(plan.userId, { $set: { googleId: profile.googleId } }, { new: true })
-        : await User.findById(plan.userId)
-  if (!user) throw ApiError.unauthorized("Account not found")
+  const { user, action } = await signInWithGoogleProfile(profile)
 
   const token = signAuthToken({ sub: String(user._id), email: user.email, role: user.role as "user" | "admin" })
   res.cookie(env.authCookieName, token, authCookieOptions())
-  res.status(plan.action === "create" ? 201 : 200).json({
+  res.status(action === "create" ? 201 : 200).json({
     user: { id: String(user._id), email: user.email, name: user.name, role: user.role },
     token,
-    created: plan.action === "create",
+    created: action === "create",
   })
 })

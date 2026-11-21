@@ -25,7 +25,6 @@ const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "tm_token"
 
 // Route groups (main) — everything a signed-in user reaches after auth.
 const PROTECTED_PREFIXES = [
-  "/browse",
   "/company-profile",
   "/company-setup",
   "/dashboard",
@@ -33,6 +32,13 @@ const PROTECTED_PREFIXES = [
   "/settings",
   "/workspace",
 ]
+
+/**
+ * Open to a visitor with no session ("Start searching free"), but still aware of
+ * one: a signed-in user who only browses must keep sliding the idle window, or
+ * they would be signed out after 30 minutes of using the page.
+ */
+const OPEN_PREFIXES = ["/browse"]
 
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password"]
 
@@ -71,7 +77,11 @@ async function handleUserAuth(request: NextRequest): Promise<NextResponse | null
   }
 
   // Active interaction on protected route: slide expiration window
-  if (session && isSignedIn && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
+  if (
+    session &&
+    isSignedIn &&
+    (matchesPrefix(pathname, PROTECTED_PREFIXES) || matchesPrefix(pathname, OPEN_PREFIXES))
+  ) {
     const refreshed = touchUserSession(session)
     const response = NextResponse.next()
     response.cookies.set(

@@ -56,6 +56,72 @@ function parseThb(value: string) {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+type LocalizedField = { en?: string | null; th?: string | null } | null | undefined
+
+/** The fields the listing's simple filters and keyword search read. */
+export type SearchableTor = {
+  announcementNo?: string | null
+  status?: string | null
+  budgetBaht?: number | null
+  techTags?: readonly string[] | null
+  title?: LocalizedField
+  department?: LocalizedField
+  localOffice?: LocalizedField
+  summary?: LocalizedField
+}
+
+export type SimpleTorFilters = {
+  status?: string
+  /** `localizedKey()` of a department: its English name, or its Thai one for a Thai-only TOR. */
+  department?: string
+  budget?: { min: number; max: number }
+  keyword?: string
+}
+
+const KEYWORD_FIELDS = ["title", "department", "localOffice", "summary"] as const
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+/**
+ * Status, department, budget range and keyword, decided in this process.
+ *
+ * The listing used to hand these to MongoDB, which meant reading from the
+ * database on every request; it now works from a cached list, so the same rules
+ * run here. They follow the old queries exactly: a missing field never matches
+ * (as in MongoDB, where `{ field: "" }` does not match an absent field), the
+ * keyword is a case-insensitive literal (regex characters escaped), and it is
+ * looked for in both locales of the text fields, in the announcement number and
+ * in any tag.
+ */
+export function matchesSimpleFilters(tor: SearchableTor, filters: SimpleTorFilters): boolean {
+  if (filters.status && tor.status !== filters.status) return false
+
+  if (filters.department) {
+    const english = tor.department?.en
+    const thai = tor.department?.th
+    if (!(english === filters.department || (english === "" && thai === filters.department))) return false
+  }
+
+  if (filters.budget) {
+    const budget = tor.budgetBaht
+    if (typeof budget !== "number" || budget < filters.budget.min || budget >= filters.budget.max) return false
+  }
+
+  const keyword = filters.keyword?.trim()
+  if (keyword) {
+    const pattern = new RegExp(escapeRegex(keyword), "i")
+    const found =
+      KEYWORD_FIELDS.some((field) => [tor[field]?.en, tor[field]?.th].some((text) => typeof text === "string" && pattern.test(text))) ||
+      (typeof tor.announcementNo === "string" && pattern.test(tor.announcementNo)) ||
+      (tor.techTags ?? []).some((tag) => typeof tag === "string" && pattern.test(tag))
+    if (!found) return false
+  }
+
+  return true
+}
+
 export function matchesDetailFilters(
   tor: FilterableTor,
   detail?: TorDetailFilters | null

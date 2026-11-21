@@ -140,15 +140,57 @@ export type RequestPasswordResetInput = {
   email: string
 }
 
-/** UI stub until the backend exposes a password-reset endpoint. */
+/**
+ * Asks the backend to email a reset link. The answer is the same whether or not
+ * the address has an account, so a success here only means "if it does, it was sent".
+ */
 export async function requestPasswordResetAction({
   email,
 }: RequestPasswordResetInput): Promise<AuthResult> {
   if (!email.trim()) {
     return { ok: false, error: "Email is required." }
   }
-  console.log("Action clicked: Request password reset", { email })
-  return { ok: true }
+  try {
+    await apiFetch("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim() }),
+      auth: false,
+    })
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: messageFromError(error, "requestPasswordResetAction failed") }
+  }
+}
+
+export type ChangePasswordInput = {
+  currentPassword: string
+  newPassword: string
+}
+
+/**
+ * Changes the signed-in user's password. The backend ends every earlier session,
+ * this one included, and answers with a fresh token that replaces the cookies.
+ */
+export async function changePasswordAction({
+  currentPassword,
+  newPassword,
+}: ChangePasswordInput): Promise<AuthResult> {
+  if (!currentPassword) {
+    return { ok: false, error: "Current password is required." }
+  }
+  if (newPassword.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." }
+  }
+  try {
+    const data = await apiFetch<{ ok: true; token: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    })
+    await setAuthCookie(data.token)
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: messageFromError(error, "changePasswordAction failed") }
+  }
 }
 
 export type ResetPasswordInput = {
@@ -156,20 +198,28 @@ export type ResetPasswordInput = {
   password: string
 }
 
-/** UI stub until the backend exposes a password-reset endpoint. */
+/** Sets a new password from the token in the emailed link. */
 export async function resetPasswordAction({
   token,
   password,
 }: ResetPasswordInput): Promise<AuthResult> {
+  if (!token) {
+    return { ok: false, error: "This password reset link is invalid or has expired. Please request a new one." }
+  }
   if (!password.trim()) {
     return { ok: false, error: "Password is required." }
   }
   if (password.length < 8) {
     return { ok: false, error: "Password must be at least 8 characters." }
   }
-  console.log("Action clicked: Reset password", {
-    token: token ?? "mock_reset_token",
-    passwordLength: password.length,
-  })
-  return { ok: true }
+  try {
+    await apiFetch("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+      auth: false,
+    })
+    return { ok: true }
+  } catch (error) {
+    return { ok: false, error: messageFromError(error, "resetPasswordAction failed") }
+  }
 }

@@ -154,8 +154,16 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
   }
 }
 
+/** One string each, so a repeated parameter or `reviewStatus[$ne]=x` cannot reach the filter. */
+const listQuerySchema = z.object({
+  reviewStatus: z.string().max(100).optional(),
+  department: z.string().max(300).optional(),
+})
+
 export const listTorDrafts = asyncHandler(async (req: Request, res: Response) => {
-  const { reviewStatus, department } = req.query as Record<string, string | undefined>
+  const parsedQuery = listQuerySchema.safeParse(req.query)
+  if (!parsedQuery.success) throw ApiError.badRequest("Invalid query")
+  const { reviewStatus, department } = parsedQuery.data
 
   const filter: Record<string, unknown> = {}
   if (reviewStatus && reviewStatus !== "all") filter.reviewStatus = reviewStatus
