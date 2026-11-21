@@ -13,3 +13,5 @@ process.env.MONGODB_URI ??= "mongodb://127.0.0.1:27017/unit-tests-unused"
 process.env.JWT_SECRET ??= "unit-test-secret"
 // Tests create TORs and list them straight away; a cache would show them the list from before.
 process.env.TOR_CACHE_TTL_MS ??= "0"
+// The download tests serve files from 127.0.0.1; the URL guard would refuse that. The guard's own tests turn it back on.
+process.env.SCRAPER_ALLOW_ANY_HOST ??= "true"

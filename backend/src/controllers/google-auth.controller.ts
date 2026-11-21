@@ -8,6 +8,7 @@ import { signInWithGoogleProfile } from "@/services/google-sign-in.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 import { signAuthToken } from "@/utils/jwt"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 /**
  * Google sign-in, authorization-code flow.
@@ -84,8 +85,43 @@ export const googleSignIn = asyncHandler(async (req: Request, res: Response) => 
   const parsed = codeSchema.safeParse(req.body)
   if (!parsed.success) throw ApiError.badRequest("A Google authorization code is required")
 
-  const profile = await profileFromCode(parsed.data.code)
-  const { user, action } = await signInWithGoogleProfile(profile)
+  const googleDetails = { method: "google" }
+
+  let profile: GoogleProfile
+  try {
+    profile = await profileFromCode(parsed.data.code)
+  } catch (error) {
+    logSecurityEvent({
+      event: "AUTH_LOGIN_FAILURE",
+      req,
+      reason: error instanceof ApiError ? error.message : "Google sign-in failed",
+      details: googleDetails,
+    })
+    throw error
+  }
+
+  let result: Awaited<ReturnType<typeof signInWithGoogleProfile>>
+  try {
+    result = await signInWithGoogleProfile(profile)
+  } catch (error) {
+    logSecurityEvent({
+      event: "AUTH_LOGIN_FAILURE",
+      req,
+      email: profile.email,
+      reason: error instanceof ApiError ? error.message : "Google sign-in failed",
+      details: googleDetails,
+    })
+    throw error
+  }
+  const { user, action } = result
+
+  logSecurityEvent({
+    event: action === "create" ? "AUTH_REGISTRATION" : "AUTH_LOGIN_SUCCESS",
+    req,
+    userId: String(user._id),
+    email: user.email,
+    details: { ...googleDetails, action },
+  })
 
   const token = signAuthToken({
     sub: String(user._id),

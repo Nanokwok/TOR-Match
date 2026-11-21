@@ -14,6 +14,7 @@ import { qualificationCriteriaSchema } from "@/validation/qualification"
 import { downloadAllTorDocuments, type TorDocument } from "@/scraper/tor-documents"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 /**
  * The admin review screen is a Thai editing surface — Thai is the site's
@@ -212,8 +213,22 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   // The reviewer's verdict. Recording it is what makes the ingest treat the
   // published content as theirs: a later announcement may add a deadline to an
   // approved draft, but it cannot overwrite what the reviewer corrected.
-  draft.set({ reviewStatus: "approved", publishedTorId: published._id, publishedAt: new Date() })
+  draft.set({
+    reviewStatus: "approved",
+    publishedTorId: published._id,
+    publishedAt: new Date(),
+    reviewedBy: isValidObjectId(req.user?.sub) ? req.user?.sub : null,
+  })
   await draft.save()
+
+  // Who published what, so an admin cannot later deny it (and a bad publish can be traced).
+  logSecurityEvent({
+    event: "TOR_PUBLISHED",
+    req,
+    userId: req.user?.sub,
+    email: req.user?.email,
+    details: { draftId: String(draft._id), announcementNo: draft.announcementNo },
+  })
 
   res.status(200).json({ draft, tor: published })
 })
@@ -322,7 +337,8 @@ export const getTorDraftPdf = asyncHandler(async (req: Request, res: Response) =
     }
   }
 
-  if (targetUrl.startsWith("/")) {
+  // A path on this site, not "//host" or "/\host", which a browser reads as another site.
+  if (targetUrl.startsWith("/") && !targetUrl.startsWith("//") && !targetUrl.includes("\\")) {
     res.redirect(targetUrl)
     return
   }

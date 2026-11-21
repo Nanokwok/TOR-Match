@@ -80,6 +80,22 @@ jobs:
       - name: Build
         run: npm run build --workspace backend
 
+  # The patching policy (docs/security/vulnerability-management-and-sbom.md) says a
+  # High or Critical advisory with a fix available in a production dependency blocks the build.
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
