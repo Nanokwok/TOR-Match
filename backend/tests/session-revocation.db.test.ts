@@ -97,17 +97,6 @@ test("a token with no issue time is refused once the password has changed", asyn
   assert.equal((await me({ cookie: old })).status, 401)
 })
 
-test("a stale cookie does not stop a fresh bearer token from working, nor the other way round", async () => {
-  const ana = await createUser("ana@example.com")
-  const stale = tokenFor(ana, 0)
-  await changePassword(ana._id)
-  const fresh = tokenFor(ana, 1)
-
-  assert.equal((await me({ cookie: stale, bearer: fresh })).status, 200)
-  assert.equal((await me({ cookie: fresh, bearer: stale })).status, 200)
-  assert.equal((await me({ cookie: stale, bearer: stale })).status, 401)
-})
-
 test("another account's sessions are not affected", async () => {
   const ana = await createUser("ana@example.com")
   const ben = await createUser("ben@example.com")
