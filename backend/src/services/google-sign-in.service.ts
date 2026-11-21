@@ -40,7 +40,8 @@ export async function signInWithGoogleProfile(profile: GoogleProfile) {
         ? await User.findByIdAndUpdate(
             plan.userId,
             {
-              $set: { googleId: profile.googleId, passwordChangedAt: new Date() },
+              $set: { googleId: profile.googleId },
+              $inc: { tokenVersion: 1 },
               $unset: { passwordHash: 1 },
             },
             { new: true }

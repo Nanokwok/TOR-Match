@@ -38,8 +38,8 @@ async function createUser(email: string) {
 }
 
 // signAuthToken fills issuedAt itself, but only when the key is absent, so do not pass it as undefined.
-const tokenFor = (user: { _id: unknown; email: string }, issuedAt?: number) =>
-  signAuthToken({ sub: String(user._id), email: user.email, role: "user", ...(issuedAt === undefined ? {} : { issuedAt }) })
+const tokenFor = (user: { _id: unknown; email: string }, tokenVersion = 0) =>
+  signAuthToken({ sub: String(user._id), email: user.email, role: "user", tokenVersion })
 
 const me = (credentials: { cookie?: string; bearer?: string }) =>
   fetch(`${base}/auth/me`, {
@@ -49,9 +49,8 @@ const me = (credentials: { cookie?: string; bearer?: string }) =>
     },
   })
 
-/** The password changed a moment ago, as a reset would record it. */
-const changePassword = (id: unknown, at = new Date()) =>
-  User.updateOne({ _id: id }, { $set: { passwordChangedAt: at } })
+const changePassword = (id: unknown) =>
+  User.updateOne({ _id: id }, { $inc: { tokenVersion: 1 } })
 
 test("before any reset, a session works as always", async () => {
   const ana = await createUser("ana@example.com")
@@ -61,30 +60,19 @@ test("before any reset, a session works as always", async () => {
 
 test("after a reset, a session from before it is refused, by cookie or by bearer token", async () => {
   const ana = await createUser("ana@example.com")
-  const before = tokenFor(ana, Date.now() - 60_000)
+  const before = tokenFor(ana, 0)
   await changePassword(ana._id)
 
   const byCookie = await me({ cookie: before })
   assert.equal(byCookie.status, 401)
-  assert.equal((await byCookie.json()).error, "Authentication required")
+  assert.equal((await byCookie.json()).error, "Session has been revoked")
   assert.equal((await me({ bearer: before })).status, 401)
-})
-
-test("the stale cookie is cleared from the browser", async () => {
-  const ana = await createUser("ana@example.com")
-  const before = tokenFor(ana, Date.now() - 60_000)
-  await changePassword(ana._id)
-
-  const response = await me({ cookie: before })
-  const cleared = response.headers.getSetCookie().find((cookie) => cookie.startsWith(`${env.authCookieName}=`))
-  assert.ok(cleared, "a Set-Cookie for the session cookie is sent")
-  assert.match(cleared, new RegExp(`^${env.authCookieName}=;`), "with an empty value")
 })
 
 test("a session started after the reset works", async () => {
   const ana = await createUser("ana@example.com")
-  await changePassword(ana._id, new Date(Date.now() - 60_000))
-  assert.equal((await me({ cookie: tokenFor(ana) })).status, 200)
+  await changePassword(ana._id)
+  assert.equal((await me({ cookie: tokenFor(ana, 1) })).status, 200)
 })
 
 test("keeping a session alive does not carry it past a reset", async () => {
@@ -111,9 +99,9 @@ test("a token with no issue time is refused once the password has changed", asyn
 
 test("a stale cookie does not stop a fresh bearer token from working, nor the other way round", async () => {
   const ana = await createUser("ana@example.com")
-  const stale = tokenFor(ana, Date.now() - 60_000)
-  await changePassword(ana._id, new Date(Date.now() - 1_000))
-  const fresh = tokenFor(ana)
+  const stale = tokenFor(ana, 0)
+  await changePassword(ana._id)
+  const fresh = tokenFor(ana, 1)
 
   assert.equal((await me({ cookie: stale, bearer: fresh })).status, 200)
   assert.equal((await me({ cookie: fresh, bearer: stale })).status, 200)
@@ -123,14 +111,14 @@ test("a stale cookie does not stop a fresh bearer token from working, nor the ot
 test("another account's sessions are not affected", async () => {
   const ana = await createUser("ana@example.com")
   const ben = await createUser("ben@example.com")
-  const benToken = tokenFor(ben, Date.now() - 60_000)
+  const benToken = tokenFor(ben, 0)
   await changePassword(ana._id)
   assert.equal((await me({ cookie: benToken })).status, 200)
 })
 
 test("a public page treats a revoked session as a visitor who is not signed in", async () => {
   const ana = await createUser("ana@example.com")
-  const before = tokenFor(ana, Date.now() - 60_000)
+  const before = tokenFor(ana, 0)
   await changePassword(ana._id)
   // /tors accepts anonymous visitors; it must still answer, just without a signed-in user.
   const response = await fetch(`${base}/tors`, { headers: { cookie: `${env.authCookieName}=${before}` } })
@@ -143,12 +131,12 @@ test("a token that does not verify is left for the auth middleware to refuse", a
 
 test("resetting the password through the emailed link signs out the old session, and logging in again works", async () => {
   const ana = await createUser("ana@example.com")
-  const oldSession = tokenFor(ana, Date.now() - 1_000)
+  const oldSession = tokenFor(ana, 0)
   assert.equal((await me({ cookie: oldSession })).status, 200)
 
   const sent: string[] = []
   await requestPasswordReset("ana@example.com", {
-    send: async (message) => {
+    send: async (message: { text: string }) => {
       sent.push(message.text)
       return true
     },

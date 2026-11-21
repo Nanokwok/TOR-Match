@@ -54,8 +54,8 @@ const login = (password: string, ip: string) =>
 
 const me = (token: string) => fetch(`${base}/auth/me`, { headers: { authorization: `Bearer ${token}` } })
 
-const sessionFor = (user: { _id: unknown; email: string }, issuedAt?: number) =>
-  signAuthToken({ sub: String(user._id), email: user.email, role: "user", ...(issuedAt === undefined ? {} : { issuedAt }) })
+const sessionFor = (user: { _id: unknown; email: string; tokenVersion?: number }, tokenVersion = 0) =>
+  signAuthToken({ sub: String(user._id), email: user.email, role: "user", tokenVersion })
 
 test("a new Google account is created with no password and the user role", async () => {
   const { user, action } = await signInWithGoogleProfile(profile())
@@ -71,7 +71,7 @@ test("a returning Google account signs in and nothing about it changes", async (
   const again = await signInWithGoogleProfile(profile())
   assert.equal(again.action, "login")
   assert.equal(String(again.user._id), String(first.user._id))
-  assert.equal((await User.findById(first.user._id))?.passwordChangedAt, undefined)
+  assert.equal((await User.findById(first.user._id))?.tokenVersion, 0)
 })
 
 test("linking Google to an account that has a password removes that password", async () => {
@@ -84,7 +84,7 @@ test("linking Google to an account that has a password removes that password", a
   const stored = await User.findById(account._id).select("+passwordHash")
   assert.equal(stored?.googleId, "g-ana")
   assert.equal(stored?.passwordHash, undefined, "the password is gone")
-  assert.ok(stored?.passwordChangedAt, "and the moment is recorded")
+  assert.equal(stored?.tokenVersion, 1)
 
   const attempt = await login(ATTACKER_PASSWORD, "10.3.0.1")
   assert.equal(attempt.status, 401)
@@ -93,13 +93,13 @@ test("linking Google to an account that has a password removes that password", a
 
 test("linking ends every session that began before it, and a session started afterwards works", async () => {
   const account = await createPasswordAccount()
-  const earlier = sessionFor(account, Date.now() - 60_000)
+  const earlier = sessionFor(account, 0)
   assert.equal((await me(earlier)).status, 200)
 
   await signInWithGoogleProfile(profile())
 
   assert.equal((await me(earlier)).status, 401, "whoever was signed in before is out")
-  assert.equal((await me(sessionFor(account))).status, 200, "a session issued after the link works")
+  assert.equal((await me(sessionFor(account, 1))).status, 200, "a session issued after the link works")
 })
 
 test("a reset link sent before the account was linked is dropped too", async () => {
@@ -120,7 +120,7 @@ test("an email Google has not verified links nothing and changes nothing", async
   const stored = await User.findById(account._id).select("+passwordHash")
   assert.ok(stored?.passwordHash, "the password is still there")
   assert.equal(stored?.googleId, undefined)
-  assert.equal(stored?.passwordChangedAt, undefined)
+  assert.equal(stored?.tokenVersion, 0)
   assert.equal((await login(ATTACKER_PASSWORD, "10.3.0.2")).status, 200)
 })
 
@@ -131,13 +131,13 @@ test("an email already linked to a different Google account is refused and left 
 
   const stored = await User.findOne({ email: "ana@example.com" })
   assert.equal(stored?.googleId, "g-someone-else")
-  assert.equal(stored?.passwordChangedAt, undefined)
+  assert.equal(stored?.tokenVersion, 0)
 })
 
 test("pre-registration takeover: the first person's password and session stop working once the real owner signs in with Google", async () => {
   // Someone registers with an address that is not theirs, and stays signed in.
   const squatted = await createPasswordAccount()
-  const squatterSession = sessionFor(squatted, Date.now() - 1_000)
+  const squatterSession = sessionFor(squatted, 0)
   assert.equal((await me(squatterSession)).status, 200)
 
   // The real owner signs in with Google.
@@ -145,5 +145,5 @@ test("pre-registration takeover: the first person's password and session stop wo
 
   assert.equal((await login(ATTACKER_PASSWORD, "10.3.0.3")).status, 401)
   assert.equal((await me(squatterSession)).status, 401)
-  assert.equal((await me(sessionFor(user))).status, 200, "the owner is in")
+  assert.equal((await me(sessionFor(user, user.tokenVersion))).status, 200, "the owner is in")
 })

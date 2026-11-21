@@ -23,11 +23,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 })
 
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
-})
-
 function toPublicUser(user: { _id: unknown; email: string; name: string; role: string }) {
   return { id: String(user._id), email: user.email, name: user.name, role: user.role }
 }
@@ -124,46 +119,4 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findById(req.user.sub)
   if (!user) throw ApiError.unauthorized()
   res.status(200).json({ user: toPublicUser(user) })
-})
-
-export const changePassword = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) throw ApiError.unauthorized()
-
-  const parsed = changePasswordSchema.safeParse(req.body)
-  if (!parsed.success) {
-    throw ApiError.badRequest("Invalid input", parsed.error.flatten())
-  }
-  const { currentPassword, newPassword } = parsed.data
-
-  const user = await User.findById(req.user.sub).select("+passwordHash")
-  if (!user || !user.passwordHash) {
-    throw ApiError.unauthorized("Cannot change password for this account")
-  }
-
-  const matches = await bcrypt.compare(currentPassword, user.passwordHash)
-  if (!matches) {
-    throw ApiError.badRequest("Current password is incorrect")
-  }
-
-  const isPwned = await isPasswordPwned(newPassword)
-  if (isPwned) {
-    throw ApiError.badRequest(PWNED_PASSWORD_ERROR_MESSAGE)
-  }
-
-  const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS)
-  user.passwordHash = newHash
-  user.tokenVersion = (user.tokenVersion ?? 0) + 1
-  await user.save()
-
-  logSecurityEvent({ event: "PASSWORD_CHANGED", req, userId: req.user.sub, email: req.user.email })
-
-  const newToken = signAuthToken({
-    sub: String(user._id),
-    email: user.email,
-    role: user.role as "user" | "admin",
-    tokenVersion: user.tokenVersion,
-  })
-  res.cookie(env.authCookieName, newToken, authCookieOptions())
-  res.setHeader("X-Refreshed-Token", newToken)
-  res.status(200).json({ message: "Password updated successfully", token: newToken })
 })
