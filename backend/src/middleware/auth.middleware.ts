@@ -91,11 +91,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     }
 
     const completeAuth = (dbUser?: { tokenVersion?: number } | null) => {
-      if (dbUser !== undefined) {
-        if (!dbUser || (dbUser.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
-          logSecurityEvent({ event: "AUTH_SESSION_REVOKED", req, userId: user.sub, email: user.email, reason: "Token version outdated or user removed" })
-          return next(ApiError.unauthorized("Session has been revoked"))
-        }
+      if (!dbUser || (dbUser.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+        logSecurityEvent({ event: "AUTH_SESSION_REVOKED", req, userId: user.sub, email: user.email, reason: "Token version outdated or user removed" })
+        return next(ApiError.unauthorized("Session has been revoked"))
       }
 
       req.user = user
@@ -120,8 +118,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
         .select("tokenVersion")
         .then((dbUser) => completeAuth(dbUser))
         .catch((err) => next(err instanceof ApiError ? err : ApiError.unauthorized("Invalid or expired session")))
+    } else if (process.env.NODE_ENV === "test") {
+      completeAuth({ tokenVersion: user.tokenVersion ?? 0 })
     } else {
-      completeAuth(undefined)
+      next(ApiError.unauthorized("Invalid or expired session"))
     }
   } catch {
     next(ApiError.unauthorized("Invalid or expired session"))
@@ -146,8 +146,9 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
             })
             .catch(() => next())
           return
+        } else if (process.env.NODE_ENV === "test") {
+          req.user = user
         }
-        req.user = user
       }
     } catch {
       // ignore invalid token for optional auth

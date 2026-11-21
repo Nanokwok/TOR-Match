@@ -42,7 +42,6 @@ async function search(projectNo: string): Promise<SearchRow[]> {
 
   const response = await fetch(url, {
     headers: { Accept: "application/json", "User-Agent": env.scraperUserAgent },
-    redirect: "error",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`Project lookup returned HTTP ${response.status}`)

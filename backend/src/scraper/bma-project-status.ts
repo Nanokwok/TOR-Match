@@ -73,7 +73,6 @@ export async function fetchProjectStatus(detailUrl: string): Promise<ProjectStat
 
   const response = await fetch(url, {
     headers: { Accept: "application/json", "User-Agent": env.scraperUserAgent },
-    redirect: "error",
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
   if (!response.ok) return null

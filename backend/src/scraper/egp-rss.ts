@@ -278,7 +278,6 @@ export async function fetchFeed(query: EgpFeedQuery): Promise<EgpFeedResult> {
   const url = buildFeedUrl(query)
   const response = await fetch(url, {
     headers: { "User-Agent": env.scraperUserAgent },
-    redirect: "error",
     signal: AbortSignal.timeout(60_000),
   })
 

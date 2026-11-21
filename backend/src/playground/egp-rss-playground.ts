@@ -151,7 +151,6 @@ async function main() {
       const res = await fetch(url.toString(), {
         signal: AbortSignal.timeout(8000),
         headers: { Accept: "application/xml, text/xml, */*" },
-        redirect: "error",
       })
       if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
       xml = await res.text()

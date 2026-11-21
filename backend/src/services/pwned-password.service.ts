@@ -84,7 +84,6 @@ export async function isPasswordPwned(
         "Add-Padding": "true",
         "User-Agent": "tor-match",
       },
-      redirect: "error",
       signal: controller.signal,
     })
 
