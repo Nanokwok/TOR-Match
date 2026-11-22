@@ -2,11 +2,11 @@ import "server-only"
 
 import { cookies } from "next/headers"
 import { apiFetch } from "@/lib/api-client"
-import { required } from "@/lib/env"
+import { AUTH_COOKIE_NAME } from "@/lib/auth-cookie"
 import type { AppNotification } from "@/types/notification"
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const token = (await cookies()).get(required("AUTH_COOKIE_NAME"))?.value
+  const token = (await cookies()).get(AUTH_COOKIE_NAME)?.value
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

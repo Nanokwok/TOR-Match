@@ -1,10 +1,10 @@
 import { cookies, headers as requestHeaders } from "next/headers"
 
 import { pickClientIp } from "@/lib/client-ip"
+import { AUTH_COOKIE_NAME } from "@/lib/auth-cookie"
 import { required } from "@/lib/env"
 
 const API_URL = required("NEXT_PUBLIC_API_URL")
-const AUTH_COOKIE_NAME = required("AUTH_COOKIE_NAME")
 
 /** Error thrown by {@link apiFetch} for any non-2xx response from the backend. */
 export class ApiRequestError extends Error {

@@ -7,7 +7,7 @@ import { redirect } from "next/navigation"
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth-cookie"
 import { GOOGLE_STATE_COOKIE, googleStateCookieOptions } from "@/lib/google-auth"
-import { decodeUserToken, setUserSessionCookie, clearUserSessionCookie } from "@/lib/user-session"
+import { decodeUserToken, setUserSessionCookie } from "@/lib/user-session"
 
 export type AuthResult = { ok: true } | { ok: false; error: string }
 
@@ -118,22 +118,6 @@ export async function registerWithEmailAction({
 /** Signing up and logging in are one flow: a new Google account is created on first use. */
 export async function registerWithGoogleAction(): Promise<AuthResult> {
   return startGoogleAuth()
-}
-
-export async function logoutAction(): Promise<void> {
-  try {
-    await apiFetch("/auth/logout", { method: "POST" })
-  } catch (error) {
-    // Best-effort: the local cookie is cleared below regardless, so a
-    // failed backend call (e.g. already-expired token) shouldn't block
-    // signing the user out on this device.
-    console.error("logoutAction: backend logout call failed", error)
-  }
-
-  const cookieStore = await cookies()
-  cookieStore.delete(AUTH_COOKIE_NAME)
-  cookieStore.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 })
-  await clearUserSessionCookie()
 }
 
 export type RequestPasswordResetInput = {
