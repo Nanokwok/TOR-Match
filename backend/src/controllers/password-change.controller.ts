@@ -6,6 +6,7 @@ import { changePassword } from "@/services/password-change.service"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 import { authCookieOptions, signAuthToken } from "@/utils/jwt"
+import { logSecurityEvent } from "@/utils/security-logger"
 import { newPasswordSchema } from "@/validation/password"
 
 const changeSchema = z.object({
@@ -19,7 +20,28 @@ export const changeMyPassword = asyncHandler(async (req: Request, res: Response)
   const parsed = changeSchema.safeParse(req.body)
   if (!parsed.success) throw ApiError.badRequest("Invalid input", parsed.error.flatten())
 
-  const result = await changePassword(req.user.sub, parsed.data.currentPassword, parsed.data.newPassword)
+  let result: Awaited<ReturnType<typeof changePassword>>
+  try {
+    result = await changePassword(req.user.sub, parsed.data.currentPassword, parsed.data.newPassword)
+  } catch (error) {
+    if (error instanceof ApiError) {
+      logSecurityEvent({
+        event: "PASSWORD_CHANGE_FAILED",
+        req,
+        userId: req.user.sub,
+        email: req.user.email,
+        reason: error.message,
+      })
+    }
+    throw error
+  }
+  logSecurityEvent({
+    event: "PASSWORD_CHANGED",
+    req,
+    userId: req.user.sub,
+    email: req.user.email,
+    details: { method: "change-password" },
+  })
 
   const token = signAuthToken({
     sub: req.user.sub,

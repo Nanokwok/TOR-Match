@@ -1,0 +1,25 @@
+version: 2
+
+# Weekly update pull requests for the npm workspaces (frontend and backend share
+# the root lockfile) and for the pinned GitHub Actions. Security updates are
+# opened as soon as an advisory is published, regardless of this schedule.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Wait a week before proposing a freshly published version: a malicious or broken
+    # release is usually pulled within days. Security updates ignore the cooldown.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7

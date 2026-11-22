@@ -82,7 +82,11 @@ export async function requestPasswordReset(email: string, deps: PasswordResetDep
  * Every session that was signed in before this moment stops working: the point
  * of a reset is often to lock out someone who should not have access.
  */
-export async function resetPassword(token: string, newPassword: string, deps: PasswordResetDeps = {}): Promise<void> {
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+  deps: PasswordResetDeps = {}
+): Promise<{ userId: string }> {
   const isPwned = deps.isPwned ?? isPasswordPwned
   const now = (deps.now ?? (() => new Date()))()
 
@@ -102,4 +106,5 @@ export async function resetPassword(token: string, newPassword: string, deps: Pa
   const updated = await User.updateOne({ _id: record.userId }, { $set: { passwordHash }, $inc: { tokenVersion: 1 } })
   if (updated.matchedCount === 0) throw ApiError.badRequest(INVALID_RESET_LINK_MESSAGE)
   await PasswordResetToken.deleteMany({ userId: record.userId })
+  return { userId: String(record.userId) }
 }

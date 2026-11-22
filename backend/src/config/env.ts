@@ -42,18 +42,39 @@ function nonNegativeInt(name: string, fallback: number): number {
   return Number.isInteger(value) && value >= 0 ? value : fallback
 }
 
+/**
+ * The origins allowed to call the API from a browser, from a comma-separated list.
+ *
+ * A wildcard is refused outright: the API sends cookies (`credentials: true`),
+ * and "any site may read an authenticated response" is never what was meant by
+ * a copied-in `*`. Failing at start-up says so before the first request.
+ */
+export function parseCorsOrigins(raw: string): string[] {
+  const origins = raw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+  if (origins.includes("*")) {
+    throw new Error('CORS_ORIGIN must list explicit origins; "*" is not allowed because the API sends cookies')
+  }
+  return origins
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
   mongodbUri: required("MONGODB_URI"),
-  corsOrigin: (process.env.CORS_ORIGIN ?? "http://localhost:3000")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  corsOrigin: parseCorsOrigins(process.env.CORS_ORIGIN ?? "http://localhost:3000"),
   jwtSecret: requiredSecret("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
   userIdleTimeoutSeconds: Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60),
+  /**
+   * Longest a session may last, however active the user is. Refreshing a token
+   * extends its idle window and its `exp`, but never this: it counts from the
+   * `issuedAt` of the sign-in, which every refresh carries over.
+   */
+  sessionMaxAgeSeconds: positiveInt("SESSION_MAX_AGE_SECONDS", 7 * 24 * 60 * 60),
   /** Global limit for /api/*: at most `rateLimitMaxRequests` per client IP in each `rateLimitWindowMs`. */
   rateLimitWindowMs: positiveInt("RATE_LIMIT_WINDOW_MS", 60 * 1000),
   rateLimitMaxRequests: positiveInt("RATE_LIMIT_MAX_REQUESTS", 100),
@@ -114,6 +135,19 @@ export const env = {
    * reachable contact is the other half of being allowed to fetch at all, so
    * keep a real address here.
    */
+  /**
+   * Hosts the scraper may download documents from (each also matches its
+   * subdomains). A link anywhere else, or one that resolves to a private
+   * address, is refused — see scraper/url-guard.ts.
+   */
+  scraperAllowedHosts: (
+    process.env.SCRAPER_ALLOWED_HOSTS ?? "gprocurement.go.th,cgd.go.th,bangkok.go.th"
+  )
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean),
+  /** Lets tests point the downloader at a local server. Never honoured in production. */
+  scraperAllowAnyHost: process.env.NODE_ENV !== "production" && process.env.SCRAPER_ALLOW_ANY_HOST === "true",
   scraperUserAgent:
     process.env.SCRAPER_USER_AGENT ??
     "TORMatchBot/0.1 (+https://github.com/Nanokwok/TOR-Match)",

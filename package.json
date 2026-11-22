@@ -22,6 +22,7 @@
     "test": "npm run test --workspace backend && npm run test --workspace frontend",
     "test:frontend": "npm run test --workspace frontend",
     "test:backend": "npm run test --workspace backend",
+    "sbom": "node scripts/generate-sbom.mjs",
     "sast": "semgrep scan --error --metrics=off --config p/typescript --config p/javascript --config p/nodejs --config p/react --config p/expressjs --config p/jwt --config p/security-audit --config p/owasp-top-ten --config p/command-injection --config p/insecure-transport --config p/secrets ."
   }
 }

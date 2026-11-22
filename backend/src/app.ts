@@ -53,6 +53,11 @@ export function createApp() {
     cors({
       origin: env.corsOrigin,
       credentials: true,
+      // Spelled out rather than left to the package defaults, which reflect whatever
+      // method or header a preflight asks for.
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      maxAge: 600,
     })
   )
   app.use(express.json())

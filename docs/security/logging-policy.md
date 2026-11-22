@@ -17,15 +17,19 @@ The following events are systematically intercepted and recorded by [`backend/sr
 
 | Event Identifier | Trigger Condition | Audited Attributes | ASVS Mapping |
 | :--- | :--- | :--- | :--- |
-| `AUTH_LOGIN_SUCCESS` | Successful user or admin login | Timestamp, Client IP, Method, Path, User ID, Email | V16.3.1 |
-| `AUTH_LOGIN_FAILURE` | Invalid password, non-existent account, or unlinked Google sign-in | Timestamp, Client IP, Method, Path, Email, Failure Reason | V16.3.1 |
+| `AUTH_LOGIN_SUCCESS` | Successful login, by password or by Google (`method: "google"`) | Timestamp, Client IP, Method, Path, User ID, Email | V16.3.1 |
+| `AUTH_LOGIN_FAILURE` | Invalid password, non-existent account, Google-only account, or a refused Google sign-in | Timestamp, Client IP, Method, Path, Email, Failure Reason | V16.3.1 |
 | `AUTH_REGISTRATION` | New user account created via email/password or Google OAuth | Timestamp, Client IP, User ID, Email | V16.1.1 |
 | `AUTH_LOGOUT` | User signs out; session version incremented | Timestamp, Client IP, User ID, Email | V16.3.1 |
 | `AUTH_SESSION_REVOKED` | Request presented with outdated `tokenVersion` or deactivated account | Timestamp, Client IP, User ID, Email, Reason | V16.3, V7.4.2 |
 | `ACCESS_DENIED` | Missing token, expired session, or unauthenticated access to protected route | Timestamp, Client IP, Method, Path, Reason | V16.3 |
 | `ROLE_ACCESS_DENIED` | Authenticated user lacks required role (e.g. non-admin accessing `/api/companies/admin/*`) | Timestamp, Client IP, User ID, Email, Required Roles, Actual Role | V16.3 |
 | `COMPANY_STATUS_MODIFIED` | Administrator modifies company status (e.g. `active` -> `suspended`) | Timestamp, Client IP, Admin ID, Target Company ID, Old Status, New Status | V16.3 |
-| `PASSWORD_CHANGED` | User successfully updates their password | Timestamp, Client IP, User ID, Email | V16.1.1 |
+| `PASSWORD_CHANGED` | A password is set: through "change password" or through a reset link (`method` says which) | Timestamp, Client IP, User ID, Email (change) or User ID (reset) | V16.3.1 |
+| `PASSWORD_CHANGE_FAILED` | A change was refused: wrong current password, breached or unchanged new password | Timestamp, Client IP, User ID, Email, Failure Reason | V16.3.1 |
+| `AUTH_PASSWORD_RESET_REQUESTED` | Someone submits the forgot-password form, whether or not the address has an account | Timestamp, Client IP, Email | V16.3.1 |
+| `AUTH_PASSWORD_RESET_FAILED` | A reset link is invalid, expired, already used, or the new password is refused | Timestamp, Client IP, Failure Reason (never the token) | V16.3.1 |
+| `TOR_PUBLISHED` | An admin publishes a TOR draft by hand | Timestamp, Client IP, Admin ID, Email, Draft ID, Announcement No. | V16.3 |
 
 ---
 

@@ -25,12 +25,17 @@ export type UserSessionCookieOptions = {
 }
 
 function getSessionSecret() {
-  return (
-    process.env.USER_SESSION_SECRET ||
-    process.env.JWT_SECRET ||
-    process.env.ADMIN_SESSION_SECRET ||
-    "dev-user-session-secret-change-me"
-  )
+  const secret =
+    process.env.USER_SESSION_SECRET || process.env.JWT_SECRET || process.env.ADMIN_SESSION_SECRET
+  if (secret) return secret
+
+  // The fallback below is public in source control: anyone could sign a cookie with it.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "USER_SESSION_SECRET must be set in production — the development fallback is public in source control"
+    )
+  }
+  return "dev-user-session-secret-change-me"
 }
 
 function toBase64Url(bytes: Uint8Array) {
@@ -68,7 +73,15 @@ async function signPayload(payload: string) {
 }
 
 async function verifySignature(payload: string, signature: string) {
-  const expected = await signPayload(payload)
+  let expected: string
+  try {
+    expected = await signPayload(payload)
+  } catch (error) {
+    // No usable secret (production without USER_SESSION_SECRET): nothing can be
+    // verified, so nothing is accepted. Signing in still fails loudly.
+    console.error("[user-session]", error instanceof Error ? error.message : error)
+    return false
+  }
   if (expected.length !== signature.length) return false
   let mismatch = 0
   for (let i = 0; i < expected.length; i += 1) {

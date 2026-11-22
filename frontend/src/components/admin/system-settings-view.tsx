@@ -14,17 +14,18 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { useLocale } from "@/components/i18n/locale-provider"
-import type { AdminSystemSettings } from "@/types/admin-settings"
+import { defaultAdminSystemSettings, type AdminSystemSettings } from "@/types/admin-settings"
 
 type SystemSettingsViewProps = {
-  initialSettings: AdminSystemSettings
+  /** null when the stored settings could not be loaded. */
+  initialSettings: AdminSystemSettings | null
 }
 
 export function SystemSettingsView({
   initialSettings,
 }: SystemSettingsViewProps) {
   const { t } = useLocale()
-  const [settings, setSettings] = useState(initialSettings)
+  const [settings, setSettings] = useState(initialSettings ?? defaultAdminSystemSettings)
   const [message, setMessage] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -65,6 +66,18 @@ export function SystemSettingsView({
       setIsError(true)
     }
     setIsResetting(false)
+  }
+
+  // Nothing to edit: a form of defaults would look real, and saving it would overwrite the stored values.
+  if (initialSettings === null) {
+    return (
+      <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("admin.systemSettings.title")}</h1>
+        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {t("admin.systemSettings.loadFailed")}
+        </p>
+      </ScrollArea>
+    )
   }
 
   return (
