@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { logoutAction } from "@/actions/auth"
+import { signOut } from "@/lib/sign-out"
 
 interface SessionTimeoutListenerProps {
   timeoutSeconds?: number
@@ -32,7 +32,7 @@ export function SessionTimeoutListener({
       if (elapsedMs >= timeoutSeconds * 1000) {
         isLoggingOutRef.current = true
         try {
-          await logoutAction()
+          await signOut()
         } catch {
           // Best effort cleanup
         }

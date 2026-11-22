@@ -60,6 +60,17 @@ export function parseCorsOrigins(raw: string): string[] {
   return origins
 }
 
+/**
+ * In production a cookie name gets the `__Host-` prefix (ASVS V3.3.1): the browser
+ * then refuses to store it unless it is Secure, has Path=/ and no Domain, so
+ * another subdomain or an insecure page cannot plant or overwrite it. Elsewhere
+ * the name is left alone: the prefix needs Secure, and development runs on plain
+ * http. A name that already starts with `__` is used as given.
+ */
+export function hostCookieName(base: string, production = process.env.NODE_ENV === "production"): string {
+  return production && !base.startsWith("__") ? `__Host-${base}` : base
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
@@ -67,7 +78,9 @@ export const env = {
   corsOrigin: parseCorsOrigins(process.env.CORS_ORIGIN ?? "http://localhost:3000"),
   jwtSecret: requiredSecret("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
-  authCookieName: process.env.AUTH_COOKIE_NAME ?? "tm_token",
+  authCookieName: hostCookieName(process.env.AUTH_COOKIE_NAME ?? "tm_token"),
+  /** The frontend's own session cookie, which the backend only ever clears (on logout). */
+  userSessionCookieName: hostCookieName("tm_user_session"),
   userIdleTimeoutSeconds: Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60),
   /**
    * Longest a session may last, however active the user is. Refreshing a token

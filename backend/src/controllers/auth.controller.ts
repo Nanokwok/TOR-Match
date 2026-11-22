@@ -98,7 +98,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     logSecurityEvent({ event: "AUTH_LOGOUT", req, userId: req.user.sub, email: req.user.email })
   }
   res.clearCookie(env.authCookieName, { ...authCookieOptions(), maxAge: 0 })
-  res.clearCookie("tm_user_session", { ...authCookieOptions(), maxAge: 0 })
+  res.clearCookie(env.userSessionCookieName, { ...authCookieOptions(), maxAge: 0 })
   res.status(204).send()
 })
 
