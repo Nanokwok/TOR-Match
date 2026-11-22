@@ -2,14 +2,22 @@
 
 import Link from "next/link"
 import {
+  Activity,
+  AlertCircle,
   Building2,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
   FileSearch,
+  Loader2,
   Settings,
 } from "lucide-react"
 
 import type {
   OverviewActivity,
   OverviewActivityType,
+  OverviewScrapeJob,
+  PipelineHealth,
 } from "@/types/admin-overview"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
@@ -27,12 +35,21 @@ type OverviewViewProps = {
   }
   queue: readonly { label: string; value: number; href: string }[]
   activity: OverviewActivity[]
+  pipelineHealth?: PipelineHealth
+  recentJobs?: OverviewScrapeJob[]
 }
 
 const activityStyles: Record<OverviewActivityType, string> = {
   review: "border-transparent bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
   company: "border-transparent bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300",
   subscription: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+}
+
+const jobStatusStyles: Record<string, string> = {
+  success: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  running: "border-transparent bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 animate-pulse",
+  failure: "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  skipped: "border-transparent bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300",
 }
 
 function formatTime(value: string, locale: Locale) {
@@ -54,6 +71,8 @@ export function OverviewView({
   stats,
   queue,
   activity,
+  pipelineHealth,
+  recentJobs = [],
 }: OverviewViewProps) {
   const { locale, t } = useLocale()
 
@@ -207,6 +226,120 @@ export function OverviewView({
           </CardContent>
         </Card>
       </div>
+
+      {/* API Ingest & Pipeline Health Monitoring (FR-7.3) */}
+      <Card className="flex flex-col">
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Activity className="size-5 text-primary" />
+              <CardTitle className="text-base">
+                {t("admin.overviewPage.pipelineHealth")}
+              </CardTitle>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("admin.overviewPage.pipelineSubtitle")}
+            </p>
+          </div>
+          {pipelineHealth ? (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <Badge variant="outline" className="gap-1.5 py-1">
+                <span className="text-muted-foreground">{t("admin.overviewPage.totalJobs")}:</span>
+                <span className="font-semibold">{pipelineHealth.totalJobs}</span>
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "gap-1.5 py-1 font-semibold",
+                  pipelineHealth.successRatePercent >= 80
+                    ? "border-emerald-300 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                    : "border-rose-300 text-rose-700 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                )}
+              >
+                {t("admin.overviewPage.successRate")}: {pipelineHealth.successRatePercent}%
+              </Badge>
+              {pipelineHealth.runningJobs > 0 ? (
+                <Badge className="bg-sky-500 text-white gap-1 animate-pulse py-1">
+                  <Loader2 className="size-3 animate-spin" />
+                  {t("admin.overviewPage.runningJobs")}: {pipelineHealth.runningJobs}
+                </Badge>
+              ) : null}
+              {pipelineHealth.failedJobs > 0 ? (
+                <Badge variant="destructive" className="gap-1 py-1">
+                  <AlertCircle className="size-3" />
+                  {t("admin.overviewPage.failedJobs")}: {pipelineHealth.failedJobs}
+                </Badge>
+              ) : null}
+            </div>
+          ) : null}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border bg-card">
+            <div className="p-3 border-b text-xs font-semibold text-muted-foreground grid grid-cols-[1.5fr_1fr_1fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1fr_1.2fr] gap-2 items-center">
+              <div>{t("admin.overviewPage.documentSource")}</div>
+              <div>{t("admin.overviewPage.stage")}</div>
+              <div>{t("admin.overviewPage.status")}</div>
+              <div className="hidden sm:block">{t("admin.overviewPage.pages")}</div>
+              <div className="text-right">{t("admin.overviewPage.time")}</div>
+            </div>
+            {recentJobs.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                {t("admin.overviewPage.noJobs")}
+              </div>
+            ) : (
+              <div className="divide-y">
+                {recentJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="p-3 text-xs grid grid-cols-[1.5fr_1fr_1fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1fr_1.2fr] gap-2 items-center hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="font-medium truncate text-foreground" title={job.documentSource}>
+                        {job.documentSource}
+                      </p>
+                      {job.sourceUrl ? (
+                        <a
+                          href={job.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-muted-foreground hover:text-primary flex items-center gap-1 truncate"
+                        >
+                          <span className="truncate">{job.sourceUrl}</span>
+                          <ExternalLink className="size-3 shrink-0" />
+                        </a>
+                      ) : null}
+                      {job.errorMessage ? (
+                        <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400 font-mono line-clamp-1">
+                          {job.errorMessage}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div>
+                      <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0.5">
+                        {job.stage}
+                      </Badge>
+                    </div>
+                    <div>
+                      <Badge className={cn("text-[11px] font-medium capitalize", jobStatusStyles[job.status] ?? "")}>
+                        {job.status === "success" && <CheckCircle2 className="size-3 mr-1 inline" />}
+                        {job.status === "running" && <Loader2 className="size-3 mr-1 inline animate-spin" />}
+                        {job.status === "failure" && <AlertCircle className="size-3 mr-1 inline" />}
+                        {t(`admin.overviewPage.job${job.status.charAt(0).toUpperCase() + job.status.slice(1)}`) || job.status}
+                      </Badge>
+                    </div>
+                    <div className="hidden sm:block font-mono text-muted-foreground">
+                      {job.pages}
+                    </div>
+                    <div className="text-right text-muted-foreground font-mono text-[11px]">
+                      {formatTime(job.createdAt, locale)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </ScrollArea>
   )
 }

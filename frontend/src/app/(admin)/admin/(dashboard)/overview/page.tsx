@@ -50,6 +50,8 @@ export default async function AdminOverviewPage() {
       }}
       queue={queue}
       activity={data.activity}
+      pipelineHealth={data.pipelineHealth}
+      recentJobs={data.recentJobs}
     />
   )
 }

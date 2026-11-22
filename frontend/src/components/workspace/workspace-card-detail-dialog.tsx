@@ -118,10 +118,16 @@ function WorkspaceCardDetailBody({
   ];
 
   const assignees = useMemo(() => {
-    return draft.assigneeIds
-      .map((id) => members.find((member) => member.id === id))
-      .filter(Boolean) as TeamMember[];
-  }, [draft, members]);
+    return draft.assigneeIds.map((id) => {
+      const member = members.find((m) => m.id === id);
+      if (member) return member;
+      return {
+        id,
+        name: id,
+        initials: id.slice(0, 2).toUpperCase(),
+      } as TeamMember;
+    });
+  }, [draft.assigneeIds, members]);
 
   const filteredMembers = useMemo(() => {
     const q = assigneeSearch.trim().toLowerCase();
@@ -159,7 +165,11 @@ function WorkspaceCardDetailBody({
   function addCustomAssignee() {
     const name = newAssigneeName.trim();
     if (!name) return;
-    workspaceActions.addCustomAssignee(name);
+    if (!draft.assigneeIds.includes(name)) {
+      patchDraft({
+        assigneeIds: [...draft.assigneeIds, name],
+      });
+    }
     setNewAssigneeName("");
   }
 

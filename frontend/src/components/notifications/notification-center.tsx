@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Bell, Inbox, Settings } from "lucide-react"
 
 import {
   deleteNotificationAction,
+  getNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/actions/notifications"
@@ -62,6 +63,25 @@ export function NotificationCenter({
   const [activeTab, setActiveTab] = useState<NotificationTab>("all")
   const [notifications, setNotifications] =
     useState<AppNotification[]>(initialNotifications)
+
+  useEffect(() => {
+    let isMounted = true
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await getNotificationsAction()
+        if (isMounted && Array.isArray(fresh)) {
+          setNotifications(fresh)
+        }
+      } catch (err) {
+        console.error("Failed to poll notifications", err)
+      }
+    }, 30000)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
