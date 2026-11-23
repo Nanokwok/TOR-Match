@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
-import { logoutAction } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
@@ -22,6 +21,7 @@ import {
   getCompanyDisplayName,
   type CompanyDisplaySource,
 } from "@/lib/company-setup";
+import { signOut } from "@/lib/sign-out";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/types/notification";
 
@@ -168,7 +168,7 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  void logoutAction().then(() => router.push("/login"));
+                  void signOut().then(() => router.push("/login"));
                 }}
               >
                 {t("header.logout")}
