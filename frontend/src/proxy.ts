@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 
+import { expiredRootCookieOptions, hostCookieName } from "@/lib/cookie-names"
 import {
   ADMIN_API_TOKEN_COOKIE,
   ADMIN_SESSION_COOKIE,
@@ -21,11 +22,12 @@ import {
 // Kept in sync with backend/src/config/env.ts's AUTH_COOKIE_NAME default.
 // Not read via lib/env's required() here: proxy runs on every request, so a
 // missing env var must degrade to the default rather than 500 the site.
-const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? "tm_token"
+// Prefixed in production, like lib/auth-cookie.ts (which is server-only and so
+// cannot be imported here).
+const AUTH_COOKIE_NAME = hostCookieName(process.env.AUTH_COOKIE_NAME ?? "tm_token")
 
 // Route groups (main) — everything a signed-in user reaches after auth.
 const PROTECTED_PREFIXES = [
-  "/browse",
   "/company-profile",
   "/company-setup",
   "/dashboard",
@@ -33,6 +35,13 @@ const PROTECTED_PREFIXES = [
   "/settings",
   "/workspace",
 ]
+
+/**
+ * Open to a visitor with no session ("Start searching free"), but still aware of
+ * one: a signed-in user who only browses must keep sliding the idle window, or
+ * they would be signed out after 30 minutes of using the page.
+ */
+const OPEN_PREFIXES = ["/browse"]
 
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password"]
 
@@ -50,8 +59,10 @@ async function handleUserAuth(request: NextRequest): Promise<NextResponse | null
   const userSessionToken = request.cookies.get(USER_SESSION_COOKIE)?.value
   const authToken = request.cookies.get(AUTH_COOKIE_NAME)?.value
 
-  const rawToken = userSessionToken ?? authToken
-  const session = await decodeUserSession(rawToken)
+  // Only the cookie this app signed identifies a visitor here. The backend's JWT
+  // (authToken) is client-supplied as far as this code can tell, and its
+  // signature is checked by the API, not here.
+  const session = await decodeUserSession(userSessionToken)
   const isExpired = !session || isUserSessionExpired(session)
   const isSignedIn = Boolean(session && !isExpired)
 
@@ -60,8 +71,8 @@ async function handleUserAuth(request: NextRequest): Promise<NextResponse | null
     loginUrl.searchParams.set("redirectTo", pathname + request.nextUrl.search)
     const response = NextResponse.redirect(loginUrl)
     if (authToken || userSessionToken) {
-      response.cookies.set(AUTH_COOKIE_NAME, "", { path: "/", maxAge: 0 })
-      response.cookies.set(USER_SESSION_COOKIE, "", { path: "/", maxAge: 0 })
+      response.cookies.set(AUTH_COOKIE_NAME, "", expiredRootCookieOptions())
+      response.cookies.set(USER_SESSION_COOKIE, "", expiredRootCookieOptions())
     }
     return response
   }
@@ -71,7 +82,11 @@ async function handleUserAuth(request: NextRequest): Promise<NextResponse | null
   }
 
   // Active interaction on protected route: slide expiration window
-  if (session && isSignedIn && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
+  if (
+    session &&
+    isSignedIn &&
+    (matchesPrefix(pathname, PROTECTED_PREFIXES) || matchesPrefix(pathname, OPEN_PREFIXES))
+  ) {
     const refreshed = touchUserSession(session)
     const response = NextResponse.next()
     response.cookies.set(

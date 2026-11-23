@@ -1,14 +1,16 @@
 import { cookies } from "next/headers"
 
+import { secureCookieName } from "@/lib/cookie-names"
+
 /** Admin inactivity timeout — shorter than regular user sessions. */
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 30 * 60
 
 /** Regular user session lifetime (for comparison / future user auth). */
 export const USER_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
-export const ADMIN_SESSION_COOKIE = "tm_admin_session"
+export const ADMIN_SESSION_COOKIE = secureCookieName("tm_admin_session")
 
-export const ADMIN_API_TOKEN_COOKIE = "tm_admin_api_token"
+export const ADMIN_API_TOKEN_COOKIE = secureCookieName("tm_admin_api_token")
 
 export type AdminSession = {
   email: string
@@ -26,10 +28,16 @@ export type AdminSessionCookieOptions = {
 }
 
 function getSessionSecret() {
-  return (
-    process.env.ADMIN_SESSION_SECRET ||
-    "dev-admin-session-secret-change-me"
-  )
+  const secret = process.env.ADMIN_SESSION_SECRET
+  if (secret) return secret
+
+  // The fallback below is public in source control: anyone could sign a cookie with it.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ADMIN_SESSION_SECRET must be set in production — the development fallback is public in source control"
+    )
+  }
+  return "dev-admin-session-secret-change-me"
 }
 
 function toBase64Url(bytes: Uint8Array) {
@@ -67,7 +75,15 @@ async function signPayload(payload: string) {
 }
 
 async function verifySignature(payload: string, signature: string) {
-  const expected = await signPayload(payload)
+  let expected: string
+  try {
+    expected = await signPayload(payload)
+  } catch (error) {
+    // No usable secret (production without ADMIN_SESSION_SECRET): nothing can be
+    // verified, so nothing is accepted. Signing in still fails loudly.
+    console.error("[admin-session]", error instanceof Error ? error.message : error)
+    return false
+  }
   if (expected.length !== signature.length) return false
   let mismatch = 0
   for (let i = 0; i < expected.length; i += 1) {

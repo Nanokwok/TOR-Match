@@ -4,10 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { AdminApiAuthError, adminApiFetch } from "@/lib/admin-api"
 import { ApiRequestError } from "@/lib/api-client"
-import {
-  defaultAdminSystemSettings,
-  type AdminSystemSettings,
-} from "@/server/db/mock/admin-settings"
+import type { AdminSystemSettings } from "@/types/admin-settings"
 
 export type AdminSystemSettingsActionResult =
   | { ok: true; settings: AdminSystemSettings }
@@ -21,15 +18,22 @@ function messageFromError(error: unknown, fallback: string): string {
   return "Something went wrong. Please try again."
 }
 
-export async function getAdminSystemSettingsAction(): Promise<AdminSystemSettings> {
+/**
+ * The stored settings, or null when they could not be loaded.
+ *
+ * Not the defaults: a form filled with defaults looks like the real values, and
+ * saving it would overwrite them (the scraper switch, the auto-approve
+ * threshold, maintenance mode). Callers must show an error instead.
+ */
+export async function getAdminSystemSettingsAction(): Promise<AdminSystemSettings | null> {
   try {
     return await adminApiFetch<AdminSystemSettings>("/admin/settings")
   } catch (error) {
     if (error instanceof AdminApiAuthError) {
       throw error
     }
-    console.error("getAdminSystemSettingsAction failed, falling back to defaults", error)
-    return defaultAdminSystemSettings
+    console.error("getAdminSystemSettingsAction failed", error)
+    return null
   }
 }
 

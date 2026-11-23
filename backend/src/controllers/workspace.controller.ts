@@ -1,5 +1,6 @@
 import type { Request, Response } from "express"
 import mongoose from "mongoose"
+import { z } from "zod"
 import { Tor } from "@/models/Tor.model"
 import { WorkspaceCard } from "@/models/WorkspaceCard.model"
 import { ApiError } from "@/utils/ApiError"
@@ -7,6 +8,25 @@ import { asyncHandler } from "@/utils/asyncHandler"
 
 const COLUMNS = ["bookmark", "todo", "in-progress", "done"] as const
 const PRIORITIES = ["HIGH", "MEDIUM", "LOW"] as const
+
+const objectIdString = z.string().regex(/^[a-f\d]{24}$/i, "Not a valid id")
+
+const addCardSchema = z.object({
+  torId: objectIdString,
+  column: z.enum(COLUMNS).optional(),
+  priority: z.enum(PRIORITIES).optional(),
+})
+
+// Unknown keys are dropped (`id` on a checklist item, for one): only these reach the database.
+const updateCardSchema = z.object({
+  priority: z.enum(PRIORITIES).optional(),
+  column: z.enum(COLUMNS).optional(),
+  assigneeIds: z.array(objectIdString).max(50).optional(),
+  checklist: z
+    .array(z.object({ label: z.string().max(500), completed: z.boolean().optional() }))
+    .max(100)
+    .optional(),
+})
 
 export const getBoard = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
@@ -32,11 +52,9 @@ export const getBoard = asyncHandler(async (req: Request, res: Response) => {
 
 export const addCard = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) throw ApiError.unauthorized()
-  const { torId, column = "bookmark", priority = "MEDIUM" } = req.body ?? {}
-  if (!torId) throw ApiError.badRequest("torId is required")
-  if (!mongoose.Types.ObjectId.isValid(torId)) {
-    throw ApiError.badRequest("Invalid torId format")
-  }
+  const parsed = addCardSchema.safeParse(req.body)
+  if (!parsed.success) throw ApiError.badRequest("Invalid card", parsed.error.flatten())
+  const { torId, column = "bookmark", priority = "MEDIUM" } = parsed.data
 
   const torExists = await Tor.exists({ _id: torId })
   if (!torExists) {
@@ -101,19 +119,12 @@ export const updateCard = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.badRequest("Invalid card id")
   }
 
-  const { priority, column, assigneeIds, checklist } = req.body ?? {}
-  if (priority !== undefined && !PRIORITIES.includes(priority)) {
-    throw ApiError.badRequest("Invalid priority")
-  }
-  if (assigneeIds !== undefined && !Array.isArray(assigneeIds)) {
-    throw ApiError.badRequest("assigneeIds must be a list")
-  }
-  if (checklist !== undefined && !Array.isArray(checklist)) {
-    throw ApiError.badRequest("checklist must be a list")
-  }
+  const parsed = updateCardSchema.safeParse(req.body)
+  if (!parsed.success) throw ApiError.badRequest("Invalid card update", parsed.error.flatten())
+  const { priority, column, assigneeIds, checklist } = parsed.data
   const update: Record<string, unknown> = {}
   if (priority !== undefined) update.priority = priority
-  if (column !== undefined && COLUMNS.includes(column)) update.column = column
+  if (column !== undefined) update.column = column
   if (assigneeIds !== undefined) update.assigneeIds = assigneeIds
   if (checklist !== undefined) update.checklist = checklist
 

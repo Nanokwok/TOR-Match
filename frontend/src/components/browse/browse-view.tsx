@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react"
+import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, Link2, X } from "lucide-react"
 
 import { searchTorsAction } from "@/actions/tor"
@@ -51,6 +52,7 @@ import type { Tor } from "@/types/tor"
 const initialFilters: BrowseFiltersState = {
   keyword: "",
   openOnly: true,
+  eligibleOnly: false,
   sort: DEFAULT_BROWSE_SORT,
   budgetRange: "all",
   status: "all",
@@ -59,6 +61,8 @@ const initialFilters: BrowseFiltersState = {
 }
 
 type BrowseViewProps = {
+  /** False for a guest: no eligibility results or bookmarks, a prompt to log in instead. */
+  isSignedIn: boolean
   initialItems: Tor[]
   initialSelectedId: string | null
   initialDeepLink: BrowseDeepLinkMeta | null
@@ -70,6 +74,7 @@ type BrowseViewProps = {
 }
 
 export function BrowseView({
+  isSignedIn,
   initialItems,
   initialSelectedId,
   initialDeepLink,
@@ -79,6 +84,7 @@ export function BrowseView({
   departments,
   localOffices,
 }: BrowseViewProps) {
+  const router = useRouter()
   const { t } = useLocale()
   // The filters on screen are what the user last set, or until they touch
   // anything, the defaults with whatever was saved in localStorage laid over
@@ -221,10 +227,16 @@ export function BrowseView({
   function handleFiltersChange(next: BrowseFiltersState) {
     const detailChanged =
       JSON.stringify(next.detail) !== JSON.stringify(filters.detail)
+    const departmentChanged = next.department !== filters.department
     // A switch or a sort reads as instant; waiting for Enter in the search box
     // made turning it off look like it did nothing.
     const openOnlyChanged = next.openOnly !== filters.openOnly
-    const instantChanged = openOnlyChanged || next.sort !== filters.sort
+    const eligibleOnlyChanged = next.eligibleOnly !== filters.eligibleOnly
+    const instantChanged =
+      openOnlyChanged ||
+      eligibleOnlyChanged ||
+      departmentChanged ||
+      next.sort !== filters.sort
     // Remembered for the next visit. Only the switch itself writes the cookie:
     // the "turn off Open only" shortcut on a linked TOR is a one-off, not a choice.
     if (openOnlyChanged) {
@@ -260,6 +272,12 @@ export function BrowseView({
   }
 
   function handleToggleBookmark(torId: string) {
+    // Bookmarks live on the user's workspace board; a guest is asked to log in first.
+    if (!isSignedIn) {
+      router.push(`/login?redirectTo=${encodeURIComponent(`/browse?tor=${torId}`)}`)
+      return
+    }
+
     const current =
       items.find((item) => item.id === torId) ??
       (anchorTor?.id === torId ? anchorTor : null)
@@ -337,6 +355,7 @@ export function BrowseView({
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <TorList
+                isSignedIn={isSignedIn}
                 items={items}
                 selectedId={selectedId}
                 linkedTorId={linkedTorId}
@@ -356,6 +375,7 @@ export function BrowseView({
 
         <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
           <TorDetail
+            isSignedIn={isSignedIn}
             tor={selectedTor}
             onToggleBookmark={handleToggleBookmark}
             onDirtyChange={setIsDetailDirty}

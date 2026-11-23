@@ -11,8 +11,10 @@ import {
 import { QUALIFICATION_KEYS } from "@/domain/qualification-taxonomy"
 import { publishBlocker, publishDraft } from "@/services/tor-publish.service"
 import { qualificationCriteriaSchema } from "@/validation/qualification"
+import { downloadAllTorDocuments, type TorDocument } from "@/scraper/tor-documents"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 /**
  * The admin review screen is a Thai editing surface — Thai is the site's
@@ -154,8 +156,16 @@ function draftUpdateFrom(draft: TorDraftDoc, input: z.infer<typeof updateDraftSc
   }
 }
 
+/** One string each, so a repeated parameter or `reviewStatus[$ne]=x` cannot reach the filter. */
+const listQuerySchema = z.object({
+  reviewStatus: z.string().max(100).optional(),
+  department: z.string().max(300).optional(),
+})
+
 export const listTorDrafts = asyncHandler(async (req: Request, res: Response) => {
-  const { reviewStatus, department } = req.query as Record<string, string | undefined>
+  const parsedQuery = listQuerySchema.safeParse(req.query)
+  if (!parsedQuery.success) throw ApiError.badRequest("Invalid query")
+  const { reviewStatus, department } = parsedQuery.data
 
   const filter: Record<string, unknown> = {}
   if (reviewStatus && reviewStatus !== "all") filter.reviewStatus = reviewStatus
@@ -203,8 +213,135 @@ export const publishTorDraft = asyncHandler(async (req: Request, res: Response) 
   // The reviewer's verdict. Recording it is what makes the ingest treat the
   // published content as theirs: a later announcement may add a deadline to an
   // approved draft, but it cannot overwrite what the reviewer corrected.
-  draft.set({ reviewStatus: "approved", publishedTorId: published._id, publishedAt: new Date() })
+  draft.set({
+    reviewStatus: "approved",
+    publishedTorId: published._id,
+    publishedAt: new Date(),
+    reviewedBy: isValidObjectId(req.user?.sub) ? req.user?.sub : null,
+  })
   await draft.save()
 
+  // Who published what, so an admin cannot later deny it (and a bad publish can be traced).
+  logSecurityEvent({
+    event: "TOR_PUBLISHED",
+    req,
+    userId: req.user?.sub,
+    email: req.user?.email,
+    details: { draftId: String(draft._id), announcementNo: draft.announcementNo },
+  })
+
   res.status(200).json({ draft, tor: published })
+})
+
+type CachedDraftDocs = {
+  expiresAt: number
+  documents: TorDocument[]
+}
+
+const docsCache = new Map<string, CachedDraftDocs>()
+const inFlightRequests = new Map<string, Promise<TorDocument[]>>()
+
+async function getOrFetchDraftDocuments(draft: TorDraftDoc): Promise<TorDocument[]> {
+  const cacheKey = draft._id.toString()
+  const now = Date.now()
+  const cached = docsCache.get(cacheKey)
+  if (cached && cached.expiresAt > now) {
+    return cached.documents
+  }
+
+  const existingInFlight = inFlightRequests.get(cacheKey)
+  if (existingInFlight) {
+    return existingInFlight
+  }
+
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    return []
+  }
+
+  if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+    const fetchPromise = downloadAllTorDocuments([targetUrl])
+      .then((docs) => {
+        if (docs.length > 0) {
+          docsCache.set(cacheKey, {
+            expiresAt: Date.now() + 30 * 60 * 1000,
+            documents: docs,
+          })
+          if (docsCache.size > 50) {
+            const oldestKey = docsCache.keys().next().value
+            if (oldestKey) docsCache.delete(oldestKey)
+          }
+        }
+        return docs
+      })
+      .finally(() => {
+        inFlightRequests.delete(cacheKey)
+      })
+
+    inFlightRequests.set(cacheKey, fetchPromise)
+    return fetchPromise
+  }
+
+  return []
+}
+
+export const getTorDraftFiles = asyncHandler(async (req: Request, res: Response) => {
+  const draft = await findDraftOrThrow(req.params.id)
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    res.status(200).json({ files: [] })
+    return
+  }
+
+  try {
+    const docs = await getOrFetchDraftDocuments(draft)
+    const files = docs.map((doc, index) => ({
+      index,
+      name: doc.name,
+      sizeBytes: doc.pdf.byteLength,
+    }))
+    res.status(200).json({ files })
+  } catch (err) {
+    console.error(`getTorDraftFiles failed for draft ${draft._id}:`, err)
+    throw ApiError.badRequest(`Could not retrieve document list: ${err instanceof Error ? err.message : String(err)}`)
+  }
+})
+
+export const getTorDraftPdf = asyncHandler(async (req: Request, res: Response) => {
+  const draft = await findDraftOrThrow(req.params.id)
+  const targetUrl = draft.pdfUrl || draft.invitationUrl
+  if (!targetUrl) {
+    throw ApiError.notFound("No document attached to this draft")
+  }
+
+  if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+    try {
+      const docs = await getOrFetchDraftDocuments(draft)
+      if (!docs.length) {
+        throw ApiError.notFound("No readable PDF document could be extracted")
+      }
+
+      const fileParam = Number(req.query.file ?? 0)
+      const fileIndex = Number.isFinite(fileParam) && fileParam >= 0 && fileParam < docs.length ? fileParam : 0
+      const selected = docs[fileIndex]
+
+      res.setHeader("Content-Type", "application/pdf")
+      res.setHeader("Content-Disposition", `inline; filename="${selected.name || `${draft.announcementNo}.pdf`}"`)
+      res.setHeader("Cache-Control", "private, max-age=3600")
+      res.setHeader("X-Frame-Options", "SAMEORIGIN")
+      res.status(200).send(selected.pdf)
+      return
+    } catch (err) {
+      console.error(`getTorDraftPdf failed for draft ${draft._id}:`, err)
+      throw ApiError.badRequest(`Could not retrieve document: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+
+  // A path on this site, not "//host" or "/\host", which a browser reads as another site.
+  if (targetUrl.startsWith("/") && !targetUrl.startsWith("//") && !targetUrl.includes("\\")) {
+    res.redirect(targetUrl)
+    return
+  }
+
+  throw ApiError.badRequest("Invalid document URL format")
 })

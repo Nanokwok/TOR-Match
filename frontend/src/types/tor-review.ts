@@ -47,6 +47,9 @@ export type TorReviewListItem = {
   budgetBaht: number
   aiConfidence: number
   reviewStatus: TorReviewStatus
+  deadline?: string
+  announcementDate?: string
+  method?: TorProcurementMethod
 }
 
 export type TorReviewDetail = TorReviewListItem & {

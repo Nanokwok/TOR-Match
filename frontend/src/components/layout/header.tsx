@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
-import { logoutAction } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { TorMatchLogo } from "@/components/layout/tor-match-logo";
@@ -22,6 +21,7 @@ import {
   getCompanyDisplayName,
   type CompanyDisplaySource,
 } from "@/lib/company-setup";
+import { signOut } from "@/lib/sign-out";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/types/notification";
 
@@ -32,6 +32,11 @@ export type HeaderNavItem = {
 
 type HeaderProps = {
   className?: string;
+  /**
+   * Whether a user is signed in. A guest sees Log in and Sign up instead of the
+   * notifications bell and the account menu (with its "log out").
+   */
+  isSignedIn?: boolean;
   /**
    * Signed-in company identity from the saved profile.
    * Omit for guests — the header will not invent a placeholder name.
@@ -52,6 +57,7 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   className,
+  isSignedIn = false,
   account,
   navItems = defaultNavItems,
   initialNotifications = [],
@@ -96,7 +102,9 @@ export function Header({
         </nav>
 
         <div className="relative z-10 flex shrink-0 items-center gap-3 sm:gap-4">
-          <NotificationCenter initialNotifications={initialNotifications} />
+          {isSignedIn ? (
+            <NotificationCenter initialNotifications={initialNotifications} />
+          ) : null}
 
           <AnimatedThemeToggler
             theme={resolvedTheme}
@@ -108,12 +116,30 @@ export function Header({
 
           <LanguageSwitcher variant="dark" />
 
-          {displayName ? (
+          {!isSignedIn ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex h-8 items-center rounded-md px-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
+              >
+                {t("header.login")}
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {t("header.signUp")}
+              </Link>
+            </div>
+          ) : null}
+
+          {isSignedIn && displayName ? (
             <span className="hidden max-w-48 truncate text-sm text-white/90 lg:inline">
               {displayName}
             </span>
           ) : null}
 
+          {isSignedIn ? (
           <DropdownMenu>
             <DropdownMenuTrigger
               className={cn(
@@ -142,13 +168,14 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  void logoutAction().then(() => router.push("/login"));
+                  void signOut().then(() => router.push("/login"));
                 }}
               >
                 {t("header.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          ) : null}
         </div>
       </div>
     </header>

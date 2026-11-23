@@ -7,6 +7,7 @@ import { env } from "@/config/env"
 import routes from "@/routes"
 import { errorMiddleware, notFoundMiddleware } from "@/middleware/error.middleware"
 import { createApiRateLimiter } from "@/middleware/rate-limit.middleware"
+import { rejectMongoOperators } from "@/middleware/reject-operators.middleware"
 
 export function createApp() {
   const app = express()
@@ -52,6 +53,11 @@ export function createApp() {
     cors({
       origin: env.corsOrigin,
       credentials: true,
+      // Spelled out rather than left to the package defaults, which reflect whatever
+      // method or header a preflight asks for.
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      maxAge: 600,
     })
   )
   app.use(express.json())
@@ -62,6 +68,9 @@ export function createApp() {
 
   // Before the routes, so a throttled client costs a counter lookup and nothing more.
   app.use("/api", createApiRateLimiter())
+  // Body and query are parsed by now. Path parameters belong to the routes, so
+  // each controller checks its own ids (isValidObjectId) before querying.
+  app.use("/api", rejectMongoOperators)
   app.use("/api", routes)
 
   app.use(notFoundMiddleware)

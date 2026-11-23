@@ -1,6 +1,7 @@
 import { unzipSync } from "fflate"
 
 import { env } from "@/config/env"
+import { assertSafeDocumentUrl, UnsafeUrlError, type UrlGuardOptions } from "@/scraper/url-guard"
 import { MAGIC_BYTES_LENGTH, detectFileType, validateMagicBytes, type FileType } from "@/utils/file-validator"
 
 /**
@@ -244,9 +245,53 @@ export type DownloadOptions = {
   maxPdfBytes?: number
   /** Overrides the archive ceiling; exists so a test does not have to serve 256MB. */
   maxArchiveBytes?: number
+  /** Overrides which hosts may be fetched; exists so a test can use a fake resolver. */
+  urlGuard?: UrlGuardOptions
+  /** Replaces `fetch`; exists so a test can script redirects without a network. */
+  fetchFn?: typeof fetch
 }
 
-type DownloadLimits = Required<DownloadOptions>
+type DownloadLimits = { maxPdfBytes: number; maxArchiveBytes: number }
+
+/** A document link that redirects more than this many times is not a document. */
+const MAX_REDIRECTS = 5
+
+/**
+ * Fetches `start`, checking every hop against the URL guard.
+ *
+ * Redirects are followed by hand: with the default `redirect: "follow"` a
+ * permitted host could answer 302 to http://169.254.169.254/ and the check on
+ * the first URL would never see where the request really went.
+ */
+async function fetchGuarded(start: string, options: DownloadOptions): Promise<Response> {
+  const fetchFn = options.fetchFn ?? fetch
+  const check = async (target: string | URL) => {
+    try {
+      return await assertSafeDocumentUrl(target, options.urlGuard)
+    } catch (error) {
+      if (error instanceof UnsafeUrlError) refuse(`Unsafe document URL: ${error.message}`)
+      throw error
+    }
+  }
+
+  let current = await check(start)
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+    const response = await fetchFn(current, {
+      headers: { "User-Agent": env.scraperUserAgent },
+      redirect: "manual",
+      // Tender archives run to hundreds of megabytes over a government link.
+      signal: AbortSignal.timeout(600_000),
+    })
+
+    const isRedirect = response.status >= 300 && response.status < 400
+    const location = response.headers.get("location")
+    if (!isRedirect || !location) return response
+
+    await response.body?.cancel().catch(() => undefined)
+    current = await check(new URL(location, current))
+  }
+  return refuse(`Document link redirected more than ${MAX_REDIRECTS} times`)
+}
 
 /**
  * Reads a response body, refusing it the moment it passes its ceiling or its
@@ -326,11 +371,7 @@ export async function downloadTorDocuments(url: string, options: DownloadOptions
     maxArchiveBytes: options.maxArchiveBytes ?? MAX_ARCHIVE_DOWNLOAD_BYTES,
   }
 
-  const response = await fetch(url, {
-    headers: { "User-Agent": env.scraperUserAgent },
-    // Tender archives run to hundreds of megabytes over a government link.
-    signal: AbortSignal.timeout(600_000),
-  })
+  const response = await fetchGuarded(url, options)
   if (!response.ok) {
     throw new Error(`Document download returned HTTP ${response.status}`)
   }

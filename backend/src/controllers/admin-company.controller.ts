@@ -19,6 +19,7 @@ import { User } from "@/models/User.model"
 import { ApiError } from "@/utils/ApiError"
 import { asyncHandler } from "@/utils/asyncHandler"
 import { notifyCompanyStatusChanged } from "@/services/profile-notification.service"
+import { logSecurityEvent } from "@/utils/security-logger"
 
 const ALLOWED_STATUS_TRANSITIONS: Record<CompanyStatus, CompanyStatus[]> = {
   pending: ["active"],
@@ -187,6 +188,21 @@ export const patchAdminCompanyStatus = asyncHandler(async (req: Request, res: Re
 
   company.status = next
   await company.save()
+
+  if (next === "suspended") {
+    await User.updateMany(
+      { $or: [{ companyId: company._id }, { _id: company.ownerId }] },
+      { $inc: { tokenVersion: 1 } }
+    )
+  }
+
+  logSecurityEvent({
+    event: "COMPANY_STATUS_MODIFIED",
+    req,
+    userId: req.user?.sub,
+    email: req.user?.email,
+    reason: `Company ${id} status changed from ${current} to ${next}`,
+  })
 
   // The owner hears about it; a failure to notify must not undo or fail the change.
   await notifyCompanyStatusChanged(company, next).catch((error) => {

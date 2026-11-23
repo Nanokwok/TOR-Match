@@ -2,6 +2,7 @@ import { localizedKey } from "@/models/localized.schema"
 import { Tor, type TorDoc } from "@/models/Tor.model"
 import type { TorDraftDoc } from "@/models/TorDraft.model"
 import { notifyTorPublished } from "@/services/match-notification.service"
+import { torListCache } from "@/services/tor-cache.service"
 
 /**
  * Copies a reviewed draft into the published `tors` collection.
@@ -23,13 +24,12 @@ export function hasInvitation(draft: Pick<TorDraftDoc, "announcements">): boolea
 /**
  * Why a draft cannot be published yet, or null when it can.
  *
- * Two bars, and the second is about timing rather than content:
+ * Three bars, and the second is about timing rather than content:
  *
  * A title and a department, in either locale — Thai is the site's default and
  * announcements are published in Thai, so requiring English would leave every
  * ingested TOR unpublishable. Without those two a TOR is a blank card no
- * department filter can reach. Everything else may be empty and renders as
- * "not specified".
+ * department filter can reach.
  *
  * And an invitation. A project is first published as B0 ร่างเอกสารประกวดราคา,
  * which states the qualifications but no closing date, because a draft tender
@@ -37,12 +37,25 @@ export function hasInvitation(draft: Pick<TorDraftDoc, "announcements">): boolea
  * bidder something they cannot act on and a deadline that reads "-". The
  * draft is kept and waits: D0 arrives a week or two later, the ingest reads it
  * for the deadline, and the TOR is published then.
+ *
+ * And the content a bidder acts on: a budget, a closing date and at least one
+ * qualification requirement. The rest (summary, deliverables, tags) may be
+ * empty and renders as "not specified".
  */
 export function publishBlocker(draft: TorDraftDoc): string | null {
   for (const field of ["title", "department"] as const) {
     if (!localizedKey(draft[field])) return `${field} is empty`
   }
   if (!hasInvitation(draft)) return "no invitation announcement yet (D0)"
+
+  // What a bidder decides on. A TOR without a budget, a closing date or any
+  // qualification to check has nothing to match or act on, and publishing one
+  // by accident (or on a model's low-quality guess) puts a blank card in front
+  // of every vendor. It stays a draft until a reviewer fills the gap in.
+  if (!(draft.budgetBaht > 0)) return "budget is missing"
+  const deadline = (draft.deadline ?? "").trim()
+  if (!deadline || Number.isNaN(Date.parse(deadline))) return "deadline is missing or not a date"
+  if ((draft.qualificationRequirements ?? []).length === 0) return "no qualification requirements"
   return null
 }
 
@@ -105,6 +118,10 @@ export async function publishDraft(draft: TorDraftDoc): Promise<TorDoc> {
       `Tor.findOneAndUpdate upsert unexpectedly returned null for ${draft.announcementNo}`
     )
   }
+
+  // The browse list is served from memory: without this a reviewer who just
+  // published would not see the TOR until the cache ran out.
+  torListCache.invalidate()
 
   // Awaited so a client refetching notifications right after the publish
   // cannot race ahead of the write. Alerts must never fail the publish.

@@ -50,7 +50,7 @@ function ScrollArea({
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
       data-scrolling={isScrolling ? "" : undefined}
-      className={cn("relative group/scroll-area", className)}
+      className={cn("relative group/scroll-area min-h-0", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport

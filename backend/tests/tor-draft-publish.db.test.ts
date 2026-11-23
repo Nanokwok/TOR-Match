@@ -55,6 +55,14 @@ async function makeDraft(overrides: Record<string, unknown> = {}) {
     status: "open",
     deadline: "2026-11-05T12:00:00+07:00",
     announcements: [announcement("B0"), announcement("D0")],
+    qualificationRequirements: [
+      {
+        id: "q1",
+        key: "manual",
+        requirement: { en: "Registered with e-GP", th: "ขึ้นทะเบียน e-GP" },
+        torCriteria: { en: "Registered with e-GP", th: "ขึ้นทะเบียน e-GP" },
+      },
+    ],
     financials: { totalBudgetBaht: 2_500_000, medianPriceBaht: 2_400_000, method: "e-bidding", milestones: [] },
     aiConfidence: 40,
     ...overrides,
@@ -82,6 +90,9 @@ test("publishing copies the draft to /browse and records the approval on the dra
   const draft = await makeDraft()
   const response = await publishVia(draft._id, await signIn("admin"))
   assert.equal(response.status, 200)
+  // Who pressed publish, so the approval cannot be denied afterwards.
+  const admin = await User.findOne({ role: "admin" })
+  assert.equal(String((await TorDraft.findById(draft._id))?.reviewedBy), String(admin?._id))
 
   const live = await Tor.findOne({ announcementNo: "69109000001" })
   assert.ok(live, "the TOR is on /browse")
@@ -121,6 +132,40 @@ test("a draft with no invitation yet is refused, and nothing changes", async () 
   const stored = await TorDraft.findById(draft._id)
   assert.equal(stored?.reviewStatus, "need-review")
   assert.equal(stored?.publishedTorId, null)
+})
+
+test("publishing is written to the security log with the admin who did it", async () => {
+  const draft = await makeDraft()
+  const token = await signIn("admin")
+  const lines: string[] = []
+  const original = console.log
+  console.log = (...args: unknown[]) => void lines.push(args.map(String).join(" "))
+  try {
+    assert.equal((await publishVia(draft._id, token)).status, 200)
+  } finally {
+    console.log = original
+  }
+
+  const entry = lines.find((line) => line.includes("TOR_PUBLISHED"))
+  assert.ok(entry, "a TOR_PUBLISHED entry is logged")
+  assert.match(entry, /admin@example\.com/)
+})
+
+test("a draft missing a budget, a deadline or any qualification is refused, and nothing changes", async () => {
+  const token = await signIn("admin")
+  const cases: Array<[Record<string, unknown>, RegExp]> = [
+    [{ announcementNo: "69109000101", budgetBaht: 0 }, /budget is missing/],
+    [{ announcementNo: "69109000102", deadline: "" }, /deadline is missing/],
+    [{ announcementNo: "69109000103", qualificationRequirements: [] }, /no qualification requirements/],
+  ]
+  for (const [overrides, message] of cases) {
+    const draft = await makeDraft(overrides)
+    const response = await publishVia(draft._id, token)
+    assert.equal(response.status, 400)
+    assert.match((await response.json()).error, message)
+    assert.equal((await TorDraft.findById(draft._id))?.reviewStatus, "need-review")
+  }
+  assert.equal(await Tor.countDocuments(), 0)
 })
 
 test("a draft with no title is refused", async () => {

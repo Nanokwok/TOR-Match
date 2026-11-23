@@ -18,6 +18,7 @@ type DashboardViewProps = {
 }
 
 export function DashboardView({ data }: DashboardViewProps) {
+  const { t } = useLocale()
   const activeBids = data.metrics.find((metric) => metric.id === "active-bids")
   const upcoming = data.metrics.find(
     (metric) => metric.id === "upcoming-deadlines"
@@ -34,30 +35,29 @@ export function DashboardView({ data }: DashboardViewProps) {
         <section className="grid gap-10 pt-12 pb-14 md:grid-cols-[1.2fr_0.8fr] md:items-end md:gap-16 md:pt-16 md:pb-16">
           <div>
             <p className="font-script text-3xl text-primary md:text-4xl">
-              Pipeline
+              {t("dashboard.eyebrow")}
             </p>
             <h1 className="mt-2 max-w-xl text-4xl leading-[1.08] font-medium tracking-tight text-foreground md:text-5xl">
-              Your BMA bid
+              {t("dashboard.titleLine1")}
               <br />
-              desk, at a glance.
+              {t("dashboard.titleLine2")}
             </h1>
             <p className="mt-4 max-w-md text-base text-muted-foreground">
-              See what&apos;s moving in workspace, what closes this week, and
-              which eligible TORs deserve a look next.
+              {t("dashboard.subtitle")}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6 border-t border-foreground/10 pt-6 md:border-t-0 md:border-l md:pt-0 md:pl-10">
             <MetricBlock
               value={activeBids?.value ?? 0}
-              label="Active bids"
-              hint="In proposal prep"
+              label={t("dashboard.activeBids")}
+              hint={t("dashboard.inProposalPrep")}
               href="/workspace"
             />
             <MetricBlock
               value={upcoming?.value ?? 0}
-              label="Closing in 7 days"
-              hint="Tracked in workspace"
+              label={t("dashboard.closingIn7Days")}
+              hint={t("dashboard.trackedInWorkspace")}
               href="/workspace"
             />
           </div>
@@ -67,17 +67,17 @@ export function DashboardView({ data }: DashboardViewProps) {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-medium tracking-tight text-foreground">
-                Recommended for you
+                {t("dashboard.recommendedTitle")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Eligible TORs scored against your company profile
+                {t("dashboard.recommendedSubtitle")}
               </p>
             </div>
             <Link
               href="/browse"
               className="text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
-              Open browse →
+              {t("dashboard.openBrowse")}
             </Link>
           </div>
 
@@ -95,20 +95,20 @@ export function DashboardView({ data }: DashboardViewProps) {
         <section className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <h2 className="text-2xl font-medium tracking-tight text-foreground">
-              Announcements & budget
+              {t("dashboard.announcementsAndBudget")}
             </h2>
             <p className="mt-1 mb-6 text-sm text-muted-foreground">
-              Last 12 months of published volume vs allocated budget
+              {t("dashboard.announcementsSubtitle")}
             </p>
             <MonthlyTrendChart points={data.monthlyTrend} />
           </div>
 
           <div>
             <h2 className="text-2xl font-medium tracking-tight text-foreground">
-              Bangkok districts
+              {t("dashboard.districtsTitle")}
             </h2>
             <p className="mt-1 mb-6 text-sm text-muted-foreground">
-              Where procurement density is concentrating across 50 offices
+              {t("dashboard.districtsSubtitle")}
             </p>
             <DistrictDistributionChart points={data.districtDistribution} />
           </div>
@@ -150,7 +150,7 @@ function RecommendedTorRow({
   index: number
 }) {
   const router = useRouter()
-  const { locale } = useLocale()
+  const { locale, t } = useLocale()
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle"
   )
@@ -185,9 +185,13 @@ function RecommendedTorRow({
         <p className="text-sm text-muted-foreground">
           {pickLocalized(tor.department, locale)}
           <span className="mx-2 text-border">·</span>
-          {formatThb(tor.budgetBaht)}
+          {formatThb(tor.budgetBaht, locale)}
           <span className="mx-2 text-border">·</span>
-          {formatDaysLeft(tor.deadline)}
+          {formatDaysLeft(tor.deadline, locale, {
+            dueToday: t("workspace.dueToday"),
+            oneDayLeft: t("workspace.oneDayLeft"),
+            daysLeft: t("workspace.daysLeft"),
+          })}
         </p>
         {error ? (
           <p className="text-xs text-destructive" role="alert">
@@ -207,17 +211,17 @@ function RecommendedTorRow({
           }}
         >
           {status === "saving"
-            ? "Saving…"
+            ? t("dashboard.saving")
             : status === "saved"
-              ? "Saved"
-              : "Quick Save"}
+              ? t("dashboard.saved")
+              : t("dashboard.quickSave")}
         </Button>
         <Button
           type="button"
           className="h-9 bg-[#0088C9] px-4 text-white hover:bg-[#007ab4]"
           onClick={() => router.push(`/browse?tor=${tor.id}`)}
         >
-          Check Eligibility
+          {t("dashboard.checkEligibility")}
         </Button>
       </div>
     </article>
@@ -229,6 +233,7 @@ function MonthlyTrendChart({
 }: {
   points: DashboardData["monthlyTrend"]
 }) {
+  const { locale, t } = useLocale()
   const width = 640
   const height = 280
   const padding = { top: 12, right: 44, bottom: 32, left: 28 }
@@ -262,11 +267,11 @@ function MonthlyTrendChart({
       <div className="flex flex-wrap gap-5 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-2">
           <span className="h-3 w-3 bg-[#0088C9]/80" />
-          Announcements
+          {t("dashboard.announcements")}
         </span>
         <span className="inline-flex items-center gap-2">
           <span className="h-px w-5 bg-[#0a0a0a] dark:bg-foreground" />
-          Budget
+          {t("dashboard.budget")}
         </span>
       </div>
 
@@ -274,7 +279,7 @@ function MonthlyTrendChart({
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto w-full"
         role="img"
-        aria-label="12-month TOR announcement and budget trend"
+        aria-label={t("dashboard.trendChartAria")}
       >
         {[0.25, 0.5, 0.75].map((ratio) => {
           const y = padding.top + innerH * (1 - ratio)
@@ -295,6 +300,20 @@ function MonthlyTrendChart({
           const barH = (point.announcementCount / maxCount) * innerH * 0.85
           const x = padding.left + index * barWidth + barWidth * 0.25
           const y = padding.top + innerH - barH
+
+          const formattedLabel = point.monthKey
+            ? (() => {
+                const [year, month] = point.monthKey.split("-")
+                return new Intl.DateTimeFormat(
+                  locale === "th" ? "th-TH" : "en-US",
+                  {
+                    month: "short",
+                    year: "2-digit",
+                  }
+                ).format(new Date(Number(year), Number(month) - 1, 1))
+              })()
+            : point.label
+
           return (
             <g key={point.monthKey}>
               <rect
@@ -310,7 +329,7 @@ function MonthlyTrendChart({
                 textAnchor="middle"
                 className="fill-muted-foreground text-[10px]"
               >
-                {point.label}
+                {formattedLabel}
               </text>
             </g>
           )
@@ -335,6 +354,7 @@ function DistrictDistributionChart({
 }: {
   points: DashboardData["districtDistribution"]
 }) {
+  const { t } = useLocale()
   const maxCount = Math.max(...points.map((point) => point.projectCount), 1)
   const top = points.slice(0, 12)
   const rest = points.slice(12)
@@ -344,9 +364,10 @@ function DistrictDistributionChart({
       <div className="space-y-3">
         {top.map((point, index) => {
           const width = (point.projectCount / maxCount) * 100
+          const localizedDistrict = t(`dashboard.districts.${point.district}`)
           return (
             <div key={point.district} className="grid grid-cols-[7rem_1fr_auto] items-center gap-3">
-              <p className="truncate text-sm text-foreground">{point.district}</p>
+              <p className="truncate text-sm text-foreground">{localizedDistrict}</p>
               <div className="h-px bg-foreground/10">
                 <div
                   className="h-px bg-[#0088C9] transition-[width] duration-500"
@@ -356,9 +377,9 @@ function DistrictDistributionChart({
               <p className="w-16 text-right text-xs tabular-nums text-muted-foreground">
                 {point.projectCount}
                 <span className="text-foreground/30"> · </span>
-                {formatCompactBudget(point.budgetBaht)}
+                {formatCompactBudget(point.budgetBaht, t)}
               </p>
-              <span className="sr-only">Rank {index + 1}</span>
+              <span className="sr-only">{t("dashboard.rank", { rank: index + 1 })}</span>
             </div>
           )
         })}
@@ -366,21 +387,22 @@ function DistrictDistributionChart({
 
       <details className="group">
         <summary className="cursor-pointer list-none text-sm font-medium text-primary underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
-          Show all 50 districts
+          {t("dashboard.showAllDistricts")}
           <span className="ml-1 text-muted-foreground group-open:hidden">
-            ({rest.length} more)
+            {t("dashboard.moreDistricts", { count: rest.length })}
           </span>
         </summary>
         <ScrollArea className="mt-4 max-h-64 border-t border-border pt-4" viewportClassName="space-y-2.5">
           {rest.map((point) => {
             const width = (point.projectCount / maxCount) * 100
+            const localizedDistrict = t(`dashboard.districts.${point.district}`)
             return (
               <div
                 key={point.district}
                 className="grid grid-cols-[7rem_1fr_auto] items-center gap-3"
               >
                 <p className="truncate text-sm text-foreground">
-                  {point.district}
+                  {localizedDistrict}
                 </p>
                 <div className="h-px bg-foreground/10">
                   <div
@@ -400,15 +422,24 @@ function DistrictDistributionChart({
   )
 }
 
-function formatCompactBudget(value: number) {
+function formatCompactBudget(
+  value: number,
+  t: (key: string, params?: Record<string, string | number>) => string
+) {
   if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)}B`
+    return t("dashboard.compactBillion", {
+      value: (value / 1_000_000_000).toFixed(1),
+    })
   }
   if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`
+    return t("dashboard.compactMillion", {
+      value: (value / 1_000_000).toFixed(1),
+    })
   }
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(0)}K`
+    return t("dashboard.compactThousand", {
+      value: (value / 1_000).toFixed(0),
+    })
   }
   return String(Math.round(value))
 }

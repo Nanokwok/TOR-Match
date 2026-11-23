@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 
+import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,10 +36,8 @@ import {
 } from "@/components/ui/table"
 import { formatThb } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import type { Locale } from "@/lib/i18n"
 import {
-  companySizeLabels,
-  companyStatusLabels,
-  formatCompanySize,
   type AdminCompanyListItem,
   type AdminCompanySize,
   type AdminCompanyStats,
@@ -66,8 +65,11 @@ const statusStyles: Record<AdminCompanyStatus, string> = {
     "border-transparent bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
 }
 
-function formatJoined(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+const COMPANY_STATUS_KEYS: AdminCompanyStatus[] = ["active", "pending", "suspended"]
+const COMPANY_SIZE_KEYS: AdminCompanySize[] = ["micro", "small", "medium", "large"]
+
+function formatJoined(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -89,6 +91,7 @@ export function CompaniesView({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const { locale, t } = useLocale()
   const [search, setSearch] = useState(q)
   const [urlQ, setUrlQ] = useState(q)
   const [isPending, startTransition] = useTransition()
@@ -128,15 +131,17 @@ export function CompaniesView({
   const currentPage = Math.min(page, totalPages)
 
   const statCards = [
-    { label: "Total Companies", value: stats ? String(stats.total) : "—" },
-    { label: "Active", value: stats ? String(stats.active) : "—" },
-    { label: "Pending", value: stats ? String(stats.pending) : "—" },
-    { label: "Suspended", value: stats ? String(stats.suspended) : "—" },
+    { label: t("admin.companiesPage.totalCompanies"), value: stats ? String(stats.total) : "—" },
+    { label: t("admin.companiesPage.active"), value: stats ? String(stats.active) : "—" },
+    { label: t("admin.companiesPage.pending"), value: stats ? String(stats.pending) : "—" },
+    { label: t("admin.companiesPage.suspended"), value: stats ? String(stats.suspended) : "—" },
   ]
 
   return (
     <ScrollArea className="flex-1" viewportClassName="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("admin.companiesPage.title")}
+      </h1>
 
       {error ? (
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
@@ -172,7 +177,7 @@ export function CompaniesView({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name or tax ID..."
+            placeholder={t("admin.companiesPage.searchPlaceholder")}
             className="pl-8"
           />
         </div>
@@ -188,17 +193,15 @@ export function CompaniesView({
           }}
         >
           <SelectTrigger className="w-full xl:w-40">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("admin.companiesPage.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {(Object.keys(companyStatusLabels) as AdminCompanyStatus[]).map(
-              (key) => (
-                <SelectItem key={key} value={key}>
-                  {companyStatusLabels[key]}
-                </SelectItem>
-              )
-            )}
+            <SelectItem value="all">{t("admin.companiesPage.allStatuses")}</SelectItem>
+            {COMPANY_STATUS_KEYS.map((key) => (
+              <SelectItem key={key} value={key}>
+                {t(`admin.companiesPage.status.${key}`)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -213,17 +216,15 @@ export function CompaniesView({
           }}
         >
           <SelectTrigger className="w-full xl:w-40">
-            <SelectValue placeholder="Company Size" />
+            <SelectValue placeholder={t("admin.companiesPage.sizePlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All sizes</SelectItem>
-            {(Object.keys(companySizeLabels) as AdminCompanySize[]).map(
-              (key) => (
-                <SelectItem key={key} value={key}>
-                  {companySizeLabels[key]}
-                </SelectItem>
-              )
-            )}
+            <SelectItem value="all">{t("admin.companiesPage.allSizes")}</SelectItem>
+            {COMPANY_SIZE_KEYS.map((key) => (
+              <SelectItem key={key} value={key}>
+                {t(`admin.companiesPage.size.${key}`)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -232,13 +233,13 @@ export function CompaniesView({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="px-4">Company</TableHead>
-              <TableHead>Tax ID</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Capital</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="px-4 text-right">Action</TableHead>
+              <TableHead className="px-4">{t("admin.companiesPage.table.company")}</TableHead>
+              <TableHead>{t("admin.companiesPage.table.taxId")}</TableHead>
+              <TableHead>{t("admin.companiesPage.table.size")}</TableHead>
+              <TableHead>{t("admin.companiesPage.table.capital")}</TableHead>
+              <TableHead>{t("admin.companiesPage.table.status")}</TableHead>
+              <TableHead>{t("admin.companiesPage.table.joined")}</TableHead>
+              <TableHead className="px-4 text-right">{t("admin.companiesPage.table.action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -249,8 +250,8 @@ export function CompaniesView({
                   className="h-24 text-center text-muted-foreground"
                 >
                   {error
-                    ? "Could not load companies."
-                    : "No companies match your filters."}
+                    ? t("admin.companiesPage.table.loadError")
+                    : t("admin.companiesPage.table.noMatch")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -259,29 +260,33 @@ export function CompaniesView({
                   <TableCell className="px-4">
                     <div className="min-w-0">
                       <p className="truncate font-medium">
-                        {company.nameEnglish || company.nameThai || "—"}
+                        {locale === "th"
+                          ? company.nameThai || company.nameEnglish || "—"
+                          : company.nameEnglish || company.nameThai || "—"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {company.nameThai && company.nameEnglish
-                          ? company.nameThai
-                          : company.contactEmail || "—"}
+                        {locale === "th"
+                          ? company.nameEnglish || company.contactEmail || "—"
+                          : company.nameThai || company.contactEmail || "—"}
                       </p>
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {company.taxId || "—"}
                   </TableCell>
-                  <TableCell>{formatCompanySize(company.size)}</TableCell>
                   <TableCell>
-                    {formatThb(company.registeredCapitalBaht)}
+                    {company.size ? t(`admin.companiesPage.size.${company.size}`) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    {formatThb(company.registeredCapitalBaht, locale)}
                   </TableCell>
                   <TableCell>
                     <Badge className={cn(statusStyles[company.status])}>
-                      {companyStatusLabels[company.status]}
+                      {t(`admin.companiesPage.status.${company.status}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatJoined(company.joinedAt)}
+                    {formatJoined(company.joinedAt, locale)}
                   </TableCell>
                   <TableCell className="px-4 text-right">
                     <Button
@@ -293,7 +298,7 @@ export function CompaniesView({
                         <Link href={`/admin/companies/${company.id}`} />
                       }
                     >
-                      View
+                      {t("admin.companiesPage.table.view")}
                     </Button>
                   </TableCell>
                 </TableRow>

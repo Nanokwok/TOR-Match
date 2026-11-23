@@ -90,6 +90,8 @@ const torDraftSchema = new Schema(
     /** Set once published; a draft with this set has a counterpart in `tors`. */
     publishedTorId: { type: Schema.Types.ObjectId, ref: "Tor", default: null },
     publishedAt: { type: Date, default: null },
+    /** The admin who published it by hand. Stays null for an auto-approved draft, which no person reviewed. */
+    reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 )
