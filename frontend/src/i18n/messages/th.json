@@ -255,6 +255,7 @@
       "label": "เลื่อนหน้า",
       "previous": "หน้าก่อนหน้า",
       "next": "หน้าถัดไป",
+      "pageOnly": "หน้า {page} จาก {totalPages}",
       "status": "หน้า {page} จาก {totalPages} · {total} รายการ"
     },
     "source": {
@@ -408,6 +409,7 @@
     "daysLeft": "เหลือ {days} วัน",
     "oneDayLeft": "เหลือ 1 วัน",
     "dueToday": "ครบกำหนดวันนี้",
+    "overdue": "เลยกำหนดแล้ว",
     "cardDetail": {
       "details": "รายละเอียด",
       "checklist": "เช็คลิสต์งานภายใน",

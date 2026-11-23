@@ -50,7 +50,7 @@ function ScrollArea({
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
       data-scrolling={isScrolling ? "" : undefined}
-      className={cn("relative group/scroll-area min-h-0", className)}
+      className={cn("relative group/scroll-area min-h-0 overflow-hidden", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
@@ -58,7 +58,7 @@ function ScrollArea({
         onScroll={handleScroll}
         data-slot="scroll-area-viewport"
         className={cn(
-          "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "size-full max-h-[inherit] rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           viewportClassName
         )}
       >

@@ -255,6 +255,7 @@
       "label": "Pagination",
       "previous": "Previous page",
       "next": "Next page",
+      "pageOnly": "Page {page} of {totalPages}",
       "status": "Page {page} of {totalPages} · {total} TORs"
     },
     "source": {
@@ -408,6 +409,7 @@
     "daysLeft": "{days} Days Left",
     "oneDayLeft": "1 Day Left",
     "dueToday": "Due today",
+    "overdue": "Overdue",
     "cardDetail": {
       "details": "Details",
       "checklist": "Internal Task Checklist",

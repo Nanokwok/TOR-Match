@@ -197,13 +197,13 @@ export function NotificationCenter({
           <div className="border-b border-border px-2">
             <TabsList
               variant="line"
-              className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
+              className="grid w-full grid-cols-4 gap-0 rounded-none bg-transparent p-0 overflow-hidden"
             >
               {TAB_KEYS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="h-10 flex-none rounded-none px-3 text-xs after:bg-primary data-active:text-primary"
+                  className="h-10 w-full rounded-none px-1 text-center text-xs whitespace-nowrap after:bg-primary data-active:text-primary"
                 >
                   {t(tab.labelKey)}
                 </TabsTrigger>
