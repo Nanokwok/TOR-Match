@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, ChevronRight, KeyRound, LogOut, Monitor } from "lucide-react"
+import { Bell, ChevronRight, KeyRound, LogOut, Monitor, Shield } from "lucide-react"
 
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,12 @@ const SETTINGS_LINKS = [
     titleKey: "settings.passwordTitle",
     descriptionKey: "settings.passwordDesc",
     icon: KeyRound,
+  },
+  {
+    href: "/privacy",
+    titleKey: "settings.privacyTitle",
+    descriptionKey: "settings.privacyDesc",
+    icon: Shield,
   },
 ] as const
 

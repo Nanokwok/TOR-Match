@@ -150,6 +150,17 @@ export function SignupForm() {
             >
               {isPending ? t("auth.creatingAccount") : t("auth.registerButton")}
             </Button>
+
+            <p className="text-center text-xs text-muted-foreground leading-relaxed pt-1">
+              {t("auth.privacyConsentText")}{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="font-medium text-[#0088C9] underline underline-offset-2 hover:text-[#0088C9]/80"
+              >
+                {t("auth.privacyPolicyLink")}
+              </Link>
+            </p>
           </form>
         </div>
 

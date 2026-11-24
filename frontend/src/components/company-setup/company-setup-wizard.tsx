@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Plus, X } from "lucide-react"
+import Link from "next/link"
+import { Plus, ShieldCheck, X } from "lucide-react"
 
 import { saveCompanySetupProfileAction } from "@/actions/company-setup"
 import { useCompanySetupDemoFill } from "@/components/company-setup/company-setup-demo-fill"
@@ -311,6 +312,20 @@ function GeneralStep({ profile, onChange }: StepProps) {
 
   return (
     <div className="space-y-5">
+      <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3.5 text-xs text-muted-foreground">
+        <ShieldCheck className="size-4 shrink-0 text-primary mt-0.5" />
+        <div>
+          <span>{t("companySetup.pdpaNotice")} </span>
+          <Link
+            href="/privacy"
+            target="_blank"
+            className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+          >
+            {t("companySetup.pdpaNoticeLink")}
+          </Link>
+        </div>
+      </div>
+
       <Field label={t("companySetup.fields.companyNameThai")} required htmlFor="company-name-thai">
         <Input
           id="company-name-thai"
@@ -356,6 +371,9 @@ function GeneralStep({ profile, onChange }: StepProps) {
             inputMode="numeric"
             className="h-11 rounded-md bg-background"
           />
+          <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+            {t("companySetup.taxIdHint")}
+          </p>
         </Field>
 
         <Field label={t("companySetup.fields.companySize")} required htmlFor="company-size">
