@@ -1,18 +1,28 @@
 "use client"
 
 import { useCallback, useMemo, useState } from "react"
-import { Filter, Search, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ChevronDown, Filter, Search, SlidersHorizontal, X } from "lucide-react"
 
 import { BrowseMoreFiltersDialog } from "@/components/browse/browse-more-filters-dialog"
 import { useLocale } from "@/components/i18n/locale-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { LabeledFilterSelect } from "@/components/ui/labeled-filter-select"
-import { BROWSE_SORTS } from "@/lib/browse-filters"
+import { BROWSE_SORTS, DEFAULT_BROWSE_SORT } from "@/lib/browse-filters"
 import { localizedKey, pickLocalized } from "@/lib/localized-content"
 import { SelectItem } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
 import {
   countActiveDetailFilters,
   EMPTY_DETAIL_FILTERS,
@@ -43,6 +53,7 @@ export type BrowseFiltersState = {
 
 type TorFilterBarProps = {
   filters: BrowseFiltersState
+  isSignedIn?: boolean
   departments: LocalizedText[]
   localOffices: string[]
   onChange: (next: BrowseFiltersState) => void
@@ -64,13 +75,17 @@ export function filtersToQuery(filters: BrowseFiltersState): TorListQuery {
 
 export function TorFilterBar({
   filters,
+  isSignedIn = false,
   departments,
   localOffices,
   onChange,
   onSearch,
 }: TorFilterBarProps) {
+  const router = useRouter()
   const { locale, t } = useLocale()
   const [moreOpen, setMoreOpen] = useState(false)
+  const [isRow2Open, setIsRow2Open] = useState(true)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
 
   /** Department filter values are the canonical English names; labels follow the locale. */
   const departmentLabel = useCallback(
@@ -84,6 +99,14 @@ export function TorFilterBar({
   const activeDetailCount =
     countActiveDetailFilters(filters.detail) +
     (filters.department !== "all" ? 1 : 0)
+
+  const totalActiveFilterCount =
+    (filters.openOnly ? 0 : 1) +
+    (filters.eligibleOnly ? 1 : 0) +
+    (filters.sort !== DEFAULT_BROWSE_SORT ? 1 : 0) +
+    (filters.budgetRange !== "all" ? 1 : 0) +
+    (filters.status !== "all" ? 1 : 0) +
+    activeDetailCount
 
   const chips = useMemo(() => {
     const list = getActiveDetailFilterChips(filters.detail, t)
@@ -185,10 +208,40 @@ export function TorFilterBar({
           >
             {t("common.search")}
           </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 shrink-0 gap-1.5 px-3"
+            onClick={() => setIsRow2Open((prev) => !prev)}
+            aria-expanded={isRow2Open}
+            aria-label={t("common.filters")}
+          >
+            <Filter className="size-4" />
+            <span className="hidden sm:inline">
+              {isRow2Open
+                ? locale === "th"
+                  ? "ซ่อนตัวกรอง"
+                  : "Hide filters"
+                : t("common.filters")}
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-3.5 transition-transform duration-200",
+                isRow2Open && "rotate-180"
+              )}
+            />
+            {totalActiveFilterCount > 0 ? (
+              <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary">
+                {totalActiveFilterCount}
+              </Badge>
+            ) : null}
+          </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-            <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
+        {isRow2Open ? (
+          <div className="flex w-full flex-wrap items-center gap-2 animate-in fade-in-0 duration-150">
+            <label className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm cursor-pointer">
               <Switch
                 checked={filters.openOnly}
                 onCheckedChange={(checked) =>
@@ -201,12 +254,16 @@ export function TorFilterBar({
               </span>
             </label>
 
-            <label className="flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm">
+            <label className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm cursor-pointer">
               <Switch
                 checked={filters.eligibleOnly}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked) => {
+                  if (checked && !isSignedIn) {
+                    setLoginModalOpen(true)
+                    return
+                  }
                   onChange({ ...filters, eligibleOnly: checked })
-                }
+                }}
                 className="data-checked:bg-primary"
               />
               <span className="whitespace-nowrap text-foreground">
@@ -221,7 +278,8 @@ export function TorFilterBar({
               onValueChange={(value) =>
                 onChange({ ...filters, sort: value as TorSort })
               }
-              triggerClassName="min-w-[9rem]"
+              className="flex-1 min-w-[140px]"
+              triggerClassName="w-full"
             >
               {BROWSE_SORTS.map((option) => (
                 <SelectItem key={option} value={option}>
@@ -237,6 +295,8 @@ export function TorFilterBar({
               onValueChange={(value) =>
                 onChange({ ...filters, budgetRange: value })
               }
+              className="flex-1 min-w-[140px]"
+              triggerClassName="w-full"
             >
               <SelectItem value="all">{t("common.all")}</SelectItem>
               <SelectItem value="under-3m">{t("browse.budgetUnder3m")}</SelectItem>
@@ -255,6 +315,8 @@ export function TorFilterBar({
                   status: value as BrowseFiltersState["status"],
                 })
               }
+              className="flex-1 min-w-[140px]"
+              triggerClassName="w-full"
             >
               <SelectItem value="all">{t("common.all")}</SelectItem>
               <SelectItem value="open">{t("browse.statusOpen")}</SelectItem>
@@ -269,19 +331,20 @@ export function TorFilterBar({
 
             <Button
               variant="outline"
-              className="relative h-9 gap-2 px-3"
+              className="relative h-9 shrink-0 gap-2 px-3"
               aria-label={t("browse.moreFilters")}
               onClick={() => setMoreOpen(true)}
             >
-              <Filter className="size-4" />
-              <span className="hidden sm:inline">{t("common.filters")}</span>
+              <SlidersHorizontal className="size-4" />
+              <span className="hidden sm:inline">{t("browse.moreFilters")}</span>
               {activeDetailCount > 0 ? (
                 <Badge className="h-5 min-w-5 rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground hover:bg-primary">
                   {activeDetailCount}
                 </Badge>
               ) : null}
             </Button>
-        </div>
+          </div>
+        ) : null}
 
         {chips.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -328,6 +391,35 @@ export function TorFilterBar({
           onChange({ ...filters, detail, department })
         }
       />
+
+      <Dialog open={loginModalOpen} onOpenChange={setLoginModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("browse.guestQualification.title")}</DialogTitle>
+            <DialogDescription>
+              {t("browse.guestQualification.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLoginModalOpen(false)}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => {
+                router.push(`/login?redirectTo=${encodeURIComponent("/browse")}`)
+              }}
+            >
+              {t("header.login")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

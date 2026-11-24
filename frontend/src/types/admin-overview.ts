@@ -8,6 +8,27 @@ export type OverviewActivity = {
   at: string
 }
 
+export type OverviewScrapeJob = {
+  id: string
+  documentSource: string
+  sourceUrl?: string
+  stage: string
+  status: "running" | "success" | "failure" | "skipped"
+  errorMessage?: string
+  pages: number
+  attempts: number
+  createdAt: string
+  finishedAt?: string | null
+}
+
+export type PipelineHealth = {
+  totalJobs: number
+  successfulJobs: number
+  failedJobs: number
+  runningJobs: number
+  successRatePercent: number
+}
+
 export type AdminOverviewStats = {
   activeCompanies: number
   pendingCompanies: number
@@ -17,4 +38,6 @@ export type AdminOverviewStats = {
 export type AdminOverviewData = {
   stats: AdminOverviewStats
   activity: OverviewActivity[]
+  pipelineHealth?: PipelineHealth
+  recentJobs?: OverviewScrapeJob[]
 }

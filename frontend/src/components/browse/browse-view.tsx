@@ -295,9 +295,10 @@ export function BrowseView({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-muted">
+    <div className="flex min-h-0 flex-1 flex-col bg-muted w-full min-w-0 overflow-x-hidden">
       <TorFilterBar
         filters={filters}
+        isSignedIn={isSignedIn}
         departments={departments}
         localOffices={localOffices}
         onChange={handleFiltersChange}
@@ -346,8 +347,8 @@ export function BrowseView({
         </p>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4">
-        <aside className="min-h-[320px] rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
+      <div className="grid min-h-0 flex-1 gap-3 p-3 md:grid-cols-[minmax(280px,360px)_1fr] md:p-4 w-full min-w-0">
+        <aside className="min-h-[320px] min-w-0 rounded-xl border border-border bg-card md:min-h-0 md:max-h-[calc(100vh-12rem)] overflow-hidden flex flex-col">
           {isPending ? (
             <div className="min-h-0 flex-1 overflow-hidden">
               <TorListSkeleton />
@@ -373,7 +374,7 @@ export function BrowseView({
           />
         </aside>
 
-        <section className="min-h-[480px] md:min-h-0 md:max-h-[calc(100vh-12rem)]">
+        <section className="min-h-[480px] min-w-0 md:min-h-0 md:max-h-[calc(100vh-12rem)] flex flex-col">
           <TorDetail
             isSignedIn={isSignedIn}
             tor={selectedTor}
@@ -449,9 +450,9 @@ function BrowsePager({
       >
         <ChevronLeft className="size-4" />
       </Button>
-      <p className="text-center text-xs text-muted-foreground" aria-live="polite">
-        {t("browse.pagination.status", { page, totalPages, total })}
-      </p>
+      <span className="sr-only" aria-live="polite">
+        {t("browse.pagination.pageOnly", { page, totalPages })}
+      </span>
       <Button
         type="button"
         size="icon-sm"

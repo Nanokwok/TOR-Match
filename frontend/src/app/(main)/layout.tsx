@@ -33,7 +33,7 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
         account={account}
         initialNotifications={initialNotifications}
       />
-      <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col min-w-0">{children}</main>
       <Footer />
     </>
   )

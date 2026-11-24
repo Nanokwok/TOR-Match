@@ -202,14 +202,17 @@ function TorDetailContent({
   const failedCount =
     qualificationCheck?.rows.filter((r) => r.status === "failed").length ?? 0;
 
-  function renderEligibilityBadge() {
+  function renderEligibilityBadge(className?: string) {
     // Without a company profile every requirement would read as failed or unknown: say nothing.
     if (!isSignedIn) return null;
     if (failedCount > 0) {
       return (
         <Badge
           variant="destructive"
-          className="h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800"
+          className={cn(
+            "h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800",
+            className
+          )}
         >
           {locale === "th" ? `ไม่ผ่าน ${failedCount} ข้อ` : `${failedCount} Failed`}
         </Badge>
@@ -217,7 +220,12 @@ function TorDetailContent({
     }
     if (tor.eligible || qualificationCheck?.status === "passed") {
       return (
-        <Badge className="h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+        <Badge
+          className={cn(
+            "h-5 px-1.5 text-[11px] font-semibold shrink-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+            className
+          )}
+        >
           {locale === "th" ? "ผ่าน" : t("common.eligible")}
         </Badge>
       );
@@ -225,7 +233,10 @@ function TorDetailContent({
     return (
       <Badge
         variant="outline"
-        className="h-5 px-1.5 text-[11px] font-semibold shrink-0 text-muted-foreground"
+        className={cn(
+          "h-5 px-1.5 text-[11px] font-semibold shrink-0 text-muted-foreground",
+          className
+        )}
       >
         {t(
           `browse.qualificationStatus.${qualificationCheck?.status ?? "insufficient-data"}`
@@ -235,14 +246,14 @@ function TorDetailContent({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card w-full min-w-0">
       {/* Top Header Section */}
-      <div className="border-b border-border shrink-0 bg-card">
+      <div className="border-b border-border shrink-0 bg-card min-w-0">
         {isCollapsed ? (
           /* แถวบนสุด (Compact Project Bar): Layer 1 */
-          <div className="flex items-center justify-between gap-3 px-5 py-2 md:px-6 h-[40px]">
+          <div className="flex items-center justify-between gap-3 px-5 py-2 md:px-6 h-[40px] min-w-0 w-full">
             {/* ฝั่งซ้าย: ชื่อโครงการ (ตัดคำ/Truncate บรรทัดเดียว มี Tooltip ดูเต็ม) + แสดงงบประมาณกะทัดรัด เช่น | 6.4 ล้านบาท + Badge สถานะ เช่น [ ไม่ผ่าน 1 ข้อ ] */}
-            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
               <TooltipProvider delay={100}>
                 <Tooltip>
                   <TooltipTrigger
@@ -251,9 +262,11 @@ function TorDetailContent({
                       setIsCollapsed(false);
                       contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="truncate text-left font-semibold text-foreground text-sm hover:text-primary transition-colors cursor-pointer shrink"
+                    className="min-w-0 flex-1 overflow-hidden text-left font-semibold text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
                   >
-                    {localized.title}
+                    <span className="truncate block" title={localized.title}>
+                      {localized.title}
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-md text-xs">
                     {localized.title}
@@ -261,9 +274,9 @@ function TorDetailContent({
                 </Tooltip>
               </TooltipProvider>
 
-              <span className="text-muted-foreground/40 shrink-0 select-none text-xs">|</span>
+              <span className="text-muted-foreground/40 shrink-0 select-none text-xs hidden sm:inline">|</span>
 
-              <span className="shrink-0 text-xs font-semibold text-foreground whitespace-nowrap">
+              <span className="shrink-0 text-xs font-semibold text-foreground whitespace-nowrap hidden sm:inline">
                 {formatCompactBaht(tor.budgetBaht, locale)}
               </span>
 
@@ -277,7 +290,7 @@ function TorDetailContent({
                 {statusBadge.shortLabel}
               </Badge>
 
-              {renderEligibilityBadge()}
+              {renderEligibilityBadge("hidden sm:inline-flex md:hidden lg:inline-flex")}
             </div>
 
             {/* ฝั่งขวา: ปุ่ม Action ขนาดเล็ก เช่น ไอคอน Bookmark, Share, ลิงก์ต้นฉบับ */}
@@ -484,7 +497,7 @@ function TorDetailContent({
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
         {/* แถวกลาง (Tabs Navigation): Layer 2 */}
-        <div className="border-b border-border px-5 md:px-6 shrink-0 bg-card">
+        <div className="border-b border-border px-5 md:px-6 shrink-0 bg-card overflow-x-auto scrollbar-none min-w-0">
           <TabsList
             variant="line"
             className="h-auto w-full justify-start gap-4 sm:gap-6 rounded-none bg-transparent p-0"
@@ -524,21 +537,21 @@ function TorDetailContent({
 
         {/* แถวล่างสุด (Sticky Table Header): Layer 3 */}
         {isCollapsed && activeTab === "qualification" ? (
-          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150">
-            <div className="flex w-full min-w-[640px] text-xs font-semibold py-2">
-              <div className="w-[25%] px-4 truncate">
+          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150 overflow-hidden min-w-0">
+            <div className="flex w-full min-w-[700px] text-xs font-semibold py-2">
+              <div className="w-[24%] px-4 truncate">
                 {t("browse.qualificationPanel.requirement")}
               </div>
-              <div className="w-[55%] px-4 truncate">
+              <div className="w-[48%] px-4 truncate">
                 {t("browse.qualificationPanel.torCriteria")}
               </div>
-              <div className="w-[20%] px-4 truncate">
+              <div className="w-[28%] px-4 truncate">
                 {t("browse.qualificationPanel.companyProfile")}
               </div>
             </div>
           </div>
         ) : isCollapsed && activeTab === "financials" ? (
-          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150">
+          <div className="border-b border-primary/20 bg-primary text-primary-foreground px-5 md:px-6 shrink-0 shadow-xs z-10 animate-in fade-in-0 duration-150 overflow-hidden min-w-0">
             <div className="flex w-full text-xs font-semibold py-2">
               <div className="w-28 px-4 sm:w-36 truncate shrink-0">
                 {t("browse.financialPanel.day")}
@@ -556,7 +569,7 @@ function TorDetailContent({
         <ScrollArea
           viewportRef={contentScrollRef}
           onScroll={handleScroll}
-          className="min-h-0 flex-1"
+          className="min-h-0 flex-1 min-w-0"
           viewportClassName="p-5 md:p-6"
         >
           <TabsContent value="summary" className="mt-0 space-y-6">

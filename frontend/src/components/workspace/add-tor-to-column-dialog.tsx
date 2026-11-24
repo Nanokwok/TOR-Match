@@ -146,7 +146,7 @@ function AddTorToColumnDialogBody({
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        <ScrollArea className="max-h-[320px] rounded-lg border border-border">
+        <ScrollArea className="max-h-[320px] rounded-lg border border-border" viewportClassName="max-h-[320px]">
           {results.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">
               {isSearching

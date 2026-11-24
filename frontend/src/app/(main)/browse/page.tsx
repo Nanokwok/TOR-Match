@@ -39,7 +39,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col w-full min-w-0">
       <BrowseView
         isSignedIn={isSignedIn}
         initialItems={items}

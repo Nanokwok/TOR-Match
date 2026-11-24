@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 
 import { Company } from "@/models/Company.model"
+import { ScrapeJob } from "@/models/ScrapeJob.model"
 import { TorDraft } from "@/models/TorDraft.model"
 import { asyncHandler } from "@/utils/asyncHandler"
 
@@ -14,6 +15,27 @@ export type OverviewActivity = {
   at: string
 }
 
+export type OverviewScrapeJob = {
+  id: string
+  documentSource: string
+  sourceUrl?: string
+  stage: string
+  status: "running" | "success" | "failure" | "skipped"
+  errorMessage?: string
+  pages: number
+  attempts: number
+  createdAt: string
+  finishedAt?: string | null
+}
+
+export type PipelineHealth = {
+  totalJobs: number
+  successfulJobs: number
+  failedJobs: number
+  runningJobs: number
+  successRatePercent: number
+}
+
 export type AdminOverviewResponse = {
   stats: {
     activeCompanies: number
@@ -21,6 +43,8 @@ export type AdminOverviewResponse = {
     torsNeedReview: number
   }
   activity: OverviewActivity[]
+  pipelineHealth: PipelineHealth
+  recentJobs: OverviewScrapeJob[]
 }
 
 type DraftActivityInput = {
@@ -88,26 +112,60 @@ export function mergeAndSortActivities(
 }
 
 export const getAdminOverview = asyncHandler(async (_req: Request, res: Response) => {
-  const [activeCompanies, pendingCompanies, torsNeedReview, recentDrafts, recentCompanies] =
-    await Promise.all([
-      Company.countDocuments({ status: "active" }),
-      Company.countDocuments({ status: "pending" }),
-      TorDraft.countDocuments({ reviewStatus: "need-review" }),
-      TorDraft.find({})
-        .sort({ updatedAt: -1 })
-        .limit(10)
-        .select("announcementNo title aiConfidence reviewStatus createdAt updatedAt publishedAt")
-        .lean(),
-      Company.find({})
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .select("companyNameEnglish companyNameThai status createdAt updatedAt")
-        .lean(),
-    ])
+  const [
+    activeCompanies,
+    pendingCompanies,
+    torsNeedReview,
+    recentDrafts,
+    recentCompanies,
+    totalJobs,
+    successfulJobs,
+    failedJobs,
+    runningJobs,
+    recentScrapeDocs,
+  ] = await Promise.all([
+    Company.countDocuments({ status: "active" }),
+    Company.countDocuments({ status: "pending" }),
+    TorDraft.countDocuments({ reviewStatus: "need-review" }),
+    TorDraft.find({})
+      .sort({ updatedAt: -1 })
+      .limit(10)
+      .select("announcementNo title aiConfidence reviewStatus createdAt updatedAt publishedAt")
+      .lean(),
+    Company.find({})
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select("companyNameEnglish companyNameThai status createdAt updatedAt")
+      .lean(),
+    ScrapeJob.countDocuments({}),
+    ScrapeJob.countDocuments({ status: "success" }),
+    ScrapeJob.countDocuments({ status: "failure" }),
+    ScrapeJob.countDocuments({ status: "running" }),
+    ScrapeJob.find({})
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .lean(),
+  ])
 
   const draftActivities = recentDrafts.map(toDraftActivity)
   const companyActivities = recentCompanies.map(toCompanyActivity)
   const mergedActivity = mergeAndSortActivities(draftActivities, companyActivities, 10)
+
+  const finishedTotal = successfulJobs + failedJobs
+  const successRatePercent = finishedTotal > 0 ? Math.round((successfulJobs / finishedTotal) * 100) : 100
+
+  const recentJobs: OverviewScrapeJob[] = recentScrapeDocs.map((job) => ({
+    id: String(job._id),
+    documentSource: job.documentSource,
+    sourceUrl: job.sourceUrl || undefined,
+    stage: job.stage,
+    status: (job.status as OverviewScrapeJob["status"]) || "running",
+    errorMessage: job.errorMessage || undefined,
+    pages: job.pages ?? 0,
+    attempts: job.attempts ?? 1,
+    createdAt: new Date(job.createdAt || new Date()).toISOString(),
+    finishedAt: job.finishedAt ? new Date(job.finishedAt).toISOString() : null,
+  }))
 
   const response: AdminOverviewResponse = {
     stats: {
@@ -116,6 +174,14 @@ export const getAdminOverview = asyncHandler(async (_req: Request, res: Response
       torsNeedReview,
     },
     activity: mergedActivity,
+    pipelineHealth: {
+      totalJobs,
+      successfulJobs,
+      failedJobs,
+      runningJobs,
+      successRatePercent,
+    },
+    recentJobs,
   }
 
   res.status(200).json(response)

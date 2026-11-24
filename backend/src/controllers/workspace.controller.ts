@@ -21,7 +21,7 @@ const addCardSchema = z.object({
 const updateCardSchema = z.object({
   priority: z.enum(PRIORITIES).optional(),
   column: z.enum(COLUMNS).optional(),
-  assigneeIds: z.array(objectIdString).max(50).optional(),
+  assigneeIds: z.array(z.string().trim().min(1).max(100)).max(50).optional(),
   checklist: z
     .array(z.object({ label: z.string().max(500), completed: z.boolean().optional() }))
     .max(100)
