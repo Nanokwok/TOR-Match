@@ -62,5 +62,6 @@ This document defines the data classification framework for **TOR-Match** in com
    - Export and transmission must occur strictly over HTTPS with modern cipher suites and HSTS enabled.
 
 3. **Data Retention & Disposal:**
-   - Session cookies carry `HttpOnly`, `SameSite=Lax`, and `Secure` in production with a max age of 7 days and 30-minute idle session timeouts.
+   - Session cookies carry `HttpOnly`, `SameSite=Lax`, and `Secure` in production with a max age of 7 days and 30-minute idle session timeouts. In production their names start with `__Host-` (`__Secure-` for the admin cookies, which are scoped to `/admin`), so the browser refuses to store them unless they are Secure.
+   - On logout the frontend expires the cookies and sends `Clear-Site-Data: "cache", "storage"`; the page also clears its own local and session storage in case that response never arrives.
    - Account deletion removes or anonymizes user and company records from the database.

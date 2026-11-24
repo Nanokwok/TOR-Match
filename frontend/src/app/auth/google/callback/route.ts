@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import { ApiRequestError, apiFetch } from "@/lib/api-client"
 import { AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth-cookie"
+import { expiredRootCookieOptions } from "@/lib/cookie-names"
 import { GOOGLE_STATE_COOKIE } from "@/lib/google-auth"
 
 import {
@@ -17,7 +18,7 @@ function backToLogin(request: NextRequest, reason: string) {
   const url = new URL("/login", request.url)
   url.searchParams.set("error", reason)
   const response = NextResponse.redirect(url)
-  response.cookies.delete(GOOGLE_STATE_COOKIE)
+  response.cookies.set(GOOGLE_STATE_COOKIE, "", expiredRootCookieOptions())
   return response
 }
 
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
         userSessionCookieOptions()
       )
     }
-    response.cookies.delete(GOOGLE_STATE_COOKIE)
+    response.cookies.set(GOOGLE_STATE_COOKIE, "", expiredRootCookieOptions())
     return response
   } catch (error) {
     if (!(error instanceof ApiRequestError)) console.error("Google sign-in failed", error)

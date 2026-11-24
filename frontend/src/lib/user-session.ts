@@ -1,12 +1,13 @@
 import { cookies } from "next/headers"
 
+import { hostCookieName } from "@/lib/cookie-names"
+
 export const USER_IDLE_TIMEOUT_SECONDS =
   Number(process.env.USER_IDLE_TIMEOUT_SECONDS ?? 30 * 60)
 
 export const USER_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
-export const USER_SESSION_COOKIE = "tm_user_session"
-export const USER_AUTH_COOKIE = process.env.AUTH_COOKIE_NAME ?? "tm_token"
+export const USER_SESSION_COOKIE = hostCookieName("tm_user_session")
 
 export type UserSession = {
   userId: string
@@ -108,6 +109,14 @@ export async function encodeUserSession(session: UserSession): Promise<string> {
   return `${payload}.${signature}`
 }
 
+/**
+ * Reads the claims of a backend JWT WITHOUT checking its signature: the frontend
+ * does not hold the backend's signing key. Fine for a token the backend has just
+ * handed over (login, Google callback) and for deciding whether to bother
+ * sending a stored token to the API, which verifies it. Never use it to decide
+ * that someone is signed in: a cookie is client-controlled, so anyone can write
+ * one. That is what the signed session cookie is for ({@link decodeUserSession}).
+ */
 export function decodeUserToken(token: string | undefined | null): UserSession | null {
   if (!token) return null
   const parts = token.split(".")
@@ -150,46 +159,35 @@ export async function decodeUserSession(
 ): Promise<UserSession | null> {
   if (!token) return null
 
-  // Case 1: HMAC-signed session string (payload.signature)
+  // Only the session cookie this app signed itself (payload.signature) counts. A
+  // three-part JWT is not accepted here: its signature cannot be checked on this
+  // side, so a forged one would pass for a signed-in user (ASVS V9.1.1, V7.2.1).
   const parts = token.split(".")
-  if (parts.length === 2) {
-    const [payload, signature] = parts
-    if (!payload || !signature) return null
-    if (!(await verifySignature(payload, signature))) return null
+  if (parts.length !== 2) return null
+  const [payload, signature] = parts
+  if (!payload || !signature) return null
+  if (!(await verifySignature(payload, signature))) return null
 
-    try {
-      const json = new TextDecoder().decode(fromBase64Url(payload))
-      const session = JSON.parse(json) as UserSession
-      if (
-        typeof session.userId !== "string" ||
-        typeof session.email !== "string" ||
-        typeof session.issuedAt !== "number" ||
-        typeof session.lastActiveAt !== "number"
-      ) {
-        return null
-      }
-
-      if (isUserSessionExpired(session, maxIdleSeconds)) {
-        return null
-      }
-
-      return session
-    } catch {
+  try {
+    const json = new TextDecoder().decode(fromBase64Url(payload))
+    const session = JSON.parse(json) as UserSession
+    if (
+      typeof session.userId !== "string" ||
+      typeof session.email !== "string" ||
+      typeof session.issuedAt !== "number" ||
+      typeof session.lastActiveAt !== "number"
+    ) {
       return null
     }
-  }
 
-  // Case 2: Standard 3-part JWT
-  if (parts.length === 3) {
-    const session = decodeUserToken(token)
-    if (!session) return null
     if (isUserSessionExpired(session, maxIdleSeconds)) {
       return null
     }
-    return session
-  }
 
-  return null
+    return session
+  } catch {
+    return null
+  }
 }
 
 export function isUserSessionExpired(
@@ -218,10 +216,7 @@ export function touchUserSession(session: UserSession): UserSession {
 
 export async function getUserSession(): Promise<UserSession | null> {
   const cookieStore = await cookies()
-  const sessionVal =
-    cookieStore.get(USER_SESSION_COOKIE)?.value ??
-    cookieStore.get(USER_AUTH_COOKIE)?.value
-  return decodeUserSession(sessionVal)
+  return decodeUserSession(cookieStore.get(USER_SESSION_COOKIE)?.value)
 }
 
 export async function setUserSessionCookie(session: UserSession) {

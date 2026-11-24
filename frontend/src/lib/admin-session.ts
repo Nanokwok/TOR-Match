@@ -1,14 +1,16 @@
 import { cookies } from "next/headers"
 
+import { secureCookieName } from "@/lib/cookie-names"
+
 /** Admin inactivity timeout — shorter than regular user sessions. */
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 30 * 60
 
 /** Regular user session lifetime (for comparison / future user auth). */
 export const USER_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
-export const ADMIN_SESSION_COOKIE = "tm_admin_session"
+export const ADMIN_SESSION_COOKIE = secureCookieName("tm_admin_session")
 
-export const ADMIN_API_TOKEN_COOKIE = "tm_admin_api_token"
+export const ADMIN_API_TOKEN_COOKIE = secureCookieName("tm_admin_api_token")
 
 export type AdminSession = {
   email: string
