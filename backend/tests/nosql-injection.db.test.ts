@@ -159,7 +159,7 @@ test("updating a card refuses operators, wrong shapes and path-like keys, and le
     { column: "bogus" },
     { assigneeIds: "someone" },
     { assigneeIds: [{ $ne: null }] },
-    { assigneeIds: ["not-an-id"] },
+    { assigneeIds: [""] },
     { checklist: "todo" },
     { checklist: [{ label: { $gt: "" } }] },
     { checklist: [{ label: "ok", completed: "yes" }] },

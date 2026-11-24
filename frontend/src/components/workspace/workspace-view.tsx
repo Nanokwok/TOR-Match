@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 
 import {
+  addTorToWorkspaceAction,
   moveWorkspaceCardAction,
   removeWorkspaceCardAction,
   updateWorkspaceCardAction,
@@ -110,6 +111,17 @@ export function WorkspaceView({
     void removeWorkspaceCardAction(torId, cardId)
   }
 
+  async function handleAddTorById(
+    torId: string
+  ): Promise<{ ok: boolean; error?: string }> {
+    const res = await addTorToWorkspaceAction(torId, "bookmark")
+    if (res.ok) {
+      setAllCards(res.cards)
+      return { ok: true }
+    }
+    return { ok: false, error: res.error }
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted">
       <WorkspaceFilterBar
@@ -117,6 +129,7 @@ export function WorkspaceView({
         members={initialBoard.members}
         onChange={setFilters}
         onSearch={() => undefined}
+        onAddTorById={handleAddTorById}
       />
 
       <ScrollArea orientation="horizontal" className="min-h-0 flex-1" viewportClassName="p-4 md:p-6">

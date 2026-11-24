@@ -170,14 +170,7 @@ export function BrowseMoreFiltersDialog({
     onOpenChange(false)
   }
 
-  const resultLabel =
-    previewTotal == null
-      ? t("browse.moreFiltersModal.applyFilters")
-      : previewTotal === 1
-        ? t("browse.moreFiltersModal.applyFiltersCount", { count: previewTotal })
-        : t("browse.moreFiltersModal.applyFiltersCountPlural", {
-            count: previewTotal,
-          })
+  const resultLabel = t("browse.moreFiltersModal.applyFilters")
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

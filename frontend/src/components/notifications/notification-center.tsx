@@ -1,11 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Bell, Inbox, Settings } from "lucide-react"
 
 import {
   deleteNotificationAction,
+  getNotificationsAction,
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/actions/notifications"
@@ -62,6 +63,25 @@ export function NotificationCenter({
   const [activeTab, setActiveTab] = useState<NotificationTab>("all")
   const [notifications, setNotifications] =
     useState<AppNotification[]>(initialNotifications)
+
+  useEffect(() => {
+    let isMounted = true
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await getNotificationsAction()
+        if (isMounted && Array.isArray(fresh)) {
+          setNotifications(fresh)
+        }
+      } catch (err) {
+        console.error("Failed to poll notifications", err)
+      }
+    }, 30000)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
@@ -177,13 +197,13 @@ export function NotificationCenter({
           <div className="border-b border-border px-2">
             <TabsList
               variant="line"
-              className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none bg-transparent p-0"
+              className="grid w-full grid-cols-4 gap-0 rounded-none bg-transparent p-0 overflow-hidden"
             >
               {TAB_KEYS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="h-10 flex-none rounded-none px-3 text-xs after:bg-primary data-active:text-primary"
+                  className="h-10 w-full rounded-none px-1 text-center text-xs whitespace-nowrap after:bg-primary data-active:text-primary"
                 >
                   {t(tab.labelKey)}
                 </TabsTrigger>

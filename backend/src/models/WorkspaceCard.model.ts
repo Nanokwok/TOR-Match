@@ -20,7 +20,7 @@ const workspaceCardSchema = new Schema(
       index: true,
     },
     priority: { type: String, enum: ["HIGH", "MEDIUM", "LOW"], default: "MEDIUM" },
-    assigneeIds: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
+    assigneeIds: { type: [String], default: [] },
     checklist: { type: [checklistItemSchema], default: [] },
   },
   { timestamps: true }

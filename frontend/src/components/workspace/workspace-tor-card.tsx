@@ -10,6 +10,7 @@ import {
 
 import { useLocale } from "@/components/i18n/locale-provider"
 import { DeadlineBadge } from "@/components/common/deadline-badge"
+import { getDeadlineStatus } from "@/lib/deadline"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,8 @@ export function WorkspaceTorCard({
   const priority = priorityStyles[card.priority]
   const [confirmOpen, setConfirmOpen] = useState(false)
   const title = pickLocalized(card.title, locale)
+  const deadlineStatus = getDeadlineStatus(card.deadline)
+  const isOverdue = deadlineStatus.isOverdue
 
   function handleConfirmDelete() {
     onDelete?.(card.torId, card.id)
@@ -84,7 +87,8 @@ export function WorkspaceTorCard({
     <>
       <article
         className={cn(
-          "rounded-xl border border-border bg-card p-3.5 shadow-sm transition-shadow hover:shadow-md",
+          "rounded-xl border border-border bg-card p-3.5 shadow-sm transition-all hover:shadow-md",
+          isOverdue && "opacity-60 bg-muted/50 border-muted-foreground/30 hover:opacity-85",
           onOpenDetails && "cursor-pointer",
           className
         )}

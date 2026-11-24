@@ -54,21 +54,38 @@ export function DeadlineBadge({
     dueToday: t("workspace.dueToday"),
     oneDayLeft: t("workspace.oneDayLeft"),
     daysLeft: t("workspace.daysLeft"),
+    overdue: t("workspace.overdue") || (locale === "th" ? "เลยกำหนดแล้ว" : "Overdue"),
   }
 
   const days = status.daysLeft
   const baseLabel =
-    days <= 0
-      ? daysLeftLabels.dueToday
-      : days === 1
-        ? daysLeftLabels.oneDayLeft
-        : daysLeftLabels.daysLeft.replace("{days}", String(days))
+    status.isOverdue
+      ? daysLeftLabels.overdue
+      : days === 0
+        ? daysLeftLabels.dueToday
+        : days === 1
+          ? daysLeftLabels.oneDayLeft
+          : daysLeftLabels.daysLeft.replace("{days}", String(days))
 
   const displayText = isCompact
     ? baseLabel
     : `${baseLabel} (${formatShortDate(deadline, locale)})`
 
   if (variant === "badge") {
+    if (status.isOverdue) {
+      return (
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-tight transition-colors border-zinc-500/30 bg-zinc-500/10 text-zinc-600 dark:border-zinc-500/40 dark:bg-zinc-950/40 dark:text-zinc-400",
+            className
+          )}
+        >
+          <Clock3 className={cn("size-3 shrink-0", iconClassName)} aria-hidden />
+          <span>{displayText}</span>
+        </span>
+      )
+    }
+
     const isCritical = status.urgency === "critical" || status.daysLeft <= 1
     return (
       <span
@@ -83,6 +100,18 @@ export function DeadlineBadge({
         <Clock3 className={cn("size-3 shrink-0", iconClassName)} aria-hidden />
         <span>{displayText}</span>
       </span>
+    )
+  }
+
+  if (status.isOverdue) {
+    return (
+      <p className={cn("flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400", className)}>
+        <Clock3
+          className={cn("size-3.5 shrink-0 text-zinc-400 dark:text-zinc-500", iconClassName)}
+          aria-hidden
+        />
+        <span>{displayText}</span>
+      </p>
     )
   }
 

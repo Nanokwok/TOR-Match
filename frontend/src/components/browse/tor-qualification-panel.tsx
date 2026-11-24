@@ -86,7 +86,7 @@ function SelfAssessmentCell({
 
       <label
         className={cn(
-          "flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition-all select-none",
+          "flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition-all select-none whitespace-nowrap",
           checked
             ? "border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/20"
             : "border-border bg-card hover:bg-muted/40"
@@ -99,7 +99,7 @@ function SelfAssessmentCell({
         />
         <span
           className={cn(
-            "text-xs font-medium leading-none",
+            "text-xs font-medium leading-none whitespace-nowrap",
             checked
               ? "text-emerald-700 dark:text-emerald-400"
               : "text-foreground"
@@ -352,7 +352,7 @@ function RequirementRows({
           showLessLabel={t("browse.qualificationPanel.showLess")}
         />
       </td>
-      <td className="px-4 py-3.5 align-top">
+      <td className="px-4 py-3.5 align-top whitespace-nowrap">
         <ProfileCell
           row={row}
           profileSetup={profileSetup}
@@ -489,16 +489,16 @@ export function TorQualificationPanel({
         ) : null}
       </div>
       <ScrollArea orientation="horizontal" className="w-full">
-        <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
+        <table className="w-full min-w-[700px] table-fixed border-collapse text-left text-sm">
           <thead className={cn(isCollapsed && "invisible")}>
             <tr className={cn(isCollapsed ? "h-0" : "bg-primary text-primary-foreground")}>
-              <th className={cn("w-[25%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              <th className={cn("w-[24%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
                 {!isCollapsed && t("browse.qualificationPanel.requirement")}
               </th>
-              <th className={cn("w-[55%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              <th className={cn("w-[48%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
                 {!isCollapsed && t("browse.qualificationPanel.torCriteria")}
               </th>
-              <th className={cn("w-[20%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium")}>
+              <th className={cn("w-[28%]", isCollapsed ? "h-0 py-0 border-0" : "px-4 py-3 font-medium whitespace-nowrap")}>
                 {!isCollapsed && t("browse.qualificationPanel.companyProfile")}
               </th>
             </tr>
